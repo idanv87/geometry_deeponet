@@ -17,11 +17,11 @@ class Polygon:
                 self.vertices=vertices
                 self.sc=simplicial_complex(vertices, triangles)
                 self.M=(self.sc[0].star_inv)@(-(self.sc[0].d).T)@(self.sc[1].star)@self.sc[0].d
-                self.ev=self.laplacian()
                 self.generators=generators
                 self.boundary_indices=[i for i in range(generators.shape[0])] 
                 self.calc_boundary_indices()
                 self.interior_indices=list(set(range(self.vertices.shape[0]))-set(self.boundary_indices))
+                self.ev=self.laplacian()
 
                 
         def calc_boundary_indices(self):
@@ -31,7 +31,7 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M, k=3,return_eigenvectors=False, which='SM')
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices], k=3,return_eigenvectors=False, which='SM')
         
         def solve_helmholtz(self,f):
                A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))
@@ -62,16 +62,18 @@ class data_point:
             X, cells = dmsh.generate(geo, 0.2)
             X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
             self.polygon=Polygon(X, cells, v)
-            f=np.array( random.sample(list(map(gaussian, X[:,0],X[:,1])),Constants.x_i  ))      
+            self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
             self.path=path
-            self.value={'eigen':None, 'u':None, 'v':None, 'f':f}
+            self.value={'eigen':None, 'u':None, 'v':None, 'f':None}
             if self.polygon.is_legit():
                 
                 self.value['v']=self.polygon.generators
                 self.value['eigen']=self.polygon.ev
-                self.u=self.polygon.solve_helmholtz(f)
+                self.u=self.polygon.solve_helmholtz(self.f)
                 interior_points=X[self.polygon.interior_indices]
-                self.value['u']=self.u[interior_points[:, 0].argsort()]
+                ind=interior_points[:, 0].argsort()
+                self.value['u']=self.u[ind]
+                self.value['f']=self.f[ind]
                 self.save_data()
                 #
                 
@@ -86,11 +88,9 @@ def creat_data(num_samples):
             data_point(path)
             
       
-x=np.array([1,2,3,4])
-random.sample(list(x),2)
-# creat_data(Constants.num_samples)  
+creat_data(Constants.num_samples)  
 
-# v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Consttnts.num_edges ))
+# v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
 # v[:,0]-=np.mean(v[:,0])
 # v[:,1]-=np.mean(v[:,1])
 # v=(1/np.sqrt(polygon_centre_area(v)))*v
