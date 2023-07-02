@@ -161,14 +161,15 @@ for epoch in range (Constants.num_epochs) :
       optimizer.step()
       loss_tot.append(loss.item())
       
-      y_batch=batched_output[2]
+   with torch.no_grad(): # validation step
+      y_batch=batched_output[-1]
       y_pred=model(batched_data3[-1],batched_data4[-1],batched_data1[-1],batched_data2[-1])
       loss_val = model.loss(y_pred, y_batch)   
       loss_val_tot.append(loss_val.item())   
          
    
   
-plt.plot(loss_tot)
-plt.plot(loss_val_tot, 'red')
-plt.show()  
+# plt.plot(loss_tot)
+# plt.plot(loss_val_tot, 'red')
+# plt.show()  
 # print(count_trainable_params(model))

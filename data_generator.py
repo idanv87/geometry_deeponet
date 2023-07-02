@@ -97,7 +97,7 @@ def creat_main_polygons_data(num_samples):
             data_point(path)            
             
       
-creat_train_data(2)  
+# creat_train_data(2)  
 # creat_main_polygons_data(1)
 
 
