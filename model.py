@@ -72,6 +72,8 @@ y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants
 
 num_data=len(y)
 indices_batches=create_batches(num_data, Constants.batch_size)
+
+
 batched_data1=[]
 batched_data2=[]
 batched_data3=[]
@@ -147,8 +149,9 @@ model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
 
 optimizer=optim.Adam(model.parameters(), lr=0.01)
 loss_tot=[]
+loss_val_tot=[]
 for epoch in range (Constants.num_epochs) :
-   for i in range(len(indices_batches)):
+   for i in range(len(indices_batches)-1):
       y_batch=batched_output[i]
       y_pred=model(batched_data3[i],batched_data4[i],batched_data1[i],batched_data2[i])
       loss = model.loss(y_pred, y_batch)
@@ -157,7 +160,15 @@ for epoch in range (Constants.num_epochs) :
         # update weights
       optimizer.step()
       loss_tot.append(loss.item())
-     
+      
+      y_batch=batched_output[2]
+      y_pred=model(batched_data3[-1],batched_data4[-1],batched_data1[-1],batched_data2[-1])
+      loss_val = model.loss(y_pred, y_batch)   
+      loss_val_tot.append(loss_val.item())   
+         
+   
+  
 plt.plot(loss_tot)
+plt.plot(loss_val_tot, 'red')
 plt.show()  
-print(count_trainable_params(model))
+# print(count_trainable_params(model))

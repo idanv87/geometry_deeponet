@@ -71,10 +71,10 @@ class data_point:
                 interior_points=X[self.polygon.interior_indices]
                 ind=interior_points[:, 0].argsort()
                 self.value['points']=interior_points[ind]
-                plt.scatter(X[:,0], X[:,1], color='red')
-                plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
+                # plt.scatter(X[:,0], X[:,1], color='red')
+                # plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
                
-                plt.show()
+                # plt.show()
                 # print(len(ind))
                 self.value['u']=self.u[ind]
                 self.save_data()
@@ -97,7 +97,7 @@ def creat_main_polygons_data(num_samples):
             data_point(path)            
             
       
-# creat_train_data(2)  
+creat_train_data(2)  
 # creat_main_polygons_data(1)
 
 
