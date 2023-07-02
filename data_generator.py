@@ -21,7 +21,7 @@ class Polygon:
                 self.boundary_indices=[i for i in range(generators.shape[0])] 
                 self.calc_boundary_indices()
                 self.interior_indices=list(set(range(self.vertices.shape[0]))-set(self.boundary_indices))
-                self.ev=self.laplacian()
+                self.ev=self.laplacian().real
 
                 
         def calc_boundary_indices(self):
@@ -31,15 +31,12 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices], k=3,return_eigenvectors=False, which='SM')
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices], k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')[:-1]
         
         def solve_helmholtz(self,f):
                A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))
                return scipy.sparse.linalg.spsolve(A,f[self.interior_indices])
-               
-        # def solver(self):
-        #        M=(self.sc[0].star_inv)@(-(self.sc[0].d).T)@(self.sc[1].star)@self.sc[0].d
-        #        M[self.interior_indices][:,self.interior_indices]+torch.eye(len(self.interior_indices))
+
 
         def is_legit(self):
                 if  np.min(abs(self.sc[1].star.diagonal()))>0:
@@ -62,9 +59,10 @@ class data_point:
             X, cells = dmsh.generate(geo, 0.2)
             X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
             self.polygon=Polygon(X, cells, v)
+          
             self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
             self.path=path
-            self.value={'eigen':None, 'u':None, 'v':None, 'f':None}
+            self.value={'eigen':None, 'points':None, 'u':None, 'gauss':gaussian}
             if self.polygon.is_legit():
                 
                 self.value['v']=self.polygon.generators
@@ -72,8 +70,13 @@ class data_point:
                 self.u=self.polygon.solve_helmholtz(self.f)
                 interior_points=X[self.polygon.interior_indices]
                 ind=interior_points[:, 0].argsort()
+                self.value['points']=interior_points[ind]
+                plt.scatter(X[:,0], X[:,1], color='red')
+                plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
+               
+                plt.show()
+                # print(len(ind))
                 self.value['u']=self.u[ind]
-                self.value['f']=self.f[ind]
                 self.save_data()
                 #
                 
@@ -81,14 +84,31 @@ class data_point:
               with open(self.path, 'wb') as file:
                  pickle.dump(self.value, file)
         
-def creat_data(num_samples):
+def creat_train_data(num_samples):
       for i in range(num_samples):
             uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
             path=Constants.path+'train/'+uniq_filename+'.pkl'
             data_point(path)
+
+def creat_main_polygons_data(num_samples):
+      for i in range(num_samples):
+            uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+            path=Constants.path+'main_polygons/'+uniq_filename+'.pkl'
+            data_point(path)            
             
       
-creat_data(Constants.num_samples)  
+# creat_train_data(2)  
+# creat_main_polygons_data(1)
+
+
+
+
+
+
+
+
+
+
 
 # v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
 # v[:,0]-=np.mean(v[:,0])

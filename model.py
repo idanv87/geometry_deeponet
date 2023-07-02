@@ -1,64 +1,163 @@
+import os
+import pickle
+from random import sample
+
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 import numpy as np
 
 from utils import *
 
 
-class branch(nn.Module):
-    def __init__(self, n,m):
-      super().__init__()
-      self.fc = nn.Linear(in_features=n, out_features=m)
-      self.c=nn.Linear(in_features=self.fc.out_features, out_features=1, bias=False)
-      self.activation=torch.relu
-    def forward(self,x):
-       return self.c(self.activation(self.fc(x)))
+class branc_point:
+    
+    def __init__(self,f, main_polygons):
+        self.f=f
+        self.main_polygons=main_polygons
+        self.b1, self.b2= self.calculate_branch()
 
+    def calculate_branch(self):
+        x=[]
+        y=[]
+        Constants.pts_per_polygon=np.min([len(p['points']) for p in self.main_polygons])
+        for p in self.main_polygons:
+         #  print(len(p['points']))
+          x.append(list(map(self.f, p['points'][:Constants.pts_per_polygon,0],p['points'][:Constants.pts_per_polygon,1]))  )
+          y.append(p['eigen'])
+        x=np.hstack(x).reshape((len(x), len(x[0])))
+        y=np.hstack(y).reshape((len(y), len(y[0])))
+
+        return x.transpose(), y.transpose()  
+
+def create_main_polygons(dir_path):
+   x=[]
+
+   for filename in os.listdir(dir_path):
+        f = os.path.join(dir_path, filename)
+
+        if os.path.isfile(f) and  f.endswith('.pkl'):
+           
+           df=extract_pickle(f)
+           x.append(df)
+   return x        
+
+        
+def create_data_points(dir_train, dir_main_polygons):
+    input1=[]
+    input2=[]
+    input3=[]
+    input4=[]
+    output=[]
+    main_polygons=create_main_polygons(dir_main_polygons)
+
+    for filename in os.listdir(dir_train):
+        f = os.path.join(dir_train, filename)
+        if os.path.isfile(f) and f.endswith('.pkl'):
+           df=extract_pickle(f)
+           for i in range(df['points'].shape[0]):
+             
+             input1.append(df['points'][i].reshape([Constants.dim,1])  )
+             input2.append(df['eigen'].reshape([Constants.ev_per_polygon,1]) )
+             input3.append(branc_point(df['gauss'], main_polygons).b1)
+             input4.append(branc_point(df['gauss'],main_polygons).b2)
+             output.append(df['u'][i])
+    return input1, input2, input3, input4, output          
+
+y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants.path+'main_polygons')
+
+
+
+num_data=len(y)
+indices_batches=create_batches(num_data, Constants.batch_size)
+batched_data1=[]
+batched_data2=[]
+batched_data3=[]
+batched_data4=[]
+batched_output=[]
+for batch_index in indices_batches: 
+  batched_data1.append(torch.tensor(np.array([y[k] for k in batch_index]), dtype=torch.float32))
+  batched_data2.append(torch.tensor(np.array([ev_y[k] for k in batch_index]), dtype=torch.float32))
+  batched_data3.append(torch.tensor(np.array([f_x[k] for k in batch_index]), dtype=torch.float32))
+  batched_data4.append(torch.tensor(np.array([ev_x[k] for k in batch_index]), dtype=torch.float32))
+  batched_output.append(torch.tensor(np.array([output[k] for k in batch_index]), dtype=torch.float32))
+
+
+class branch(nn.Module):
+    def __init__(self, n, p):
+      super().__init__()
+      self.linear=nn.Linear(in_features=n*n, out_features=p, bias=True)
+      self.activation=torch.nn.ReLU()
+      self.n=n
+    def forward(self,x):
+         
+         s=torch.matmul(x, torch.transpose(x,1,2))
+        
+
+         return self.activation(self.linear(torch.flatten(s,start_dim=1)))
+
+         
 
 class trunk(nn.Module):
-    def __init__(self, n,m):
+    def __init__(self, n, p):
       super().__init__()
-      self.fc = nn.Linear(in_features=n, out_features=m)
-      self.activation=torch.relu
+      self.linear=nn.Linear(in_features=n*n, out_features=p, bias=True)
+      self.activation=torch.nn.ReLU()
     def forward(self,x):
-       return self.activation(self.fc(x))
+         s=torch.matmul(x, torch.transpose(x,1,2))
+         return self.activation(self.linear(torch.flatten(s,start_dim=1)))
+
+
 
 
 class deeponet(nn.Module):
-    def __init__(self, num_branches, y_dim, u_dim, n):
+    def __init__(self, pts_per_polygon, ev_per_polygon, dim, p):
       super().__init__()
-      self.branches=nn.ModuleList([])
-      self.trunk=nn.ModuleList([])
-      for i in range(num_branches):
-         self.branches.append(branch(u_dim,n))
-         self.trunk.append(trunk(y_dim,1))
-    def forward(self,x,y):
-       sol=0
-       for i in range(num_branches):
-          sol=self.branches[i](x)*self.trunk[i](y)
-       return sol
-    
-# x=np.random.rand(10,2)
-# x=torch.tensor(x, dtype=torch.float64)
-num_branches=2
-u_dim=10
-y_dim=2
-x=torch.rand((4,1,u_dim))
-y=torch.rand((4,1,y_dim))
-m=deeponet(num_branches,y.shape[2],x.shape[2],3)
-m(x,y)
-# count_trainable_params(m)
+      self.branch1=branch(pts_per_polygon,p)
+      self.branch2=branch(ev_per_polygon,p)
+      
+      self.trunk1=trunk(dim,p)
+      self.trunk2=trunk(ev_per_polygon,p)
+      self.loss=torch.nn.MSELoss()
+
+    def forward(self,x,lx,y,ly):
+       s1=torch.cat(( self.trunk1(y),self.trunk2(ly)), dim=-1)
+       s2=torch.cat(( self.branch1(x),self.branch2(lx)), dim=-1)
+     
+       return torch.sum(s1*s2, dim=-1)
+
+p=40
+dim=Constants.dim
+num_ctrl_polygons=2
+pts_per_polygon=Constants.pts_per_polygon
+ev_per_polygon=Constants.ev_per_polygon
+
+# x1=torch.randn(4,pts_per_polygon, num_ctrl_polygons)
+
+# l1=torch.randn(4,ev_per_polygon, 7)
 
 
+# y1=torch.randn(4,dim, 1)
 
-# b=branch(x.shape[2],3)
-# t=trunk(y.shape[2],1)
+# ly=torch.randn(4,ev_per_polygon, 1)
 
-# print(t(y).shape)
-# print(b(x).shape)
+model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
 
-# my_nn = Net()
-# model_parameters = filter(lambda p: p.requires_grad, my_nn.parameters())
-# params = sum([np.prod(p.size()) for p in model_parameters])
-# print(params)
+optimizer=optim.Adam(model.parameters(), lr=0.01)
+loss_tot=[]
+for epoch in range (Constants.num_epochs) :
+   for i in range(len(indices_batches)):
+      y_batch=batched_output[i]
+      y_pred=model(batched_data3[i],batched_data4[i],batched_data1[i],batched_data2[i])
+      loss = model.loss(y_pred, y_batch)
+      optimizer.zero_grad()
+      loss.backward()
+        # update weights
+      optimizer.step()
+      loss_tot.append(loss.item())
+     
+plt.plot(loss_tot)
+plt.show()  
+print(count_trainable_params(model))

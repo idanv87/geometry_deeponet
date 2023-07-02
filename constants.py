@@ -1,11 +1,13 @@
 class Constants:
-       num_samples=2
+       num_samples=5
        num_edges=6
        var_center=0
        var_angle=0.3
        radius=3
        h=0.2
        path='/Users/idanversano/Documents/clones/deeponet/'
-       x_i=10
-       batch_size=2
-       num_epochs=10
+       batch_size=8
+       num_epochs=2
+       pts_per_polygon=None
+       ev_per_polygon=3
+       dim=2

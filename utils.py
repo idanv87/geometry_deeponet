@@ -1,12 +1,14 @@
 import numpy as np
 import math, random
 import scipy
+import os
 from typing import List, Tuple
 from shapely import geometry
 
 from constants import Constants
 from pydec.dec import simplicial_complex 
-
+import pickle
+import sklearn
 
 def clip(value, lower, upper):
     """
@@ -161,6 +163,61 @@ def on_boundary(point, geo):
 
 def gaussian(x,y):
      return math.exp(-(x**2+y**2)/Constants.h)  
+
+def extract_pickle(file_path):
+     with open(file_path, 'rb') as f:
+         data = pickle.load(f)
+     return  data  
+def train_one_epoch(model, ):
+    running_loss = 0.
+    last_loss = 0.
+
+    # Here, we use enumerate(training_loader) instead of
+    # iter(training_loader) so that we can track the batch
+    # index and do some intra-epoch reporting
+    for i, data in enumerate(training_loader):
+        # Every data instance is an input + label pair
+        inputs, labels = data
+
+        # Zero your gradients for every batch!
+        optimizer.zero_grad()
+
+        # Make predictions for this batch
+        outputs = model(inputs)
+
+        # Compute the loss and its gradients
+        loss = loss_fn(outputs, labels)
+        loss.backward()
+
+        # Adjust learning weights
+        optimizer.step()
+
+        # # Gather data and report
+        # running_loss += loss.item()
+        # if i % 1000 == 999:
+        #     last_loss = running_loss / 1000 # loss per batch
+        #     print('  batch {} loss: {}'.format(i + 1, last_loss))
+        #     tb_x = epoch_index * len(training_loader) + i + 1
+        #     tb_writer.add_scalar('Loss/train', last_loss, tb_x)
+        #     running_loss = 0.
+
+    return last_loss
+def create_batches(n, batch_size):
+     k=math.floor(n/batch_size)
+     x=list(range(n))
+     random.shuffle(x)
+     return [list(x[i*batch_size:(i+1)*batch_size]) for i in range(k)]
+
+     
+
+  
+
+          
+# for filename in os.listdir(Constants.path+'train'):
+#         f = os.path.join(Constants.path+'train', filename)
+#         if f.endswith('.pkl'):
+#           print('h')
+#           print(f)
 # boundary_indices=[i for i in range(v.shape[0])]     
 
 # for i in range(X.shape[0]):
