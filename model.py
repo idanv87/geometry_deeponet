@@ -10,91 +10,11 @@ import torch.optim as optim
 import numpy as np
 
 from utils import *
-from dataset import train_loader
+from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader
+from tqdm import tqdm
+import argparse
+import time
 
-
-
-
-# class branc_point:
-    
-#     def __init__(self,f, main_polygons):
-#         self.f=f
-#         self.main_polygons=main_polygons
-#         self.b1, self.b2= self.calculate_branch()
-
-#     def calculate_branch(self):
-#         x=[]
-#         y=[]
-   
-#         for p in self.main_polygons:
-#           x_interior_points=spread_points(Constants.pts_per_polygon, p['points'])
-#           ind_x=x_interior_points[:, 0].argsort()
-#           p['x_points']=x_interior_points[ind_x]
-#          #  plt.scatter(p['points'][:,0], p['points'][:,1], color='black')
-#          #  plt.scatter(p['x_points'][:,0], p['x_points'][:,1], color='red')
-#          #  plt.show()
-         
-#           x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
-#           y.append(p['eigen'])
-#         x=np.hstack(x).reshape((len(x), len(x[0])))
-#         y=np.hstack(y).reshape((len(y), len(y[0])))
-
-#         return x.transpose(), y.transpose()  
-
-# def create_main_polygons(dir_path):
-#    x=[]
-
-#    for filename in os.listdir(dir_path):
-#         f = os.path.join(dir_path, filename)
-
-#         if os.path.isfile(f) and  f.endswith('.pkl'):
-           
-#            df=extract_pickle(f)
-#            x.append(df)
-#    return x        
-
-        
-# def create_data_points(dir_train, dir_main_polygons):
-#     input1=[]
-#     input2=[]
-#     input3=[]
-#     input4=[]
-#     output=[]
-#     main_polygons=create_main_polygons(dir_main_polygons)
-
-#     for filename in os.listdir(dir_train):
-#         f = os.path.join(dir_train, filename)
-#         if os.path.isfile(f) and f.endswith('.pkl'):
-           
-#            df=extract_pickle(f)
-#            for i in range(df['points'].shape[0]):
-             
-#              input1.append(df['points'][i].reshape([Constants.dim,1])  )
-#              input2.append(df['eigen'].reshape([Constants.ev_per_polygon,1]) )
-#              input3.append(branc_point(df['gauss'], main_polygons).b1)
-#              input4.append(branc_point(df['gauss'],main_polygons).b2)
-#              output.append(df['u'][i])
-#     return input1, input2, input3, input4, output          
-
-# y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants.path+'main_polygons')
-
-
-
-# num_data=len(y)
-# indices_batches=create_batches(num_data, Constants.batch_size)
-
-
-# batched_data1=[]
-# batched_data2=[]
-# batched_data3=[]
-# batched_data4=[]
-# batched_output=[]
-# for batch_index in indices_batches: 
-#   batched_data1.append(torch.tensor(np.array([y[k] for k in batch_index]), dtype=torch.float32))
-#   batched_data2.append(torch.tensor(np.array([ev_y[k] for k in batch_index]), dtype=torch.float32))
-#   batched_data3.append(torch.tensor(np.array([f_x[k] for k in batch_index]), dtype=torch.float32))
-#   batched_data4.append(torch.tensor(np.array([ev_x[k] for k in batch_index]), dtype=torch.float32))
-#   batched_output.append(torch.tensor(np.array([output[k] for k in batch_index]), dtype=torch.float32))
 
 
 class branch(nn.Module):
@@ -135,100 +55,176 @@ class deeponet(nn.Module):
       self.loss=torch.nn.MSELoss()
 
     def forward(self,x,lx,y,ly):
+       
        s1=torch.cat(( self.trunk1(y),self.trunk2(ly)), dim=-1)
        s2=torch.cat(( self.branch1(x),self.branch2(lx)), dim=-1)
      
        return torch.sum(s1*s2, dim=-1)
 
+
+
+
+
 p=40
 dim=Constants.dim
-num_ctrl_polygons=2
 pts_per_polygon=Constants.pts_per_polygon
 ev_per_polygon=Constants.ev_per_polygon
-
-# x1=torch.randn(4,pts_per_polygon, num_ctrl_polygons)
-
-# l1=torch.randn(4,ev_per_polygon, 7)
-
-
-# y1=torch.randn(4,dim, 1)
-
-# ly=torch.randn(4,ev_per_polygon, 1)
-
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
-for i, data in enumerate(train_loader):
-   x1,x2,x3,x4,output=data
-   print(model(x3,x4,x1,x2))
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# print(f"Computation device: {device}\n")
-
-# # total parameters and trainable parameters
-# total_params = sum(p.numel() for p in model.parameters())
-# print(f"{total_params:,} total parameters.")
-# total_trainable_params = sum(
-#     p.numel() for p in model.parameters() if p.requires_grad)
-# print(f"{total_trainable_params:,} training parameters.")
-
-# lr = 0.001
-# epochs = 100
-# # optimizer
-# optimizer = optim.Adam(model.parameters(), lr=lr)
-# # loss function
-# criterion = torch.nn.MSELoss()
-
-# loss_plot_name = 'loss'
-# acc_plot_name = 'accuracy'
-# model_name = 'model'
 
 
-# # either initialize early stopping or learning rate scheduler
-# if args['lr_scheduler']:
-#     print('INFO: Initializing learning rate scheduler')
-#     lr_scheduler = LRScheduler(optimizer)
-#     # change the accuracy, loss plot names and model name
-#     loss_plot_name = 'lrs_loss'
-#     acc_plot_name = 'lrs_accuracy'
-#     model_name = 'lrs_model'
-# if args['early_stopping']:
-#     print('INFO: Initializing early stopping')
-#     early_stopping = EarlyStopping()
-#     # change the accuracy, loss plot names and model name
-#     loss_plot_name = 'es_loss'
-#     acc_plot_name = 'es_accuracy'
-#     model_name = 'es_model'
+parser = argparse.ArgumentParser()
+parser.add_argument('--lr-scheduler', dest='lr_scheduler', action='store_true')
+parser.add_argument('--early-stopping', dest='early_stopping', action='store_true')
+args = vars(parser.parse_args())
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# loss_tot=[]
-# loss_val_tot=[]
+# total parameters and trainable parameters
+total_params = sum(p.numel() for p in model.parameters())
+print(f"{total_params:,} total parameters.")
+total_trainable_params = sum(
+    p.numel() for p in model.parameters() if p.requires_grad)
+print(f"{total_trainable_params:,} training parameters.")
 
-# for epoch in range (Constants.num_epochs) :
-#    accuracy=100
-#    for i in range(len(indices_batches)-1):
-#       y_batch=batched_output[i]
-#       y_pred=model(batched_data3[i],batched_data4[i],batched_data1[i],batched_data2[i])
-#       loss = model.loss(y_pred, y_batch)
-#       optimizer.zero_grad()
-#       loss.backward()
-#         # update weights
-#       optimizer.step()
-#       loss_tot.append(loss.item())
-#       print(loss)
-      
-#    with torch.no_grad(): # validation step
-#       y_batch=batched_output[-1]
-#       y_pred=model(batched_data3[-1],batched_data4[-1],batched_data1[-1],batched_data2[-1])
-#       loss_val = model.loss(y_pred, y_batch)   
-#       loss_val_tot.append(loss_val.item())   
-#       if loss_val<accuracy:
-#          accuracy=loss_val
-#          torch.save({
-#                 'epoch': epoch+1,
-#                 'model_state_dict': model.state_dict(),
-#                 }, Constants.path+'best_model/best_model.pth')
+lr=0.01
+epochs = Constants.num_epochs
+# optimizer
+optimizer = optim.Adam(model.parameters(), lr=lr)
+# loss function
+criterion = nn.MSELoss()
+loss_plot_name = 'loss'
+acc_plot_name = 'accuracy'
+model_name = 'model'
 
-         
-   
-  
-# plt.plot(loss_tot)
-# plt.plot(loss_val_tot, 'red')
-# plt.show()  
-# print(count_trainable_params(model))
+
+if args['lr_scheduler']:
+    print('INFO: Initializing learning rate scheduler')
+    lr_scheduler = LRScheduler(optimizer)
+    # change the accuracy, loss plot names and model name
+    loss_plot_name = 'lrs_loss'
+    acc_plot_name = 'lrs_accuracy'
+    model_name = 'lrs_model'
+if args['early_stopping']:
+    print('INFO: Initializing early stopping')
+    early_stopping = EarlyStopping()
+    # change the accuracy, loss plot names and model name
+    loss_plot_name = 'es_loss'
+    acc_plot_name = 'es_accuracy'
+    model_name = 'es_model'
+
+def fit(model, train_dataloader, train_dataset, optimizer, criterion):
+    print('Training')
+    model.train()
+    train_running_loss = 0.0
+    train_running_correct = 0
+    counter = 0
+    total = 0
+    prog_bar = tqdm(enumerate(train_dataloader), total=int(len(train_dataset)/train_dataloader.batch_size))
+    for i, data in prog_bar:
+        x1,x2,x3,x4,output=data
+        counter += 1
+        x1,x2,x3,x4,output = x1.to(device), x2.to(device),x3.to(device),x4.to(device),output.to(device)
+        total += output.size(0)
+        optimizer.zero_grad()
+        outputs = model(x3,x4,x1,x2)
+        loss = criterion(outputs, output)
+        train_running_loss += loss.item()
+      #   print(torch.max(outputs.data))
+      #   _, preds = torch.max(outputs.data)
+      #   train_running_correct += (preds == output).sum().item()
+        loss.backward()
+        optimizer.step()
+        
+    train_loss = train_running_loss / counter
+    train_accuracy = 100. * train_running_correct / total
+    return train_loss, train_accuracy
+
+def validate(model, test_dataloader, val_dataset, criterion):
+    print('Validating')
+    model.eval()
+    val_running_loss = 0.0
+    val_running_correct = 0
+    counter = 0
+    total = 0
+    prog_bar = tqdm(enumerate(test_dataloader), total=int(len(val_dataset)/test_dataloader.batch_size))
+    with torch.no_grad():
+        for i, data in prog_bar:
+            x1,x2,x3,x4,output=data
+            counter += 1
+            x1,x2,x3,x4,output = x1.to(device), x2.to(device),x3.to(device),x4.to(device),output.to(device)
+            total += output.size(0)
+            outputs = model(x3,x4,x1,x2)
+            loss = criterion(outputs, output)
+            
+            val_running_loss += loss.item()
+            # _, preds = torch.max(outputs.data, 1)
+            # val_running_correct += (preds == output).sum().item()
+        
+        val_loss = val_running_loss / counter
+        val_accuracy = 100. * val_running_correct / total
+        return val_loss, val_accuracy
+
+# either initialize early stopping or learning rate scheduler
+
+
+# lists to store per-epoch loss and accuracy values
+train_loss, train_accuracy = [], []
+val_loss, val_accuracy = [], []
+start = time.time()
+for epoch in range(epochs):
+    print(f"Epoch {epoch+1} of {epochs}")
+    train_epoch_loss, train_epoch_accuracy = fit(
+        model, train_dataloader, train_dataset, optimizer, criterion
+    )
+    val_epoch_loss, val_epoch_accuracy = validate(
+        model, val_dataloader, val_dataset, criterion
+    )
+    train_loss.append(train_epoch_loss)
+    train_accuracy.append(train_epoch_accuracy)
+    val_loss.append(val_epoch_loss)
+    val_accuracy.append(val_epoch_accuracy)
+    if args['lr_scheduler']:
+        lr_scheduler(val_epoch_loss)
+    if args['early_stopping']:
+        early_stopping(val_epoch_loss)
+        if early_stopping.early_stop:
+            break
+    print(f"Train Loss: {train_epoch_loss:.4f}, Train Acc: {train_epoch_accuracy:.2f}")
+    print(f'Val Loss: {val_epoch_loss:.4f}, Val Acc: {val_epoch_accuracy:.2f}')
+end = time.time()
+print(f"Training time: {(end-start)/60:.3f} minutes")
+
+# print('Saving loss and accuracy plots...')
+# # accuracy plots
+# plt.figure(figsize=(10, 7))
+# plt.plot(train_accuracy, color='green', label='train accuracy')
+# plt.plot(val_accuracy, color='blue', label='validataion accuracy')
+# plt.xlabel('Epochs')
+# plt.ylabel('Accuracy')
+# plt.legend()
+# plt.savefig(f"../outputs/{acc_plot_name}.png")
+# plt.show()
+# loss plots
+plt.figure(figsize=(10, 7))
+plt.plot(train_loss[2:], color='orange', label='train loss')
+plt.plot(val_loss[2:], color='red', label='validataion loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+# plt.savefig(f"../outputs/{loss_plot_name}.png")
+plt.show()
+    
+# serialize the model to disk
+print('Saving model...')
+# torch.save(model.state_dict(), f"../outputs/{model_name}.pth")
+ 
+print('TRAINING COMPLETE')    
+
+
+
+
+
+# for i, data in enumerate(train_dataloader):
+#    x1,x2,x3,x4,output=data
+#    print(model(x3,x4,x1,x2))
+
+
