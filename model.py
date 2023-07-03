@@ -10,87 +10,91 @@ import torch.optim as optim
 import numpy as np
 
 from utils import *
+from dataset import train_loader
 
 
-class branc_point:
+
+
+# class branc_point:
     
-    def __init__(self,f, main_polygons):
-        self.f=f
-        self.main_polygons=main_polygons
-        self.b1, self.b2= self.calculate_branch()
+#     def __init__(self,f, main_polygons):
+#         self.f=f
+#         self.main_polygons=main_polygons
+#         self.b1, self.b2= self.calculate_branch()
 
-    def calculate_branch(self):
-        x=[]
-        y=[]
+#     def calculate_branch(self):
+#         x=[]
+#         y=[]
    
-        for p in self.main_polygons:
-          x_interior_points=spread_points(Constants.pts_per_polygon, p['points'])
-          ind_x=x_interior_points[:, 0].argsort()
-          p['x_points']=x_interior_points[ind_x]
-         #  plt.scatter(p['points'][:,0], p['points'][:,1], color='black')
-         #  plt.scatter(p['x_points'][:,0], p['x_points'][:,1], color='red')
-         #  plt.show()
+#         for p in self.main_polygons:
+#           x_interior_points=spread_points(Constants.pts_per_polygon, p['points'])
+#           ind_x=x_interior_points[:, 0].argsort()
+#           p['x_points']=x_interior_points[ind_x]
+#          #  plt.scatter(p['points'][:,0], p['points'][:,1], color='black')
+#          #  plt.scatter(p['x_points'][:,0], p['x_points'][:,1], color='red')
+#          #  plt.show()
          
-          x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
-          y.append(p['eigen'])
-        x=np.hstack(x).reshape((len(x), len(x[0])))
-        y=np.hstack(y).reshape((len(y), len(y[0])))
+#           x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
+#           y.append(p['eigen'])
+#         x=np.hstack(x).reshape((len(x), len(x[0])))
+#         y=np.hstack(y).reshape((len(y), len(y[0])))
 
-        return x.transpose(), y.transpose()  
+#         return x.transpose(), y.transpose()  
 
-def create_main_polygons(dir_path):
-   x=[]
+# def create_main_polygons(dir_path):
+#    x=[]
 
-   for filename in os.listdir(dir_path):
-        f = os.path.join(dir_path, filename)
+#    for filename in os.listdir(dir_path):
+#         f = os.path.join(dir_path, filename)
 
-        if os.path.isfile(f) and  f.endswith('.pkl'):
+#         if os.path.isfile(f) and  f.endswith('.pkl'):
            
-           df=extract_pickle(f)
-           x.append(df)
-   return x        
+#            df=extract_pickle(f)
+#            x.append(df)
+#    return x        
 
         
-def create_data_points(dir_train, dir_main_polygons):
-    input1=[]
-    input2=[]
-    input3=[]
-    input4=[]
-    output=[]
-    main_polygons=create_main_polygons(dir_main_polygons)
+# def create_data_points(dir_train, dir_main_polygons):
+#     input1=[]
+#     input2=[]
+#     input3=[]
+#     input4=[]
+#     output=[]
+#     main_polygons=create_main_polygons(dir_main_polygons)
 
-    for filename in os.listdir(dir_train):
-        f = os.path.join(dir_train, filename)
-        if os.path.isfile(f) and f.endswith('.pkl'):
-           df=extract_pickle(f)
-           for i in range(df['points'].shape[0]):
+#     for filename in os.listdir(dir_train):
+#         f = os.path.join(dir_train, filename)
+#         if os.path.isfile(f) and f.endswith('.pkl'):
+           
+#            df=extract_pickle(f)
+#            for i in range(df['points'].shape[0]):
              
-             input1.append(df['points'][i].reshape([Constants.dim,1])  )
-             input2.append(df['eigen'].reshape([Constants.ev_per_polygon,1]) )
-             input3.append(branc_point(df['gauss'], main_polygons).b1)
-             input4.append(branc_point(df['gauss'],main_polygons).b2)
-             output.append(df['u'][i])
-    return input1, input2, input3, input4, output          
+#              input1.append(df['points'][i].reshape([Constants.dim,1])  )
+#              input2.append(df['eigen'].reshape([Constants.ev_per_polygon,1]) )
+#              input3.append(branc_point(df['gauss'], main_polygons).b1)
+#              input4.append(branc_point(df['gauss'],main_polygons).b2)
+#              output.append(df['u'][i])
+#     return input1, input2, input3, input4, output          
 
-y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants.path+'main_polygons')
-
-
-
-num_data=len(y)
-indices_batches=create_batches(num_data, Constants.batch_size)
+# y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants.path+'main_polygons')
 
 
-batched_data1=[]
-batched_data2=[]
-batched_data3=[]
-batched_data4=[]
-batched_output=[]
-for batch_index in indices_batches: 
-  batched_data1.append(torch.tensor(np.array([y[k] for k in batch_index]), dtype=torch.float32))
-  batched_data2.append(torch.tensor(np.array([ev_y[k] for k in batch_index]), dtype=torch.float32))
-  batched_data3.append(torch.tensor(np.array([f_x[k] for k in batch_index]), dtype=torch.float32))
-  batched_data4.append(torch.tensor(np.array([ev_x[k] for k in batch_index]), dtype=torch.float32))
-  batched_output.append(torch.tensor(np.array([output[k] for k in batch_index]), dtype=torch.float32))
+
+# num_data=len(y)
+# indices_batches=create_batches(num_data, Constants.batch_size)
+
+
+# batched_data1=[]
+# batched_data2=[]
+# batched_data3=[]
+# batched_data4=[]
+# batched_output=[]
+# for batch_index in indices_batches: 
+#   batched_data1.append(torch.tensor(np.array([y[k] for k in batch_index]), dtype=torch.float32))
+#   batched_data2.append(torch.tensor(np.array([ev_y[k] for k in batch_index]), dtype=torch.float32))
+#   batched_data3.append(torch.tensor(np.array([f_x[k] for k in batch_index]), dtype=torch.float32))
+#   batched_data4.append(torch.tensor(np.array([ev_x[k] for k in batch_index]), dtype=torch.float32))
+#   batched_output.append(torch.tensor(np.array([output[k] for k in batch_index]), dtype=torch.float32))
 
 
 class branch(nn.Module):
@@ -102,9 +106,8 @@ class branch(nn.Module):
     def forward(self,x):
          
          s=torch.matmul(x, torch.transpose(x,1,2))
-        
-
-         return self.activation(self.linear(torch.flatten(s,start_dim=1)))
+         s=torch.flatten(s,start_dim=1)
+         return self.activation(self.linear(s))
 
          
 
@@ -115,7 +118,8 @@ class trunk(nn.Module):
       self.activation=torch.nn.ReLU()
     def forward(self,x):
          s=torch.matmul(x, torch.transpose(x,1,2))
-         return self.activation(self.linear(torch.flatten(s,start_dim=1)))
+         s=torch.flatten(s,start_dim=1)
+         return self.activation(self.linear(s))
 
 
 
@@ -152,28 +156,75 @@ ev_per_polygon=Constants.ev_per_polygon
 # ly=torch.randn(4,ev_per_polygon, 1)
 
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
+for i, data in enumerate(train_loader):
+   x1,x2,x3,x4,output=data
+   print(model(x3,x4,x1,x2))
+# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# print(f"Computation device: {device}\n")
 
-optimizer=optim.Adam(model.parameters(), lr=0.01)
-loss_tot=[]
-loss_val_tot=[]
+# # total parameters and trainable parameters
+# total_params = sum(p.numel() for p in model.parameters())
+# print(f"{total_params:,} total parameters.")
+# total_trainable_params = sum(
+#     p.numel() for p in model.parameters() if p.requires_grad)
+# print(f"{total_trainable_params:,} training parameters.")
 
-for epoch in range (Constants.num_epochs) :
-   for i in range(len(indices_batches)-1):
-      y_batch=batched_output[i]
-      y_pred=model(batched_data3[i],batched_data4[i],batched_data1[i],batched_data2[i])
-      loss = model.loss(y_pred, y_batch)
-      optimizer.zero_grad()
-      loss.backward()
-        # update weights
-      optimizer.step()
-      loss_tot.append(loss.item())
-      print(loss)
+# lr = 0.001
+# epochs = 100
+# # optimizer
+# optimizer = optim.Adam(model.parameters(), lr=lr)
+# # loss function
+# criterion = torch.nn.MSELoss()
+
+# loss_plot_name = 'loss'
+# acc_plot_name = 'accuracy'
+# model_name = 'model'
+
+
+# # either initialize early stopping or learning rate scheduler
+# if args['lr_scheduler']:
+#     print('INFO: Initializing learning rate scheduler')
+#     lr_scheduler = LRScheduler(optimizer)
+#     # change the accuracy, loss plot names and model name
+#     loss_plot_name = 'lrs_loss'
+#     acc_plot_name = 'lrs_accuracy'
+#     model_name = 'lrs_model'
+# if args['early_stopping']:
+#     print('INFO: Initializing early stopping')
+#     early_stopping = EarlyStopping()
+#     # change the accuracy, loss plot names and model name
+#     loss_plot_name = 'es_loss'
+#     acc_plot_name = 'es_accuracy'
+#     model_name = 'es_model'
+
+# loss_tot=[]
+# loss_val_tot=[]
+
+# for epoch in range (Constants.num_epochs) :
+#    accuracy=100
+#    for i in range(len(indices_batches)-1):
+#       y_batch=batched_output[i]
+#       y_pred=model(batched_data3[i],batched_data4[i],batched_data1[i],batched_data2[i])
+#       loss = model.loss(y_pred, y_batch)
+#       optimizer.zero_grad()
+#       loss.backward()
+#         # update weights
+#       optimizer.step()
+#       loss_tot.append(loss.item())
+#       print(loss)
       
-   with torch.no_grad(): # validation step
-      y_batch=batched_output[-1]
-      y_pred=model(batched_data3[-1],batched_data4[-1],batched_data1[-1],batched_data2[-1])
-      loss_val = model.loss(y_pred, y_batch)   
-      loss_val_tot.append(loss_val.item())   
+#    with torch.no_grad(): # validation step
+#       y_batch=batched_output[-1]
+#       y_pred=model(batched_data3[-1],batched_data4[-1],batched_data1[-1],batched_data2[-1])
+#       loss_val = model.loss(y_pred, y_batch)   
+#       loss_val_tot.append(loss_val.item())   
+#       if loss_val<accuracy:
+#          accuracy=loss_val
+#          torch.save({
+#                 'epoch': epoch+1,
+#                 'model_state_dict': model.state_dict(),
+#                 }, Constants.path+'best_model/best_model.pth')
+
          
    
   

@@ -62,7 +62,8 @@ class data_point:
           
             self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
             self.path=path
-            self.value={'eigen':None, 'points':None, 'x_points':None, 'u':None, 'gauss':gaussian}
+            self.value={'eigen':None, 'points':None, 'x_points':None, 'generators':v, 'u':None, 'gauss':gaussian, 'path':self.path}
+           
             if self.polygon.is_legit():
                 
                 self.value['v']=self.polygon.generators
@@ -81,7 +82,7 @@ class data_point:
                             # list(map(gaussian, X[:,0],X[:,1])),
                             
                
-                plt.show()
+                # plt.show()
                 # print(len(ind))
                 self.value['u']=self.u[ind]
                 self.save_data()
@@ -104,8 +105,8 @@ def creat_main_polygons_data(num_samples):
             data_point(path)            
             
       
-creat_train_data(1)  
-creat_main_polygons_data(1)
+# creat_train_data(1)  
+# creat_main_polygons_data(1)
 
 
 
