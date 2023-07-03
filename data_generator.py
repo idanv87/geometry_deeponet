@@ -56,23 +56,30 @@ class data_point:
             v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
             v=(1/np.sqrt(polygon_centre_area(v)))*v
             geo = dmsh.Polygon(v)
-            X, cells = dmsh.generate(geo, 0.2)
+            X, cells = dmsh.generate(geo, Constants.h)
             X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
             self.polygon=Polygon(X, cells, v)
           
             self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
             self.path=path
-            self.value={'eigen':None, 'points':None, 'u':None, 'gauss':gaussian}
+            self.value={'eigen':None, 'points':None, 'x_points':None, 'u':None, 'gauss':gaussian}
             if self.polygon.is_legit():
                 
                 self.value['v']=self.polygon.generators
                 self.value['eigen']=self.polygon.ev
                 self.u=self.polygon.solve_helmholtz(self.f)
                 interior_points=X[self.polygon.interior_indices]
+                x_interior_points=spread_points(Constants.pts_per_polygon, interior_points)
                 ind=interior_points[:, 0].argsort()
                 self.value['points']=interior_points[ind]
-                # plt.scatter(X[:,0], X[:,1], color='red')
-                # plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
+                ind_x=x_interior_points[:, 0].argsort()
+                self.value['x_points']=x_interior_points[ind_x]
+                # fig = plt.figure()
+                # ax = fig.add_subplot(projection='3d')
+  
+                # plt.scatter( X[:,0],  X[:,1], color='black')
+                #             # list(map(gaussian, X[:,0],X[:,1])),
+                            
                
                 # plt.show()
                 # print(len(ind))
@@ -97,8 +104,8 @@ def creat_main_polygons_data(num_samples):
             data_point(path)            
             
       
-# creat_train_data(2)  
-# creat_main_polygons_data(1)
+creat_train_data(3)  
+creat_main_polygons_data(1)
 
 
 

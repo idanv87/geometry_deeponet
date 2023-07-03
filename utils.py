@@ -208,8 +208,33 @@ def create_batches(n, batch_size):
      random.shuffle(x)
      return [list(x[i*batch_size:(i+1)*batch_size]) for i in range(k)]
 
-     
+import random
+from sklearn.metrics import pairwise_distances
 
+def spread_points(n, data):
+    r=data[:,0]**2+data[:,1]**2
+    starting_point_ind=np.argmin(r)
+    points_from_data=np.array([data[starting_point_ind]])
+
+
+
+    for i in range(1, n):
+        pairwise_distances_to_data = pairwise_distances (data, Y=points_from_data, metric='euclidean', n_jobs=-1)
+        pairwise_distances_to_data = np.array(pairwise_distances_to_data)
+
+        min_distances_to_data = np.amin(pairwise_distances_to_data, axis=1)
+
+        k = min_distances_to_data.argmax()
+
+        points_from_data = np.append(points_from_data, [data[k]], axis=0)
+
+    return points_from_data
+     
+# data=np.random.rand(100,2)
+# data2=spread_points(20, data)
+# plt.scatter(data[:,0], data[:,1], color='black')
+# plt.scatter(data2[:,0], data2[:,1], color='red')
+# plt.show()
   
 
           

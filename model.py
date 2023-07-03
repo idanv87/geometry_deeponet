@@ -22,10 +22,10 @@ class branc_point:
     def calculate_branch(self):
         x=[]
         y=[]
-        Constants.pts_per_polygon=np.min([len(p['points']) for p in self.main_polygons])
+   
         for p in self.main_polygons:
          #  print(len(p['points']))
-          x.append(list(map(self.f, p['points'][:Constants.pts_per_polygon,0],p['points'][:Constants.pts_per_polygon,1]))  )
+          x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
           y.append(p['eigen'])
         x=np.hstack(x).reshape((len(x), len(x[0])))
         y=np.hstack(y).reshape((len(y), len(y[0])))
@@ -160,6 +160,7 @@ for epoch in range (Constants.num_epochs) :
         # update weights
       optimizer.step()
       loss_tot.append(loss.item())
+      # print(loss)
       
    with torch.no_grad(): # validation step
       y_batch=batched_output[-1]
