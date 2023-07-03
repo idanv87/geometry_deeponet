@@ -69,19 +69,19 @@ class data_point:
                 self.value['eigen']=self.polygon.ev
                 self.u=self.polygon.solve_helmholtz(self.f)
                 interior_points=X[self.polygon.interior_indices]
-                x_interior_points=spread_points(Constants.pts_per_polygon, interior_points)
+                
                 ind=interior_points[:, 0].argsort()
                 self.value['points']=interior_points[ind]
-                ind_x=x_interior_points[:, 0].argsort()
-                self.value['x_points']=x_interior_points[ind_x]
+
                 # fig = plt.figure()
                 # ax = fig.add_subplot(projection='3d')
   
-                # plt.scatter( X[:,0],  X[:,1], color='black')
-                #             # list(map(gaussian, X[:,0],X[:,1])),
+                # plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
+                # plt.scatter( x_interior_points[:,0],  x_interior_points[:,1], color='red')
+                            # list(map(gaussian, X[:,0],X[:,1])),
                             
                
-                # plt.show()
+                plt.show()
                 # print(len(ind))
                 self.value['u']=self.u[ind]
                 self.save_data()
@@ -104,7 +104,7 @@ def creat_main_polygons_data(num_samples):
             data_point(path)            
             
       
-creat_train_data(3)  
+creat_train_data(1)  
 creat_main_polygons_data(1)
 
 

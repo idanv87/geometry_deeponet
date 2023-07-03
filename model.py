@@ -24,7 +24,13 @@ class branc_point:
         y=[]
    
         for p in self.main_polygons:
-         #  print(len(p['points']))
+          x_interior_points=spread_points(Constants.pts_per_polygon, p['points'])
+          ind_x=x_interior_points[:, 0].argsort()
+          p['x_points']=x_interior_points[ind_x]
+         #  plt.scatter(p['points'][:,0], p['points'][:,1], color='black')
+         #  plt.scatter(p['x_points'][:,0], p['x_points'][:,1], color='red')
+         #  plt.show()
+         
           x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
           y.append(p['eigen'])
         x=np.hstack(x).reshape((len(x), len(x[0])))
@@ -150,6 +156,7 @@ model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
 optimizer=optim.Adam(model.parameters(), lr=0.01)
 loss_tot=[]
 loss_val_tot=[]
+
 for epoch in range (Constants.num_epochs) :
    for i in range(len(indices_batches)-1):
       y_batch=batched_output[i]
@@ -160,7 +167,7 @@ for epoch in range (Constants.num_epochs) :
         # update weights
       optimizer.step()
       loss_tot.append(loss.item())
-      # print(loss)
+      print(loss)
       
    with torch.no_grad(): # validation step
       y_batch=batched_output[-1]

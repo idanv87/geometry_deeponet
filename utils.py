@@ -212,6 +212,7 @@ import random
 from sklearn.metrics import pairwise_distances
 
 def spread_points(n, data):
+    assert data.shape[1]==2
     r=data[:,0]**2+data[:,1]**2
     starting_point_ind=np.argmin(r)
     points_from_data=np.array([data[starting_point_ind]])
@@ -229,7 +230,8 @@ def spread_points(n, data):
         points_from_data = np.append(points_from_data, [data[k]], axis=0)
 
     return points_from_data
-     
+
+
 # data=np.random.rand(100,2)
 # data2=spread_points(20, data)
 # plt.scatter(data[:,0], data[:,1], color='black')

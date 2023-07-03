@@ -9,7 +9,7 @@ class Constants:
        path='/Users/idanversano/Documents/clones/deeponet_data/'
        batch_size=8
        num_epochs=10
-       pts_per_polygon=5
+       pts_per_polygon=10
        ev_per_polygon=5
        dim=2
        isExist = os.path.exists(path+'train')
