@@ -15,6 +15,7 @@ class Polygon:
         def __init__(self, vertices, triangles, generators):
                 self.geo=dmsh.Polygon(generators)
                 self.vertices=vertices
+                self.triangles=triangles
                 self.sc=simplicial_complex(vertices, triangles)
                 self.M=(self.sc[0].star_inv)@(-(self.sc[0].d).T)@(self.sc[1].star)@self.sc[0].d
                 self.generators=generators
@@ -45,10 +46,17 @@ class Polygon:
                         return False
                 
 
+        # def plot_polygon(self):
+        #       dmsh.show(self.vertices, self.triangles, self.geo)
+
         def plot_polygon(self):
-               plt.scatter(self.vertices[:,0], self.vertices[:,1], color='black')
-               plt.scatter(self.vertices[self.boundary_indices,0], self.vertices[self.boundary_indices,1], color='red')
-               plt.show()
+              plt.scatter(self.vertices[self.boundary_indices,0], self.vertices[self.boundary_indices,1], color='red')
+
+              dmsh.show(self.vertices, self.triangles, self.geo)
+            #   plt.scatter(self.vertices[self.interior_indices,0], self.vertices[self.interior_indices,1], color='black')
+              
+              plt.show()      
+
 
 class data_point:
 
@@ -62,7 +70,7 @@ class data_point:
           
             self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
             self.path=path
-            self.value={'eigen':None, 'points':None, 'x_points':None, 'generators':v, 'u':None, 'gauss':gaussian, 'path':self.path}
+            self.value={'eigen':None, 'points':None, 'x_points':None, 'generators':v, 'u':None, 'gauss':gaussian, 'path':self.path, 'X':X, 'cells':cells}
            
             if self.polygon.is_legit():
                 
@@ -102,7 +110,7 @@ def creat_polygons_data(num_samples):
             data_point(path) 
 
 
-# creat_polygons_data(4)       
+# creat_polygons_data(1)       
 
 
 

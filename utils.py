@@ -13,6 +13,8 @@ import sklearn
 import argparse
 import torch
 from tqdm import tqdm
+from matplotlib.patches import Polygon
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--lr-scheduler', dest='lr_scheduler', action='store_true')
@@ -366,6 +368,9 @@ def save_plots(train_loss, valid_loss):
     plt.legend()
     plt.savefig(Constants.path+'figures/loss.png')
     plt.show()
+
+# def plot_polygon(coord):
+
 
 
 

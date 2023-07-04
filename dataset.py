@@ -11,8 +11,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import torch.utils.data as data_utils
+import dmsh
 
 from utils import *
+from data_generator import Polygon
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
@@ -21,10 +23,22 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, Subset
 
 polygons_dir=Constants.path+'polygons/'
-polygons_files_names=next(os.walk(polygons_dir), (None, None, []))[2]
+polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
+polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
+polygon_pathes=[polygons_dir+p for p in polygons_files_names]
 indices=list(np.random.permutation(len(polygons_files_names)))
 control_polygons=list(map(polygons_files_names.__getitem__, indices[:Constants.num_control_polygons]))
 train_polygons=list(map(polygons_files_names.__getitem__, indices[Constants.num_control_polygons:]))
+
+
+#plot polygon:
+p=torch.load(polygon_pathes[0])  
+pol=Polygon(p['X'],p['cells'], p['generators'])
+pol.plot_polygon()
+            
+# dmsh.show(p['X'],p['cells'], dmsh.Polygon(p['generators']))
+
+
 
 class branc_point:
     
@@ -99,7 +113,7 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
     return         
-create_data_points(train_polygons,control_polygons, polygons_dir)
+# create_data_points(train_polygons,control_polygons, polygons_dir)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     filenames = torch.load(Constants.path+'data_names/data_names.pt')
@@ -132,7 +146,7 @@ class SonarDataset(Dataset):
         return self.x1[idx], self.x2[idx], self.x3[idx], self. x4[idx], self.y[idx]
     
 
-# y, ev_y, f_x, ev_x, output  =load_data()
+y, ev_y, f_x, ev_x, output  =load_data()
 my_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 
 train_size = int(0.7 * len(my_dataset))
