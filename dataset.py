@@ -20,6 +20,12 @@ from sklearn.preprocessing import LabelEncoder
 
 from torch.utils.data import Dataset, Subset
 
+polygons_dir=Constants.path+'polygons/'
+polygons_files_names=next(os.walk(polygons_dir), (None, None, []))[2]
+indices=list(np.random.permutation(len(polygons_files_names)))
+control_polygons=list(map(polygons_files_names.__getitem__, indices[:Constants.num_control_polygons]))
+train_polygons=list(map(polygons_files_names.__getitem__, indices[Constants.num_control_polygons:]))
+
 class branc_point:
     
     def __init__(self,f, main_polygons):
@@ -46,28 +52,28 @@ class branc_point:
 
         return x.transpose(), y.transpose()  
 
-def create_main_polygons(dir_path):
+def create_main_polygons(control_polygons, polygons_dir):
    x=[]
 
-   for filename in os.listdir(dir_path):
-        f = os.path.join(dir_path, filename)
+   for filename in control_polygons:
+        f = os.path.join(polygons_dir, filename)
 
-        if os.path.isfile(f) and  f.endswith('.pkl'):
+        if os.path.isfile(f):
            
-           df=extract_pickle(f)
+           df=torch.load(f)
            x.append(df)
    return x        
 
         
-def create_data_points(dir_train, dir_main_polygons):
+def create_data_points(train_polygons,control_polygons, polygons_dir):
     data_names=[]
-    main_polygons=create_main_polygons(dir_main_polygons)
+    main_polygons=create_main_polygons(control_polygons, polygons_dir)
 
-    for filename in os.listdir(dir_train):
-        f = os.path.join(dir_train, filename)
-        if os.path.isfile(f) and f.endswith('.pkl'):
+    for filename in train_polygons:
+        f = os.path.join(polygons_dir, filename)
+        if os.path.isfile(f):
            
-           df=extract_pickle(f)
+           df=torch.load(f)
            for i in range(df['points'].shape[0]):
              y=df['points'][i].reshape([Constants.dim,1])
              ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
@@ -75,13 +81,16 @@ def create_data_points(dir_train, dir_main_polygons):
              ev_x=branc_point(df['gauss'],main_polygons).b2
              output=df['u'][i]
              name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-             data_names.append(name)
-
+             
+             data_names.append(name+'.pt')
+             
              save_file(np_to_torch(y),Constants.path+'y/', name)
              save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
              save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
              save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
              save_file(np_to_torch(output),Constants.path+'output/', name)
+             save_file(data_names,Constants.path+'data_names/','data_names')
+
              
             #  input1.append(torch.tensor(df['points'][i].reshape([Constants.dim,1]),dtype=Constants.dtype  ))
             #  input2.append(torch.tensor(df['eigen'].reshape([Constants.ev_per_polygon,1]),dtype=Constants.dtype ))
@@ -89,11 +98,11 @@ def create_data_points(dir_train, dir_main_polygons):
             #  input4.append(torch.tensor(branc_point(df['gauss'],main_polygons).b2, dtype=Constants.dtype))
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
-    return          
-# create_data_points(Constants.path+'train',Constants.path+'main_polygons')
+    return         
+create_data_points(train_polygons,control_polygons, polygons_dir)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
-    filenames = next(os.walk(Constants.path+dir[1]), (None, None, []))[2] 
+    filenames = torch.load(Constants.path+'data_names/data_names.pt')
 
     y=[torch.load(Constants.path+'y/'+name) for name in filenames]
     ev_y=[torch.load(Constants.path+'ev_y/'+name) for name in filenames]
@@ -101,7 +110,9 @@ def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     ev_x=[torch.load(Constants.path+'ev_x/'+name) for name in filenames]
     output=[torch.load(Constants.path+'output/'+name) for name in filenames]
     return torch.stack(y), torch.stack(ev_y), torch.stack(f_x), torch.stack(ev_x), torch.stack(output)
-y, ev_y, f_x, ev_x, output  =load_data()
+
+
+
 
 
 class SonarDataset(Dataset):
@@ -121,7 +132,7 @@ class SonarDataset(Dataset):
         return self.x1[idx], self.x2[idx], self.x3[idx], self. x4[idx], self.y[idx]
     
 
-
+# y, ev_y, f_x, ev_x, output  =load_data()
 my_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 
 train_size = int(0.7 * len(my_dataset))

@@ -89,26 +89,49 @@ class data_point:
                 #
                 
        def save_data(self):
-              with open(self.path, 'wb') as file:
-                 pickle.dump(self.value, file)
+              torch.save(self.value, self.path)
+            #   with open(self.path, 'wb') as file:
+            #      pickle.dump(self.value, file)
         
-def creat_train_data(num_samples):
-      for i in range(num_samples):
-            uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-            path=Constants.path+'train/'+uniq_filename+'.pkl'
-            data_point(path)
-
-def creat_main_polygons_data(num_samples):
-      for i in range(num_samples):
-            uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-            path=Constants.path+'main_polygons/'+uniq_filename+'.pkl'
-            data_point(path)            
+#         
             
-      
+def creat_polygons_data(num_samples):
+      for i in range(num_samples):
+            uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+            path=Constants.path+'polygons/'+uniq_filename+'.pt'
+            data_point(path) 
+
+
+# creat_polygons_data(4)       
+
+
+
+
+
+
+
+
+
+
+
+
 # creat_train_data(1)  
 # creat_main_polygons_data(1)
 
 
+
+
+# def creat_train_data(num_samples):
+#       for i in range(num_samples):
+#             uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+#             path=Constants.path+'train/'+uniq_filename+'.pkl'
+#             data_point(path)
+
+# def creat_main_polygons_data(num_samples):
+#       for i in range(num_samples):
+#             uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+#             path=Constants.path+'main_polygons/'+uniq_filename+'.pkl'
+#             data_point(path)    
 
 
 

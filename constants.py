@@ -13,6 +13,7 @@ class Constants:
        num_epochs=10
        pts_per_polygon=10
        ev_per_polygon=5
+       num_control_polygons=1
        dim=2
        isExist = os.path.exists(path+'train')
        if not isExist:
@@ -20,6 +21,10 @@ class Constants:
        isExist = os.path.exists(path+'main_polygons')
        if not isExist:
               os.makedirs(path+'main_polygons')      
+
+       isExist = os.path.exists(path+'polygons')
+       if not isExist:
+              os.makedirs(path+'polygons')           
        isExist = os.path.exists(path+'best_model')
        if not isExist:
               os.makedirs(path+'best_model')   
