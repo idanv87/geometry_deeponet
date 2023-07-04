@@ -18,7 +18,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
 
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset
 
 class branc_point:
     
@@ -137,11 +137,20 @@ class SonarDataset(Dataset):
 
 
 my_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
+
 train_size = int(0.7 * len(my_dataset))
+test_size = len(my_dataset) - train_size
+train_dataset, test_dataset = torch.utils.data.random_split(my_dataset, [train_size, test_size])
+test_dataloader = DataLoader (test_dataset, batch_size=Constants.batch_size, shuffle=True)
+
+my_dataset = train_dataset
+train_size = int(0.8 * len(my_dataset))
 val_size = len(my_dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(my_dataset, [train_size, val_size])
-train_dataloader = DataLoader (train_dataset, batch_size=Constants.batch_size, shuffle=True)
 val_dataloader = DataLoader (val_dataset, batch_size=Constants.batch_size, shuffle=True)
+
+train_dataloader = DataLoader (train_dataset, batch_size=Constants.batch_size, shuffle=True)
+
 # print(len(my_dataset))
 # print(output.shape)
 # torch.save(my_dataset, Constants.path+'data_sets/my_dataset.pt')

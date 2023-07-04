@@ -9,7 +9,7 @@ class Constants:
        h=0.1
        path='/Users/idanversano/Documents/clones/deeponet_data/'
        
-       batch_size=8
+       batch_size=16
        num_epochs=10
        pts_per_polygon=10
        ev_per_polygon=5
@@ -23,7 +23,11 @@ class Constants:
        isExist = os.path.exists(path+'best_model')
        if not isExist:
               os.makedirs(path+'best_model')   
-    
+
+       isExist = os.path.exists(path+'figures')
+       if not isExist:
+              os.makedirs(path+'figures')  
+
        isExist = os.path.exists(path+'data_sets')
 
        if not isExist:
