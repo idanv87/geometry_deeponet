@@ -32,13 +32,18 @@ train_polygons=list(map(polygons_files_names.__getitem__, indices[Constants.num_
 
 
 #plot polygon:
-p=torch.load(polygon_pathes[0])  
-pol=Polygon(p['X'],p['cells'], p['generators'])
-pol.plot_polygon()
+# p=torch.load(polygon_pathes[0])  
+# pol=Polygon(p['X'],p['cells'], p['generators'])
+# pol.plot_polygon()
             
 # dmsh.show(p['X'],p['cells'], dmsh.Polygon(p['generators']))
-
-
+F=[gaussian, gaussian]
+def create_data_point(X,func,p):
+            
+            assert p.is_legit
+            f=np.array(list(map(func, X[:,0],X[:,1])))  
+            u=p.solve_helmholtz(func)
+            return f,u
 
 class branc_point:
     
@@ -52,14 +57,9 @@ class branc_point:
         y=[]
    
         for p in self.main_polygons:
-          x_interior_points=spread_points(Constants.pts_per_polygon, p['points'])
-          ind_x=x_interior_points[:, 0].argsort()
-          p['x_points']=x_interior_points[ind_x]
-         #  plt.scatter(p['points'][:,0], p['points'][:,1], color='black')
-         #  plt.scatter(p['x_points'][:,0], p['x_points'][:,1], color='red')
-         #  plt.show()
+          x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
          
-          x.append(list(map(self.f, p['x_points'][:,0],p['x_points'][:,1]))  )
+          x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
           y.append(p['eigen'])
         x=np.hstack(x).reshape((len(x), len(x[0])))
         y=np.hstack(y).reshape((len(y), len(y[0])))
@@ -84,26 +84,35 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
     main_polygons=create_main_polygons(control_polygons, polygons_dir)
 
     for filename in train_polygons:
-        f = os.path.join(polygons_dir, filename)
-        if os.path.isfile(f):
-           
-           df=torch.load(f)
-           for i in range(df['points'].shape[0]):
-             y=df['points'][i].reshape([Constants.dim,1])
-             ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
-             f_x=branc_point(df['gauss'], main_polygons).b1
-             ev_x=branc_point(df['gauss'],main_polygons).b2
-             output=df['u'][i]
-             name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-             
-             data_names.append(name+'.pt')
-             
-             save_file(np_to_torch(y),Constants.path+'y/', name)
-             save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
-             save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
-             save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
-             save_file(np_to_torch(output),Constants.path+'output/', name)
-             save_file(data_names,Constants.path+'data_names/','data_names')
+        fil= os.path.join(polygons_dir, filename)
+        if os.path.isfile(fil):
+           df=torch.load(fil)
+           for func in F:
+                p=Polygon(df['X'], df['cells'], df['generators'])  
+                f,u=create_data_point(df['X'],func,p)
+               
+                u=u[df['ind']]
+
+                for i in range(df['interior_points'].shape[0]):
+                        
+                    y=y0[i].reshape([Constants.dim,1])
+                    ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                    f_x=branc_point(func, main_polygons).b1
+                    ev_x=branc_point(func,main_polygons).b2
+                    output=u[i]
+                    # sort indices
+
+
+                    name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+                    
+                    data_names.append(name+'.pt')
+                    
+                    save_file(np_to_torch(y),Constants.path+'y/', name)
+                    save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
+                    save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
+                    save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
+                    save_file(np_to_torch(output),Constants.path+'output/', name)
+                    save_file(data_names,Constants.path+'data_names/','data_names')
 
              
             #  input1.append(torch.tensor(df['points'][i].reshape([Constants.dim,1]),dtype=Constants.dtype  ))

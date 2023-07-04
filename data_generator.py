@@ -67,32 +67,17 @@ class data_point:
             X, cells = dmsh.generate(geo, Constants.h)
             X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
             self.polygon=Polygon(X, cells, v)
-          
-            self.f=np.array(list(map(gaussian, X[:,0],X[:,1])))  
+         
             self.path=path
-            self.value={'eigen':None, 'points':None, 'x_points':None, 'generators':v, 'u':None, 'gauss':gaussian, 'path':self.path, 'X':X, 'cells':cells}
+            self.value={'eigen':None, 'interior_points':X, 'generators':v, 'X':X, 'cells':cells,'ind':None}
            
             if self.polygon.is_legit():
                 
-                self.value['v']=self.polygon.generators
                 self.value['eigen']=self.polygon.ev
-                self.u=self.polygon.solve_helmholtz(self.f)
                 interior_points=X[self.polygon.interior_indices]
-                
                 ind=interior_points[:, 0].argsort()
-                self.value['points']=interior_points[ind]
-
-                # fig = plt.figure()
-                # ax = fig.add_subplot(projection='3d')
-  
-                # plt.scatter( interior_points[:,0],  interior_points[:,1], color='black')
-                # plt.scatter( x_interior_points[:,0],  x_interior_points[:,1], color='red')
-                            # list(map(gaussian, X[:,0],X[:,1])),
-                            
-               
-                # plt.show()
-                # print(len(ind))
-                self.value['u']=self.u[ind]
+                self.value['ind']=ind
+                self.value['interior_points']=interior_points[ind]
                 self.save_data()
                 #
                 
@@ -110,7 +95,7 @@ def creat_polygons_data(num_samples):
             data_point(path) 
 
 
-# creat_polygons_data(1)       
+creat_polygons_data(1)       
 
 
 
