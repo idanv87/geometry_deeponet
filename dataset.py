@@ -104,20 +104,6 @@ def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
 y, ev_y, f_x, ev_x, output  =load_data()
 
 
-   
-
-
-      
-
-        
-
-# y, ev_y, f_x, ev_x, output  =create_data_points(Constants.path+'train',Constants.path+'main_polygons')
-# torch.save(y, Constants.path+'data_sets/y.pt')
-# torch.save(ev_y, Constants.path+'data_sets/ev_y.pt')
-# torch.save(f_x, Constants.path+'data_sets/f_x.pt')
-# torch.save(ev_x, Constants.path+'data_sets/ev_x.pt')
-# torch.save(output, Constants.path+'data_sets/output.pt')
-
 class SonarDataset(Dataset):
     def __init__(self, X, y):
         # convert into PyTorch tensors and remember them
