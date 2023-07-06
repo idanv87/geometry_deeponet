@@ -15,6 +15,7 @@ class Constants:
        ev_per_polygon=5
        num_control_polygons=1
        dim=2
+       num_ev=4
        isExist = os.path.exists(path+'train')
        if not isExist:
               os.makedirs(path+'train')

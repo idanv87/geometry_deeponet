@@ -32,7 +32,7 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices], k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')[:-1]
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices], k=20,return_eigenvectors=False, which='SM')[:-1]
         
         def solve_helmholtz(self,f):
                A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))

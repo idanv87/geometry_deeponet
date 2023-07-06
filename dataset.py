@@ -123,7 +123,7 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
     return         
-create_data_points(train_polygons,control_polygons, polygons_dir)
+# create_data_points(train_polygons,control_polygons, polygons_dir)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     filenames = torch.load(Constants.path+'data_names/data_names.pt')
@@ -153,7 +153,7 @@ class SonarDataset(Dataset):
         return self.y.shape[0]
  
     def __getitem__(self, idx):
-        return self.x1[idx], self.x2[idx], self.x3[idx], self. x4[idx], self.y[idx]
+        return self.x1[idx], self.x2[idx][:Constants.ev_per_polygon], self.x3[idx], self.x4[idx][:Constants.ev_per_polygon], self.y[idx]
     
 
 y, ev_y, f_x, ev_x, output  =load_data()
