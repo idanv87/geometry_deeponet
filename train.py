@@ -93,6 +93,7 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     for i, data in prog_bar:
         counter += 1
         x1,x2,x3,x4,output=data
+        print(x2.shape)
         x1,x2,x3,x4,output = x1.to(device), x2.to(device),x3.to(device),x4.to(device),output.to(device)
         total += output.size(0)
         optimizer.zero_grad()
