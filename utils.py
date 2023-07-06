@@ -172,8 +172,18 @@ def on_boundary(point, geo):
                   return True
       return False    
 
-def gaussian(x,y):
-     return math.exp(-(x**2+y**2)/Constants.h)  
+
+
+def create_mu():
+    x=np.linspace(-1,1,5)
+    y=np.linspace(-1,1,5)
+    x,y=np.meshgrid(x,y)
+    # A=np.zeros((x.shape[0], x.shape[1]),dtype=tuple)
+    mu=[]
+    for i in range(x.shape[0]):
+        for j in range(x.shape[1]):
+            mu.append((x[i,j],y[i,j]))
+    return mu
 
 def extract_pickle(file_path):
      with open(file_path, 'rb') as f:
@@ -370,7 +380,13 @@ def save_plots(train_loss, valid_loss):
     plt.show()
 
 # def plot_polygon(coord):
-
+def gaussian(x,y, mu):
+     return math.exp(-((x-mu[0])**2+(y-mu[1])**2)/Constants.h)  
+class Gaussian:
+    def __init__(self, mu):
+        self.mu=mu
+    def call(self, x,y):
+        return gaussian(x,y,self.mu)    
 
 
 

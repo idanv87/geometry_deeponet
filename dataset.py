@@ -32,17 +32,16 @@ train_polygons=list(map(polygons_files_names.__getitem__, indices[Constants.num_
 
 
 #plot polygon:
-# p=torch.load(polygon_pathes[0])  
+# p=torch.load(polygon_pathes[3])  
 # pol=Polygon(p['X'],p['cells'], p['generators'])
 # pol.plot_polygon()
             
 # dmsh.show(p['X'],p['cells'], dmsh.Polygon(p['generators']))
-F=[gaussian, gaussian]
+Mu=create_mu()[:2]
 def create_data_point(X,func,p):
-            
             assert p.is_legit
             f=np.array(list(map(func, X[:,0],X[:,1])))  
-            u=p.solve_helmholtz(func)
+            u=p.solve_helmholtz(f)
             return f,u
 
 class branc_point:
@@ -87,7 +86,9 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
         fil= os.path.join(polygons_dir, filename)
         if os.path.isfile(fil):
            df=torch.load(fil)
-           for func in F:
+           for mu in Mu:
+                func=Gaussian(mu).call
+                
                 p=Polygon(df['X'], df['cells'], df['generators'])  
                 f,u=create_data_point(df['X'],func,p)
                
@@ -95,7 +96,7 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
 
                 for i in range(df['interior_points'].shape[0]):
                         
-                    y=y0[i].reshape([Constants.dim,1])
+                    y=df['interior_points'][i].reshape([Constants.dim,1])
                     ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
                     f_x=branc_point(func, main_polygons).b1
                     ev_x=branc_point(func,main_polygons).b2
@@ -122,7 +123,7 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
     return         
-# create_data_points(train_polygons,control_polygons, polygons_dir)
+create_data_points(train_polygons,control_polygons, polygons_dir)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     filenames = torch.load(Constants.path+'data_names/data_names.pt')

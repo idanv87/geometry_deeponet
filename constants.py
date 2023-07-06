@@ -6,7 +6,7 @@ class Constants:
        var_center=0
        var_angle=0.3
        radius=3
-       h=0.05
+       h=0.1
        path='/Users/idanversano/Documents/clones/deeponet_data/'
        
        batch_size=16
