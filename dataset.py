@@ -82,7 +82,7 @@ train_dataloader = DataLoader (train_dataset, batch_size=Constants.batch_size, s
 y, ev_y, f_x, ev_x, output  =load_data('test')
 test_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 test_dataloader = DataLoader (test_dataset, batch_size=Constants.batch_size, shuffle=False)
-
+print(len(train_dataloader))
 
 
 # print(len(my_dataset))

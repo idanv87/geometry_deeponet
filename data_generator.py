@@ -32,7 +32,7 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=6,return_eigenvectors=False, which='SM')[:-1]
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=6,return_eigenvectors=False, which='SM')
         
         def solve_helmholtz(self,f):
                A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))
@@ -66,21 +66,22 @@ class data_point:
             v[:,0]-=np.mean(v[:,0])
             v[:,1]-=np.mean(v[:,1])
             geo = dmsh.Polygon(v)
-            X, cells = dmsh.generate(geo, Constants.h)
-            X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
-            self.polygon=Polygon(X, cells, v)
-         
-            self.path=path
-            self.value={'eigen':None, 'interior_points':X, 'generators':v, 'X':X, 'cells':cells,'ind':None}
-           
-            if self.polygon.is_legit():
+            if np.min(calc_min_angle(geo))>(math.pi/8):
+                X, cells = dmsh.generate(geo, Constants.h)
+                X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
+                self.polygon=Polygon(X, cells, v)
                 
-                self.value['eigen']=self.polygon.ev
-                interior_points=X[self.polygon.interior_indices]
-                ind=interior_points[:, 0].argsort()
-                self.value['ind']=ind
-                self.value['interior_points']=interior_points[ind]
-                self.save_data()
+                self.path=path
+                self.value={'eigen':None, 'interior_points':X, 'generators':v, 'X':X, 'cells':cells,'ind':None}
+                
+                if self.polygon.is_legit():
+                        
+                        self.value['eigen']=self.polygon.ev
+                        interior_points=X[self.polygon.interior_indices]
+                        ind=interior_points[:, 0].argsort()
+                        self.value['ind']=ind
+                        self.value['interior_points']=interior_points[ind]
+                        self.save_data()
                 #
                 
        def save_data(self):
@@ -116,24 +117,21 @@ if __name__=='__main__':
    for j, name in enumerate(pol_type):
         
         p=torch.load(polygons_dir+name)
+        geo=dmsh.Polygon(p['generators'])
+        print(calc_min_angle(geo))
         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
         xs, ys = zip(*coord) #create lists of x and y values
         axs[0,j].plot(xs,ys) 
         
-
-        # p=torch.load(polygons_dir+list(train_polygons)[j])
-        # coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
-        # coord.append(coord[0]) #repeat the first point to create a 'closed loop'
-        # xs, ys = zip(*coord) #create lists of x and y values
-        # axs[1,j].plot(xs,ys) 
    x=list(np.linspace(-1,1,5))
    y=list(np.linspace(-1,1,5) )    
    for X in x:
          for Y in y:
                axs[0,j].scatter(X,Y) 
+   plt.show()              
                
-   plt.show()
+  
 
 
 
@@ -239,9 +237,7 @@ if __name__=='__main__':
 
 
 
-# plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')
-# plt.scatter(points,np.array(points)     *0,color='red')
-# plt.show()
+
 
 
 
@@ -249,7 +245,8 @@ if __name__=='__main__':
 
 
 # v=np.array(generate_polygon((0.,0.), 3, 0,0,10))
-# # v=np.array([0,0])
+# v=np.array([[0,0],[1,0],[1,1],[0,1]])
+
 # v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
 # v[:,0]-=np.mean(v[:,0])
 # v[:,1]-=np.mean(v[:,1])
@@ -257,9 +254,19 @@ if __name__=='__main__':
 # geo = dmsh.Polygon(v)
 # X, cells = dmsh.generate(geo, 0.2)
 # X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
+
+
+          
+      
+# p=Polygon(X, cells, v)
+
+# print(p.s)
+# print(polygon_centre_area(v))
+# print(math.pi*2)
+# # print(p.ev)
 # dmsh.show(X, cells, geo)
 
-
+# plt.show()
 
 
 

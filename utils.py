@@ -14,6 +14,7 @@ import argparse
 import torch
 from tqdm import tqdm
 from matplotlib.patches import Polygon
+import dmsh
 
 
 parser = argparse.ArgumentParser()
@@ -392,7 +393,21 @@ class Gaussian:
     def call(self, x,y):
         return gaussian(x,y,self.mu)    
 
-
+def calc_min_angle(geo):
+    seg1=[]
+    for i in range(len(geo.__dict__['paths'])):
+                p1=geo.__dict__['paths'][i].__dict__['x0']
+                p2=geo.__dict__['paths'][i].__dict__['x1']
+                seg1.append(p1)
+                
+    
+    angle=[]
+    for i in range(len(seg1)):
+        p1=seg1[i % len(seg1)]
+        p2=seg1[(i-1) % len(seg1)]
+        p3=seg1[(i+1) % len(seg1)]  
+        angle.append(np.dot(p2-p1,p3-p1)/(np.linalg.norm(p2-p1)*np.linalg.norm(p3-p1)))
+    return np.arccos(angle)   
 # def generate_shape():
 #     V=[[0,0],[1,0],[1,1],[0,1]]
 #     for v in V:
