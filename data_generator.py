@@ -96,37 +96,41 @@ def creat_polygons_data(num_samples):
             path=Constants.path+'polygons/'+uniq_filename+'.pt'
             data_point(path) 
 
-   
+if __name__=='__main__':
+      pass
+#    creat_polygons_data(5) 
+
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
 polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
 all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_names]
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
+
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([polygons_files_names[i] for i in control_ind])
 train_polygons=set(polygons_files_names)-control_polygons
 
+# plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')
+# plt.scatter(points,np.array(points)     *0,color='red')
+# plt.show()
 
-
-
-# if __name__=='__main__':
-#    creat_polygons_data(5)  
-#    fig, axs = plt.subplots(2,len(control_polygons))
-#    for j, name in enumerate(control_polygons):
+if __name__=='__main__':
+   fig, axs = plt.subplots(2,len(control_polygons))
+   for j, name in enumerate(control_polygons):
         
-#         p=torch.load(polygons_dir+name)
-#         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
-#         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
-#         xs, ys = zip(*coord) #create lists of x and y values
-#         axs[0,j].plot(xs,ys) 
+        p=torch.load(polygons_dir+name)
+        coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+        coord.append(coord[0]) #repeat the first point to create a 'closed loop'
+        xs, ys = zip(*coord) #create lists of x and y values
+        axs[0,j].plot(xs,ys) 
         
-#         p=torch.load(polygons_dir+list(train_polygons)[j])
-#         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
-#         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
-#         xs, ys = zip(*coord) #create lists of x and y values
-#         axs[1,j].plot(xs,ys) 
+        # p=torch.load(polygons_dir+list(train_polygons)[j])
+        # coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+        # coord.append(coord[0]) #repeat the first point to create a 'closed loop'
+        # xs, ys = zip(*coord) #create lists of x and y values
+        # axs[1,j].plot(xs,ys) 
         
-#    plt.show()
+   plt.show()
 
 
 
@@ -167,23 +171,21 @@ train_polygons=set(polygons_files_names)-control_polygons
 
 
 
-v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
+# v=np.array(generate_polygon((0.,0.), 3, Constants.var_center,Constants.var_angle,Constants.num_edges ))
+# # v=np.array([0,0])
+# v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
+# v[:,0]-=np.mean(v[:,0])
+# v[:,1]-=np.mean(v[:,1])
 
-v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
-v[:,0]-=np.mean(v[:,0])
-v[:,1]-=np.mean(v[:,1])
+# geo = dmsh.Polygon(v)
+# X, cells = dmsh.generate(geo, 0.2)
+# X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
+# dmsh.show(X, cells, geo)
 
-geo = dmsh.Polygon(v)
-X, cells = dmsh.generate(geo, 0.2)
-X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
-dmsh.show(X, cells, geo)
+# p=Polygon(X, cells, v)  
+# print(p.is_legit())
 
-p=Polygon(X, cells, v)  
-print(p.is_legit())
 
-# x=np.linspace(-1,1,20)
-# plt.plot(x,[gaussian(x[i]*20,0) for i in range(len(x))])
-# plt.show()
 
               
 

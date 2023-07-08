@@ -389,7 +389,9 @@ class Gaussian:
         return gaussian(x,y,self.mu)    
 
 
-
+# def generate_shape():
+#     V=[[0,0],[1,0],[1,1],[0,1]]
+#     for v in V:
 
 
 

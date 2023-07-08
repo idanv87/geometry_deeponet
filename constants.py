@@ -2,9 +2,9 @@ import os
 import torch
 class Constants:
        num_samples=5
-       num_edges=12
+       num_edges=6
        var_center=0
-       var_angle=0.3
+       var_angle=0.4
        radius=3
        h=0.2
        path='/Users/idanversano/Documents/clones/deeponet_data/'
@@ -14,7 +14,7 @@ class Constants:
        num_epochs=10
        pts_per_polygon=10
        ev_per_polygon=3
-       num_control_polygons=3
+       num_control_polygons=2
        dim=2
        num_ev=4
        isExist = os.path.exists(path+'train')
