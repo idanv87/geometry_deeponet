@@ -97,45 +97,33 @@ def creat_polygons_data(num_samples):
             path=Constants.path+'polygons/'+uniq_filename+'.pt'
             data_point(path) 
 
-if __name__=='__main__':
-      pass
-#       creat_polygons_data(5) 
 
-polygons_dir=Constants.path+'polygons/'
-polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
-all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_names]
-points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
-control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
-control_polygons=set([polygons_files_names[i] for i in control_ind])
-test_polygons=set(random.sample(polygons_files_names,1))
-train_polygons=set(polygons_files_names)-test_polygons-control_polygons
 
-if __name__=='__main__':
-   pol_type=train_polygons
-   fig, axs = plt.subplots(2,len(pol_type))
-   for j, name in enumerate(pol_type):
+# if __name__=='__main__':
+#    pol_type=train_polygons
+#    fig, axs = plt.subplots(2,len(pol_type))
+#    for j, name in enumerate(pol_type):
         
-        p=torch.load(polygons_dir+name)
-        geo=dmsh.Polygon(p['generators'])
-        print(calc_min_angle(geo))
-        coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
-        coord.append(coord[0]) #repeat the first point to create a 'closed loop'
-        xs, ys = zip(*coord) #create lists of x and y values
-        axs[0,j].plot(xs,ys) 
+#         p=torch.load(polygons_dir+name)
+#         geo=dmsh.Polygon(p['generators'])
+#         print(calc_min_angle(geo))
+#         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+#         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
+#         xs, ys = zip(*coord) #create lists of x and y values
+#         axs[0,j].plot(xs,ys) 
         
-   x=list(np.linspace(-1,1,5))
-   y=list(np.linspace(-1,1,5) )    
-   for X in x:
-         for Y in y:
-               axs[0,j].scatter(X,Y) 
-   plt.show()              
+#    x=list(np.linspace(-1,1,5))
+#    y=list(np.linspace(-1,1,5) )    
+#    for X in x:
+#          for Y in y:
+#                axs[0,j].scatter(X,Y) 
+#    plt.show()              
                
   
 
 
 
-Mu_train=create_mu()
+
 def create_data_point(X,func,p):
             assert p.is_legit
             f=np.array(list(map(func, X[:,0],X[:,1])))  
@@ -180,6 +168,10 @@ def create_main_polygons(control_polygons, polygons_dir):
 
 
 def create_data_points(control_polygons, train_polygons, train_or_test):
+    if train_or_test=='train':
+        funcs=[Gaussian(mu).call for mu in create_mu()]
+    else:
+         funcs=[Test_function().call]    
     polygons_dir=Constants.path+'polygons/'
     data_names=[]
     main_polygons=create_main_polygons(control_polygons, polygons_dir)
@@ -189,8 +181,8 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
         if os.path.isfile(fil):
            df=torch.load(fil)
            
-           for mu in Mu_train:
-                func=Gaussian(mu).call
+           for func in funcs:
+                # func=Gaussian(mu).call
                 
                 p=Polygon(df['X'], df['cells'], df['generators'])  
                 f,u=create_data_point(df['X'],func,p)
@@ -227,10 +219,23 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
 
     
     return      
+if __name__=='__main__':
+      pass
+#       creat_polygons_data(5) 
+
+polygons_dir=Constants.path+'polygons/'
+polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
+polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
+all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_names]
+points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
+control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
+control_polygons=set([polygons_files_names[i] for i in control_ind])
+test_polygons=set(random.sample(polygons_files_names,1))
+train_polygons=set(polygons_files_names)-test_polygons-control_polygons
 if __name__=='__main__':   
   pass
 #   create_data_points(control_polygons, train_polygons, train_or_test='train')
-#   create_data_points(control_polygons, test_polygons, train_or_test='test')
+  create_data_points(control_polygons, test_polygons, train_or_test='test')
 
 
 # print(Mu)

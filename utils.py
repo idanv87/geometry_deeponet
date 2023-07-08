@@ -393,6 +393,13 @@ class Gaussian:
     def call(self, x,y):
         return gaussian(x,y,self.mu)    
 
+class Test_function:
+    def __init__(self):
+        pass
+
+    def call(self, x,y):
+        return np.cos(x)*np.sin(y)
+      
 def calc_min_angle(geo):
     seg1=[]
     for i in range(len(geo.__dict__['paths'])):
