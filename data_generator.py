@@ -109,7 +109,6 @@ control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([polygons_files_names[i] for i in control_ind])
 test_polygons=set(random.sample(polygons_files_names,1))
 train_polygons=set(polygons_files_names)-test_polygons-control_polygons
-print(train_polygons)
 
 if __name__=='__main__':
    pol_type=train_polygons

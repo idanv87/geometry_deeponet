@@ -366,17 +366,17 @@ def save_plots(train_loss, valid_loss, test_loss):
 
     plt.figure(figsize=(10, 7))
     plt.plot(
-        train_loss[3:], color='orange', linestyle='-', 
+        train_loss, color='orange', linestyle='-', 
         label='train loss'
     )
     plt.plot(
-        valid_loss[3:], color='red', linestyle='-', 
+        valid_loss, color='red', linestyle='-', 
         label='validataion loss'
     )
-    # plt.plot(
-    #     test_loss, color='blue', linestyle='-', 
-    #     label='test loss'
-    # )
+    plt.plot(
+        test_loss, color='blue', linestyle='-', 
+        label='test loss'
+    )
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
