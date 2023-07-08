@@ -111,8 +111,8 @@ control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([polygons_files_names[i] for i in control_ind])
 test_polygons=set(random.sample(polygons_files_names,2))
 train_polygons=set(polygons_files_names)-test_polygons-control_polygons
-# Mu=create_mu()[:2]
-Mu=[(0,0)]
+Mu=create_mu()
+
 # print(Mu)
 
 
@@ -131,12 +131,18 @@ if __name__=='__main__':
         xs, ys = zip(*coord) #create lists of x and y values
         axs[0,j].plot(xs,ys) 
         
+
         # p=torch.load(polygons_dir+list(train_polygons)[j])
         # coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
         # coord.append(coord[0]) #repeat the first point to create a 'closed loop'
         # xs, ys = zip(*coord) #create lists of x and y values
         # axs[1,j].plot(xs,ys) 
-        
+   x=list(np.linspace(-1,1,5))
+   y=list(np.linspace(-1,1,5) )    
+   for X in x:
+         for Y in y:
+               axs[0,j].scatter(X,Y) 
+               
    plt.show()
 
 

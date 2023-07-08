@@ -175,8 +175,8 @@ def on_boundary(point, geo):
 
 
 def create_mu():
-    x=np.linspace(-2,2,5)
-    y=np.linspace(-2,2,5)
+    x=np.linspace(-1,1,5)
+    y=np.linspace(-1,1,5)
     x,y=np.meshgrid(x,y)
     # A=np.zeros((x.shape[0], x.shape[1]),dtype=tuple)
     mu=[]
