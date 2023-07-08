@@ -358,7 +358,7 @@ class SaveBestModel:
                 }, Constants.path+'best_model/best_model.pth')
 
 
-def save_plots(train_loss, valid_loss):
+def save_plots(train_loss, valid_loss, test_loss):
     """
     Function to save the loss and accuracy plots to disk.
     """
@@ -373,6 +373,10 @@ def save_plots(train_loss, valid_loss):
         valid_loss[3:], color='red', linestyle='-', 
         label='validataion loss'
     )
+    # plt.plot(
+    #     test_loss, color='blue', linestyle='-', 
+    #     label='test loss'
+    # )
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()

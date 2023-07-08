@@ -98,32 +98,23 @@ def creat_polygons_data(num_samples):
 
 if __name__=='__main__':
       pass
-#    creat_polygons_data(5) 
+#       creat_polygons_data(5) 
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
 polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
 all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_names]
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
-
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
-
 control_polygons=set([polygons_files_names[i] for i in control_ind])
-test_polygons=set(random.sample(polygons_files_names,2))
+test_polygons=set(random.sample(polygons_files_names,1))
 train_polygons=set(polygons_files_names)-test_polygons-control_polygons
-Mu=create_mu()
-
-# print(Mu)
-
-
-
-# plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')
-# plt.scatter(points,np.array(points)     *0,color='red')
-# plt.show()
+print(train_polygons)
 
 if __name__=='__main__':
-   fig, axs = plt.subplots(2,len(control_polygons))
-   for j, name in enumerate(control_polygons):
+   pol_type=train_polygons
+   fig, axs = plt.subplots(2,len(pol_type))
+   for j, name in enumerate(pol_type):
         
         p=torch.load(polygons_dir+name)
         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
@@ -144,6 +135,116 @@ if __name__=='__main__':
                axs[0,j].scatter(X,Y) 
                
    plt.show()
+
+
+
+Mu_train=create_mu()
+def create_data_point(X,func,p):
+            assert p.is_legit
+            f=np.array(list(map(func, X[:,0],X[:,1])))  
+            u=p.solve_helmholtz(f)
+            return f,u
+
+class branc_point:
+    
+    def __init__(self,f, main_polygons):
+        self.f=f
+        self.main_polygons=main_polygons
+        self.b1, self.b2= self.calculate_branch()
+
+    def calculate_branch(self):
+        x=[]
+        y=[]
+   
+        for p in self.main_polygons:
+          x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
+         
+          x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
+          y.append(p['eigen'])
+        #   print(p['eigen'].shape)
+        x=np.hstack(x).reshape((len(x), len(x[0])))
+        # print(np.hstack(y).shape)
+        y=np.hstack(y).reshape((len(y), len(y[0])))
+
+        return x.transpose(), y.transpose()  
+
+def create_main_polygons(control_polygons, polygons_dir):
+   x=[]
+
+   for filename in control_polygons:
+        f = os.path.join(polygons_dir, filename)
+
+        if os.path.isfile(f):
+           
+           df=torch.load(f)
+        
+           x.append(df)
+   return x        
+
+
+def create_data_points(control_polygons, train_polygons, train_or_test):
+    polygons_dir=Constants.path+'polygons/'
+    data_names=[]
+    main_polygons=create_main_polygons(control_polygons, polygons_dir)
+
+    for filename in train_polygons:
+        fil= os.path.join(polygons_dir, filename)
+        if os.path.isfile(fil):
+           df=torch.load(fil)
+           
+           for mu in Mu_train:
+                func=Gaussian(mu).call
+                
+                p=Polygon(df['X'], df['cells'], df['generators'])  
+                f,u=create_data_point(df['X'],func,p)
+               
+                u=u[df['ind']]
+
+                for i in range(df['interior_points'].shape[0]):
+                        
+                    y=df['interior_points'][i].reshape([Constants.dim,1])
+                    # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                    ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
+                   
+
+                    f_x=branc_point(func, main_polygons).b1
+                    ev_x=branc_point(func,main_polygons).b2
+                    output=u[i]
+                    # sort indices
+
+
+                    name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+                    
+                    data_names.append(name+'.pt')
+                    
+                    save_file(np_to_torch(y),Constants.path+'y/', name)
+                    save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
+                    save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
+                    save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
+                    save_file(np_to_torch(output),Constants.path+'output/', name)
+                    if train_or_test=='train':
+                      save_file(data_names,Constants.path+'train_data_names/','train_data_names')
+                    else:  
+                      save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
+
+
+    
+    return      
+if __name__=='__main__':   
+  pass
+#   create_data_points(control_polygons, train_polygons, train_or_test='train')
+#   create_data_points(control_polygons, test_polygons, train_or_test='test')
+
+
+# print(Mu)
+
+
+
+# plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')
+# plt.scatter(points,np.array(points)     *0,color='red')
+# plt.show()
+
+
 
 
 

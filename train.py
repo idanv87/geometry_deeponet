@@ -3,6 +3,9 @@
 import os
 import pickle
 from random import sample
+from tqdm import tqdm
+import argparse
+import time
 
 import matplotlib.pyplot as plt
 import torch
@@ -10,33 +13,15 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
+import matplotlib.pyplot as plt
+
 
 from utils import *
 from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
-from tqdm import tqdm
-import argparse
-import time
 from model import model
 
-
-import os
-import pickle
-from random import sample
-
-import matplotlib.pyplot as plt
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
-
-from utils import *
-from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
-# from dataset import train_polygons, control_polygons
               
-from tqdm import tqdm
-import argparse
-import time
+
 
 experment_dir=Constants.output_path
 experment_name=str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
@@ -120,13 +105,13 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     train_loss = train_running_loss / counter
     return train_loss
 
-def validate(model, test_dataloader, val_dataset, criterion):
-    print('Validating')
+def validate(model, dataloader, dataset, criterion):
+    # print('Validating')
     model.eval()
     val_running_loss = 0.0
     counter = 0
     total = 0
-    prog_bar = tqdm(enumerate(test_dataloader), total=int(len(val_dataset)/test_dataloader.batch_size))
+    prog_bar = tqdm(enumerate(dataloader), total=int(len(dataset)/dataloader.batch_size))
     with torch.no_grad():
         for i, data in prog_bar:
             counter += 1
@@ -150,6 +135,8 @@ def validate(model, test_dataloader, val_dataset, criterion):
 # lists to store per-epoch loss and accuracy values
 train_loss, train_accuracy = [], []
 val_loss, val_accuracy = [], []
+test_loss, test_accuracy = [], []
+
 start = time.time()
 
 for epoch in range(epochs):
@@ -160,9 +147,16 @@ for epoch in range(epochs):
     val_epoch_loss = validate(
         model, val_dataloader, val_dataset, criterion
     )
+
+    test_epoch_loss = validate(
+        model, test_dataloader, test_dataset, criterion
+    )
+
     train_loss.append(train_epoch_loss)
    
     val_loss.append(val_epoch_loss)
+
+    test_loss.append(test_epoch_loss)
 
     save_best_model(
         val_epoch_loss, epoch, model, optimizer, criterion
@@ -179,7 +173,7 @@ for epoch in range(epochs):
 end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
-save_plots(train_loss, val_loss)
+save_plots(train_loss, val_loss, test_loss)
 
 print('TRAINING COMPLETE')
 

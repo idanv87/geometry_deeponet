@@ -21,7 +21,6 @@ from sklearn.preprocessing import LabelEncoder
 
 
 from torch.utils.data import Dataset, Subset
-from data_generator import control_polygons, train_polygons, Mu
 
 
 #plot polygon:
@@ -32,106 +31,14 @@ from data_generator import control_polygons, train_polygons, Mu
 # pol.plot_polygon()
             
 # dmsh.show(p['X'],p['cells'], dmsh.Polygon(p['generators']))
-Mu=Mu.copy()
-def create_data_point(X,func,p):
-            assert p.is_legit
-            f=np.array(list(map(func, X[:,0],X[:,1])))  
-            u=p.solve_helmholtz(f)
-            return f,u
-
-class branc_point:
-    
-    def __init__(self,f, main_polygons):
-        self.f=f
-        self.main_polygons=main_polygons
-        self.b1, self.b2= self.calculate_branch()
-
-    def calculate_branch(self):
-        x=[]
-        y=[]
-   
-        for p in self.main_polygons:
-          x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
-         
-          x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
-          y.append(p['eigen'])
-        #   print(p['eigen'].shape)
-        x=np.hstack(x).reshape((len(x), len(x[0])))
-        # print(np.hstack(y).shape)
-        y=np.hstack(y).reshape((len(y), len(y[0])))
-
-        return x.transpose(), y.transpose()  
-
-def create_main_polygons(control_polygons, polygons_dir):
-   x=[]
-
-   for filename in control_polygons:
-        f = os.path.join(polygons_dir, filename)
-
-        if os.path.isfile(f):
-           
-           df=torch.load(f)
-        
-           x.append(df)
-   return x        
 
 
-def create_data_points(control_polygons, train_polygons):
-    polygons_dir=Constants.path+'polygons/'
-    data_names=[]
-    main_polygons=create_main_polygons(control_polygons, polygons_dir)
-
-    for filename in train_polygons:
-        fil= os.path.join(polygons_dir, filename)
-        if os.path.isfile(fil):
-           df=torch.load(fil)
-           
-           for mu in Mu:
-                func=Gaussian(mu).call
-                
-                p=Polygon(df['X'], df['cells'], df['generators'])  
-                f,u=create_data_point(df['X'],func,p)
-               
-                u=u[df['ind']]
-
-                for i in range(df['interior_points'].shape[0]):
-                        
-                    y=df['interior_points'][i].reshape([Constants.dim,1])
-                    # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
-                    ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
-                   
-
-                    f_x=branc_point(func, main_polygons).b1
-                    ev_x=branc_point(func,main_polygons).b2
-                    output=u[i]
-                    # sort indices
-
-
-                    name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-                    
-                    data_names.append(name+'.pt')
-                    
-                    save_file(np_to_torch(y),Constants.path+'y/', name)
-                    save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
-                    save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
-                    save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
-                    save_file(np_to_torch(output),Constants.path+'output/', name)
-                    save_file(data_names,Constants.path+'data_names/','data_names')
-
-             
-            #  input1.append(torch.tensor(df['points'][i].reshape([Constants.dim,1]),dtype=Constants.dtype  ))
-            #  input2.append(torch.tensor(df['eigen'].reshape([Constants.ev_per_polygon,1]),dtype=Constants.dtype ))
-            #  input3.append(torch.tensor(branc_point(df['gauss'], main_polygons).b1, dtype=Constants.dtype))
-            #  input4.append(torch.tensor(branc_point(df['gauss'],main_polygons).b2, dtype=Constants.dtype))
-            #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
-    
-    return      
-if __name__=='__main__':   
-  pass
-  create_data_points(control_polygons, train_polygons)
-
-def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
-    filenames = torch.load(Constants.path+'data_names/data_names.pt')
+def load_data(train_or_test):
+    dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']
+    if train_or_test=='train':
+      filenames = torch.load(Constants.path+'train_data_names/train_data_names.pt')
+    else:  
+        filenames = torch.load(Constants.path+'test_data_names/test_data_names.pt')
 
     y=[torch.load(Constants.path+'y/'+name) for name in filenames]
     ev_y=[torch.load(Constants.path+'ev_y/'+name) for name in filenames]
@@ -162,21 +69,21 @@ class SonarDataset(Dataset):
         return self.x1[idx], self.x2[idx][-Constants.ev_per_polygon:], self.x3[idx], self.x4[idx][-Constants.ev_per_polygon:], self.y[idx]
     
 
-y, ev_y, f_x, ev_x, output  =load_data()
+y, ev_y, f_x, ev_x, output  =load_data('train')
 my_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 
-train_size = int(0.7 * len(my_dataset))
-test_size = len(my_dataset) - train_size
-train_dataset, test_dataset = torch.utils.data.random_split(my_dataset, [train_size, test_size])
-test_dataloader = DataLoader (test_dataset, batch_size=Constants.batch_size, shuffle=True)
-
-my_dataset = train_dataset
 train_size = int(0.8 * len(my_dataset))
 val_size = len(my_dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(my_dataset, [train_size, val_size])
 val_dataloader = DataLoader (val_dataset, batch_size=Constants.batch_size, shuffle=True)
-
 train_dataloader = DataLoader (train_dataset, batch_size=Constants.batch_size, shuffle=True)
+
+
+y, ev_y, f_x, ev_x, output  =load_data('test')
+test_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
+test_dataloader = DataLoader (test_dataset, batch_size=Constants.batch_size, shuffle=False)
+
+
 
 # print(len(my_dataset))
 # print(output.shape)
