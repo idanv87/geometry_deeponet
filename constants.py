@@ -6,7 +6,7 @@ class Constants:
        output_path='/Users/idanversano/Documents/clones/deeponet_output/'
 
        num_samples=5
-       num_edges=6
+       num_edges=9
        var_center=0
        var_angle=0.4
        radius=3
