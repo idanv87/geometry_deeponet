@@ -107,8 +107,12 @@ all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
 
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
+
 control_polygons=set([polygons_files_names[i] for i in control_ind])
-train_polygons=set(polygons_files_names)-control_polygons
+test_polygons=set(random.sample(polygons_files_names,5))
+train_polygons=set(polygons_files_names)-test_polygons
+# print(polygons_files_names)
+
 
 # plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')
 # plt.scatter(points,np.array(points)     *0,color='red')
@@ -135,7 +139,16 @@ if __name__=='__main__':
 
 
 
+# v=np.array(generate_polygon((0.,0.), 3, 0,0,10))
+# # v=np.array([0,0])
+# v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
+# v[:,0]-=np.mean(v[:,0])
+# v[:,1]-=np.mean(v[:,1])
 
+# geo = dmsh.Polygon(v)
+# X, cells = dmsh.generate(geo, 0.2)
+# X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
+# dmsh.show(X, cells, geo)
 
 
 
@@ -171,16 +184,7 @@ if __name__=='__main__':
 
 
 
-# v=np.array(generate_polygon((0.,0.), 3, Constants.var_center,Constants.var_angle,Constants.num_edges ))
-# # v=np.array([0,0])
-# v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
-# v[:,0]-=np.mean(v[:,0])
-# v[:,1]-=np.mean(v[:,1])
 
-# geo = dmsh.Polygon(v)
-# X, cells = dmsh.generate(geo, 0.2)
-# X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
-# dmsh.show(X, cells, geo)
 
 # p=Polygon(X, cells, v)  
 # print(p.is_legit())
