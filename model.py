@@ -56,8 +56,8 @@ class deeponet(nn.Module):
     def forward(self,x,lx,y,ly):
       #  s1=self.trunk1(y)
       #  s2=self.trunk2(ly)
-       s1=torch.cat(( self.trunk1(y),self.trunk2(ly/100)), dim=-1)
-       s2=torch.cat(( self.branch1(x),self.branch2(lx/100)), dim=-1)
+       s1=torch.cat(( self.trunk1(y),self.trunk2(ly/10)), dim=-1)
+       s2=torch.cat(( self.branch1(x),self.branch2(lx/10)), dim=-1)
      
        return torch.sum(s1*s2, dim=-1)
 

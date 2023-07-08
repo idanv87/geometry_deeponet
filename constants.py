@@ -11,7 +11,7 @@ class Constants:
        output_path='/Users/idanversano/Documents/clones/deeponet_output/'
        
        batch_size=16
-       num_epochs=10
+       num_epochs=30
        pts_per_polygon=10
        ev_per_polygon=3
        num_control_polygons=4

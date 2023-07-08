@@ -21,7 +21,7 @@ from sklearn.preprocessing import LabelEncoder
 
 
 from torch.utils.data import Dataset, Subset
-from data_generator import control_polygons, train_polygons
+from data_generator import control_polygons, train_polygons, Mu
 
 
 #plot polygon:
@@ -32,7 +32,7 @@ from data_generator import control_polygons, train_polygons
 # pol.plot_polygon()
             
 # dmsh.show(p['X'],p['cells'], dmsh.Polygon(p['generators']))
-Mu=create_mu()[:2]
+Mu=Mu.copy()
 def create_data_point(X,func,p):
             assert p.is_legit
             f=np.array(list(map(func, X[:,0],X[:,1])))  
@@ -85,6 +85,7 @@ def create_data_points(control_polygons, train_polygons):
         fil= os.path.join(polygons_dir, filename)
         if os.path.isfile(fil):
            df=torch.load(fil)
+           
            for mu in Mu:
                 func=Gaussian(mu).call
                 
@@ -124,8 +125,10 @@ def create_data_points(control_polygons, train_polygons):
             #  input4.append(torch.tensor(branc_point(df['gauss'],main_polygons).b2, dtype=Constants.dtype))
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
-    return         
-create_data_points(control_polygons, train_polygons)
+    return      
+if __name__=='__main__':   
+  pass
+  create_data_points(control_polygons, train_polygons)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     filenames = torch.load(Constants.path+'data_names/data_names.pt')

@@ -109,9 +109,12 @@ points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eig
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 
 control_polygons=set([polygons_files_names[i] for i in control_ind])
-test_polygons=set(random.sample(polygons_files_names,5))
-train_polygons=set(polygons_files_names)-test_polygons
-# print(polygons_files_names)
+test_polygons=set(random.sample(polygons_files_names,2))
+train_polygons=set(polygons_files_names)-test_polygons-control_polygons
+# Mu=create_mu()[:2]
+Mu=[(0,0)]
+# print(Mu)
+
 
 
 # plt.scatter(all_eigs, np.array(all_eigs)*0, color='black')

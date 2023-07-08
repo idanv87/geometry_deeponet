@@ -381,7 +381,7 @@ def save_plots(train_loss, valid_loss):
 
 # def plot_polygon(coord):
 def gaussian(x,y, mu):
-     return math.exp(-((x-mu[0])**2+(y-mu[1])**2)/Constants.h)  
+     return math.exp(-((x-mu[0])**2+(y-mu[1])**2)/np.sqrt(Constants.h))  
 class Gaussian:
     def __init__(self, mu):
         self.mu=mu
