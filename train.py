@@ -32,10 +32,16 @@ import numpy as np
 
 from utils import *
 from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
+# from dataset import train_polygons, control_polygons
+              
 from tqdm import tqdm
 import argparse
 import time
 
+experment_dir=Constants.output_path
+experment_name=str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+experment_path=experment_dir+experment_name
+# print(experment_path)
 
 lr=0.01
 epochs = Constants.num_epochs
@@ -172,6 +178,7 @@ end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
 save_plots(train_loss, val_loss)
+
 print('TRAINING COMPLETE')
 
 

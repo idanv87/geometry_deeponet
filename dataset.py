@@ -21,17 +21,12 @@ from sklearn.preprocessing import LabelEncoder
 
 
 from torch.utils.data import Dataset, Subset
-
-polygons_dir=Constants.path+'polygons/'
-polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
-polygon_pathes=[polygons_dir+p for p in polygons_files_names]
-indices=list(np.random.permutation(len(polygons_files_names)))
-control_polygons=list(map(polygons_files_names.__getitem__, indices[:Constants.num_control_polygons]))
-train_polygons=list(map(polygons_files_names.__getitem__, indices[Constants.num_control_polygons:]))
+from data_generator import control_polygons, train_polygons
 
 
 #plot polygon:
+# polygons_dir=Constants.path+'polygons/'
+# polygon_pathes=[polygons_dir+p for p in polygons_files_names]
 # p=torch.load(polygon_pathes[3])  
 # pol=Polygon(p['X'],p['cells'], p['generators'])
 # pol.plot_polygon()
@@ -60,7 +55,9 @@ class branc_point:
          
           x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
           y.append(p['eigen'])
+        #   print(p['eigen'].shape)
         x=np.hstack(x).reshape((len(x), len(x[0])))
+        # print(np.hstack(y).shape)
         y=np.hstack(y).reshape((len(y), len(y[0])))
 
         return x.transpose(), y.transpose()  
@@ -74,11 +71,13 @@ def create_main_polygons(control_polygons, polygons_dir):
         if os.path.isfile(f):
            
            df=torch.load(f)
+        
            x.append(df)
    return x        
 
-        
-def create_data_points(train_polygons,control_polygons, polygons_dir):
+
+def create_data_points(control_polygons, train_polygons):
+    polygons_dir=Constants.path+'polygons/'
     data_names=[]
     main_polygons=create_main_polygons(control_polygons, polygons_dir)
 
@@ -97,7 +96,10 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
                 for i in range(df['interior_points'].shape[0]):
                         
                     y=df['interior_points'][i].reshape([Constants.dim,1])
-                    ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                    # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                    ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
+                   
+
                     f_x=branc_point(func, main_polygons).b1
                     ev_x=branc_point(func,main_polygons).b2
                     output=u[i]
@@ -123,7 +125,7 @@ def create_data_points(train_polygons,control_polygons, polygons_dir):
             #  out.append(torch.tensor(df['u'][i], dtype=Constants.dtype))
     
     return         
-# create_data_points(train_polygons,control_polygons, polygons_dir)
+create_data_points(control_polygons, train_polygons)
 
 def load_data(dir=['y/', 'ev_y/', 'f_x/', 'ev_x/', 'output/']):
     filenames = torch.load(Constants.path+'data_names/data_names.pt')
@@ -147,13 +149,14 @@ class SonarDataset(Dataset):
         self.x3 = X[2]
         self.x4 = X[3]
         self.y = y
+        
  
     def __len__(self):
         # this should return the size of the dataset
         return self.y.shape[0]
  
     def __getitem__(self, idx):
-        return self.x1[idx], self.x2[idx][:Constants.ev_per_polygon], self.x3[idx], self.x4[idx][:Constants.ev_per_polygon], self.y[idx]
+        return self.x1[idx], self.x2[idx][-Constants.ev_per_polygon:], self.x3[idx], self.x4[idx][-Constants.ev_per_polygon:], self.y[idx]
     
 
 y, ev_y, f_x, ev_x, output  =load_data()
