@@ -73,6 +73,7 @@ class data_point:
             geo = dmsh.Polygon(v)
             if np.min(calc_min_angle(geo))>(math.pi/8):
                 X, cells = dmsh.generate(geo, Constants.h)
+                
                 X, cells = optimesh.optimize_points_cells(X, cells, "CVT (full)", 1.0e-10, 80)
                 self.polygon=Polygon(X, cells, v)
                 
@@ -161,7 +162,7 @@ def create_main_polygons(control_polygons, polygons_dir):
 
 def create_data_points(control_polygons, train_polygons, train_or_test):
     if train_or_test=='train':
-        funcs=[Gaussian(mu).call for mu in create_mu()[:2]]
+        funcs=[Gaussian(mu).call for mu in create_mu()]
         polygons_dir=Constants.path+'polygons/'
     else:
          funcs=[Test_function().call]    
@@ -186,6 +187,7 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
                 f_x=branc_point(func, main_polygons).b1
                 ev_x=branc_point(func,main_polygons).b2
                 for i in range(df['interior_points'].shape[0]):
+                    
                    
                         
                     y=df['interior_points'][i].reshape([Constants.dim,1])

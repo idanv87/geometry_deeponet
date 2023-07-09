@@ -13,10 +13,10 @@ class Constants:
        h=0.2
 
        
-       num_control_polygons=2
-       batch_size=16
+       num_control_polygons=3
+       batch_size=32
        num_epochs=30
-       pts_per_polygon=10
+       pts_per_polygon=25
        ev_per_polygon=3
        
        dim=2
