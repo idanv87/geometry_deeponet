@@ -10,7 +10,7 @@ class Constants:
        var_center=0
        var_angle=0.4
        radius=3
-       h=0.2
+       h=0.1
 
        
        batch_size=16
@@ -27,7 +27,12 @@ class Constants:
 
        isExist = os.path.exists(path+'polygons')
        if not isExist:
-              os.makedirs(path+'polygons')           
+              os.makedirs(path+'polygons')     
+
+       isExist = os.path.exists(path+'special_polygons')
+       if not isExist:
+              os.makedirs(path+'special_polygons')              
+
        isExist = os.path.exists(path+'best_model')
        if not isExist:
               os.makedirs(path+'best_model')   

@@ -60,8 +60,13 @@ class Polygon:
 
 class data_point:
 
-       def __init__(self, path):
-            v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
+       def __init__(self, path, special=None):
+            if special is not None:
+                  v=special  
+            else:
+                  v=np.array(generate_polygon((0.,0.), Constants.radius, Constants.var_center,Constants.var_angle,Constants.num_edges ))
+
+                  
             v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
             v[:,0]-=np.mean(v[:,0])
             v[:,1]-=np.mean(v[:,1])
@@ -97,27 +102,14 @@ def creat_polygons_data(num_samples):
             path=Constants.path+'polygons/'+uniq_filename+'.pt'
             data_point(path) 
 
+def create_special_polygons():
+     path=Constants.path+'special_polygons/rect.pt'
+     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+     path=Constants.path+'special_polygons/special1.pt'
+     data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
+) 
 
-
-# if __name__=='__main__':
-#    pol_type=train_polygons
-#    fig, axs = plt.subplots(2,len(pol_type))
-#    for j, name in enumerate(pol_type):
-        
-#         p=torch.load(polygons_dir+name)
-#         geo=dmsh.Polygon(p['generators'])
-#         print(calc_min_angle(geo))
-#         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
-#         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
-#         xs, ys = zip(*coord) #create lists of x and y values
-#         axs[0,j].plot(xs,ys) 
-        
-#    x=list(np.linspace(-1,1,5))
-#    y=list(np.linspace(-1,1,5) )    
-#    for X in x:
-#          for Y in y:
-#                axs[0,j].scatter(X,Y) 
-#    plt.show()              
+          
                
   
 
@@ -221,7 +213,8 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
     return      
 if __name__=='__main__':
       pass
-#       creat_polygons_data(5) 
+      create_special_polygons()
+      creat_polygons_data(10) 
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
@@ -230,11 +223,16 @@ all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([polygons_files_names[i] for i in control_ind])
-test_polygons=set(random.sample(polygons_files_names,1))
-train_polygons=set(polygons_files_names)-test_polygons-control_polygons
+train_polygons=set(polygons_files_names)
+
+polygons_dir=Constants.path+'special_polygons/'
+polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
+polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
+test_polygons=set(polygons_files_names)
+
 if __name__=='__main__':   
   pass
-#   create_data_points(control_polygons, train_polygons, train_or_test='train')
+  create_data_points(control_polygons, train_polygons, train_or_test='train')
   create_data_points(control_polygons, test_polygons, train_or_test='test')
 
 
@@ -322,3 +320,25 @@ if __name__=='__main__':
 # p.plot_polygon()
 # print(p.interior_indices)
 # print(p.boundary_indices)
+
+# if __name__=='__main__':
+#    pol_type=test_polygons
+#    polygons_dir=Constants.path+'special_polygons/'
+#    fig, axs = plt.subplots(2,len(pol_type))
+#    for j, name in enumerate(pol_type):
+#         print(name)
+        
+#         p=torch.load(polygons_dir+name)
+#         geo=dmsh.Polygon(p['generators'])
+#         print(calc_min_angle(geo))
+#         coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+#         coord.append(coord[0]) #repeat the first point to create a 'closed loop'
+#         xs, ys = zip(*coord) #create lists of x and y values
+#         axs[j,0].plot(xs,ys) 
+        
+# #    x=list(np.linspace(-1,1,5))
+# #    y=list(np.linspace(-1,1,5) )    
+# #    for X in x:
+# #          for Y in y:
+# #                axs[j].scatter(X,Y) 
+#    plt.show()    
