@@ -342,6 +342,8 @@ class SaveBestModel:
         self, best_valid_loss=float('inf')
     ):
         self.best_valid_loss = best_valid_loss
+        self.uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')+'.pth'
+
         
     def __call__(
         self, current_valid_loss, 
@@ -351,12 +353,13 @@ class SaveBestModel:
             self.best_valid_loss = current_valid_loss
             print(f"\nBest validation loss: {self.best_valid_loss}")
             print(f"\nSaving best model for epoch: {epoch+1}\n")
+
             torch.save({
                 'epoch': epoch+1,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': criterion,
-                }, Constants.path+'best_model/best_model.pth')
+                }, Constants.path+'best_model/'+self.uniq_filename)
 
 
 def save_plots(train_loss, valid_loss, test_loss):
