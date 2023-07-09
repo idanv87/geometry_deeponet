@@ -220,27 +220,33 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
     
     return      
 if __name__=='__main__':
-      pass
-#       create_special_polygons()
-#       creat_polygons_data(5) 
+ 
+        create_special_polygons()
+        creat_polygons_data(10) 
+        polygons_dir=Constants.path+'polygons/'
+        polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
+        polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
+        special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
 
-polygons_dir=Constants.path+'polygons/'
-polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
-special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
+        all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
+        points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
+        control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
+        control_polygons=set([polygons_files_names[i] for i in control_ind])
+        test_polygons=set(special_polygons)
+        train_polygons=set(polygons_files_names)-test_polygons
 
-all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
-points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
-control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
-control_polygons=set([polygons_files_names[i] for i in control_ind])
-train_polygons=set(polygons_files_names)
-test_polygons=set(special_polygons)
+
+        create_data_points(control_polygons, train_polygons, train_or_test='train')
+        create_data_points(control_polygons, test_polygons, train_or_test='test')
+        print('finished creating data')
+
+
 
 def plot_eigs():
    ev=[[],[],[]]
-   lab=[ 'all_polygons','control', 'test']
+   lab=[ 'all_polygons','control polygons', 'test']
    color=['red', 'black', 'blue']
-   for i,type in enumerate([train_polygons, control_polygons, special_polygons]):
+   for i,type in enumerate([train_polygons+test_polygons, control_polygons, test_polygons]):
      for name in type:
         p=torch.load(name)
         ev[i].append(p['eigen'][-1])
@@ -250,12 +256,10 @@ def plot_eigs():
        plt.scatter(ev[i], np.array(ev[i])*0+i, label=lab[i])
    plt.legend()    
    plt.show()
-# plot_eigs()
+   plt.title('principal eigenvalue distribution')
+plot_eigs()
 
-if __name__=='__main__':   
-  pass
-  create_data_points(control_polygons, train_polygons, train_or_test='train')
-  create_data_points(control_polygons, test_polygons, train_or_test='test')
+
 
 
 # print(Mu)

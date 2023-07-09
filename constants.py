@@ -17,7 +17,7 @@ class Constants:
        batch_size=32
        num_epochs=30
        pts_per_polygon=25
-       ev_per_polygon=3
+       ev_per_polygon=5
        
        dim=2
        num_ev=4
