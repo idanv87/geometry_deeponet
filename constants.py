@@ -29,9 +29,9 @@ class Constants:
        isExist = os.path.exists(path+'polygons')
        if not isExist:
               os.makedirs(path+'polygons')     
-       isExist = os.path.exists(path+'special_polygons')
-       if not isExist:
-              os.makedirs(path+'special_polygons')   
+    #    isExist = os.path.exists(path+'special_polygons')
+    #    if not isExist:
+    #           os.makedirs(path+'special_polygons')   
 
            
 

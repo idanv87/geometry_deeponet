@@ -13,7 +13,8 @@ import sklearn
 import argparse
 import torch
 from tqdm import tqdm
-from matplotlib.patches import Polygon
+# from matplotlib.patches import Polygon
+
 import dmsh
 
 
@@ -385,7 +386,12 @@ def save_plots(train_loss, valid_loss, test_loss):
     plt.ylabel('Loss')
     plt.legend()
     plt.savefig(Constants.path+'figures/loss.png')
+
     plt.show()
+
+
+
+
 
 # def plot_polygon(coord):
 def gaussian(x,y, mu):

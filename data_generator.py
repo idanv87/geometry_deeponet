@@ -103,13 +103,18 @@ def creat_polygons_data(num_samples):
             path=Constants.path+'polygons/'+uniq_filename+'.pt'
             data_point(path) 
 
+# def create_special_polygons():
+#      path=Constants.path+'special_polygons/rect.pt'
+#      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+#      path=Constants.path+'special_polygons/special1.pt'
+#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
+# ) 
 def create_special_polygons():
-     path=Constants.path+'special_polygons/rect.pt'
+     path=Constants.path+'polygons/rect.pt'
      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
-     path=Constants.path+'special_polygons/special1.pt'
+     path=Constants.path+'polygons/special1.pt'
      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
 ) 
-
           
                
   
@@ -146,11 +151,11 @@ class branc_point:
 
         return x.transpose(), y.transpose()  
 
-def create_main_polygons(control_polygons, polygons_dir):
+def create_main_polygons(control_polygons):
    x=[]
 
-   for filename in control_polygons:
-        f = os.path.join(polygons_dir, filename)
+   for f in control_polygons:
+       
 
         if os.path.isfile(f):
            
@@ -163,18 +168,18 @@ def create_main_polygons(control_polygons, polygons_dir):
 def create_data_points(control_polygons, train_polygons, train_or_test):
     if train_or_test=='train':
         funcs=[Gaussian(mu).call for mu in create_mu()]
-        polygons_dir=Constants.path+'polygons/'
+        # polygons_dir=Constants.path+'polygons/'
     else:
          funcs=[Test_function().call]    
-         polygons_dir=Constants.path+'special_polygons/'
+        #  polygons_dir=Constants.path+'special_polygons/'
     
     data_names=[]
-    main_polygons=create_main_polygons(control_polygons, Constants.path+'polygons/')
+    main_polygons=create_main_polygons(control_polygons)
 
-    for filename in train_polygons:
-        fil= os.path.join(polygons_dir, filename)
-        if os.path.isfile(fil):
-           df=torch.load(fil)
+    for file in train_polygons:
+        
+        if os.path.isfile(file):
+           df=torch.load(file)
            
            for func in funcs:
                 # func=Gaussian(mu).call
@@ -216,22 +221,36 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
     return      
 if __name__=='__main__':
       pass
-      create_special_polygons()
-      creat_polygons_data(5) 
+#       create_special_polygons()
+#       creat_polygons_data(5) 
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
-all_eigs=[torch.load(polygons_dir+name)['eigen'][-1] for name in polygons_files_names]
+polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
+special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
+
+all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([polygons_files_names[i] for i in control_ind])
 train_polygons=set(polygons_files_names)
+test_polygons=set(special_polygons)
 
-polygons_dir=Constants.path+'special_polygons/'
-polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[n for n in polygons_raw_names if n.endswith('.pt')]
-test_polygons=set(polygons_files_names)
+def plot_eigs():
+   ev=[[],[],[]]
+   lab=[ 'all_polygons','control', 'test']
+   color=['red', 'black', 'blue']
+   for i,type in enumerate([train_polygons, control_polygons, special_polygons]):
+     for name in type:
+        p=torch.load(name)
+        ev[i].append(p['eigen'][-1])
+
+   plt.figure(figsize=(10, 7))  
+   for i in range(3):
+       plt.scatter(ev[i], np.array(ev[i])*0+i, label=lab[i])
+   plt.legend()    
+   plt.show()
+# plot_eigs()
 
 if __name__=='__main__':   
   pass
@@ -285,18 +304,6 @@ if __name__=='__main__':
 
 
 
-
-# def creat_train_data(num_samples):
-#       for i in range(num_samples):
-#             uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-#             path=Constants.path+'train/'+uniq_filename+'.pkl'
-#             data_point(path)
-
-# def creat_main_polygons_data(num_samples):
-#       for i in range(num_samples):
-#             uniq_filename = str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-#             path=Constants.path+'main_polygons/'+uniq_filename+'.pkl'
-#             data_point(path)    
 
 
 
