@@ -161,12 +161,14 @@ def create_main_polygons(control_polygons, polygons_dir):
 
 def create_data_points(control_polygons, train_polygons, train_or_test):
     if train_or_test=='train':
-        funcs=[Gaussian(mu).call for mu in create_mu()]
+        funcs=[Gaussian(mu).call for mu in create_mu()[:2]]
+        polygons_dir=Constants.path+'polygons/'
     else:
          funcs=[Test_function().call]    
-    polygons_dir=Constants.path+'polygons/'
+         polygons_dir=Constants.path+'special_polygons/'
+    
     data_names=[]
-    main_polygons=create_main_polygons(control_polygons, polygons_dir)
+    main_polygons=create_main_polygons(control_polygons, Constants.path+'polygons/')
 
     for filename in train_polygons:
         fil= os.path.join(polygons_dir, filename)
@@ -181,15 +183,14 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
                
                 u=u[df['ind']]
 
+                f_x=branc_point(func, main_polygons).b1
+                ev_x=branc_point(func,main_polygons).b2
                 for i in range(df['interior_points'].shape[0]):
+                   
                         
                     y=df['interior_points'][i].reshape([Constants.dim,1])
                     # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
                     ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
-                   
-
-                    f_x=branc_point(func, main_polygons).b1
-                    ev_x=branc_point(func,main_polygons).b2
                     output=u[i]
                     # sort indices
 
@@ -203,10 +204,10 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
                     save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
                     save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
                     save_file(np_to_torch(output),Constants.path+'output/', name)
-                    if train_or_test=='train':
-                      save_file(data_names,Constants.path+'train_data_names/','train_data_names')
-                    else:  
-                      save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
+        if train_or_test=='train':
+          save_file(data_names,Constants.path+'train_data_names/','train_data_names')
+        else:  
+          save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
 
 
     
@@ -214,7 +215,7 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
 if __name__=='__main__':
       pass
       create_special_polygons()
-      creat_polygons_data(10) 
+      creat_polygons_data(5) 
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]

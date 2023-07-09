@@ -39,6 +39,7 @@ def load_data(train_or_test):
       filenames = torch.load(Constants.path+'train_data_names/train_data_names.pt')
     else:  
         filenames = torch.load(Constants.path+'test_data_names/test_data_names.pt')
+       
 
     y=[torch.load(Constants.path+'y/'+name) for name in filenames]
     ev_y=[torch.load(Constants.path+'ev_y/'+name) for name in filenames]
