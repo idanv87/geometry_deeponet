@@ -73,7 +73,7 @@ class SonarDataset(Dataset):
 y, ev_y, f_x, ev_x, output  =load_data('train')
 my_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 
-train_size = int(0.8 * len(my_dataset))
+train_size = int(0.7 * len(my_dataset))
 val_size = len(my_dataset) - train_size
 train_dataset, val_dataset = torch.utils.data.random_split(my_dataset, [train_size, val_size])
 val_dataloader = DataLoader (val_dataset, batch_size=Constants.batch_size, shuffle=True)

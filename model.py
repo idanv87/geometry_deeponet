@@ -10,7 +10,7 @@ import torch.optim as optim
 import numpy as np
 
 from utils import *
-from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
+# from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
 from tqdm import tqdm
 import argparse
 import time
@@ -39,6 +39,7 @@ class trunk(nn.Module):
     def forward(self,x):
          s=torch.matmul(x, torch.transpose(x,1,2))
          s=torch.flatten(s,start_dim=1)
+         self.activation(self.linear(s))
          return self.activation(self.linear(s))
 
 
@@ -65,12 +66,12 @@ class deeponet(nn.Module):
 
 
 
-p=10
+p=2
 dim=Constants.dim
 pts_per_polygon=Constants.pts_per_polygon
 ev_per_polygon=Constants.ev_per_polygon
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
-# print(count_trainable_params(model))
+print(count_trainable_params(model))
 
 
 

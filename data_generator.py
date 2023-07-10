@@ -32,7 +32,7 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=6,return_eigenvectors=False, which='SM')
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')
         
         def solve_helmholtz(self,f):
                A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))
@@ -78,7 +78,7 @@ class data_point:
                 self.polygon=Polygon(X, cells, v)
                 
                 self.path=path
-                self.value={'eigen':None, 'interior_points':X, 'generators':v, 'X':X, 'cells':cells,'ind':None}
+                self.value={'eigen':None, 'control_points':None, 'interior_points':None, 'generators':v, 'X':X, 'cells':cells,'ind':None}
                 
                 if self.polygon.is_legit():
                         
@@ -87,6 +87,7 @@ class data_point:
                         ind=interior_points[:, 0].argsort()
                         self.value['ind']=ind
                         self.value['interior_points']=interior_points[ind]
+                        self.value['control_points']=spread_points(Constants.pts_per_polygon, self.value['interior_points'])
                         self.save_data()
                 #
                 
@@ -140,7 +141,8 @@ class branc_point:
         y=[]
    
         for p in self.main_polygons:
-          x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
+        #   x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
+          x_interior_points=p['control_points']
          
           x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
           y.append(p['eigen'])
@@ -220,22 +222,23 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
     
     return      
 if __name__=='__main__':
- 
+        pass
         create_special_polygons()
-        creat_polygons_data(10) 
-        polygons_dir=Constants.path+'polygons/'
-        polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-        polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
-        special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
+        creat_polygons_data(6) 
 
-        all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
-        points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
-        control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
-        control_polygons=set([polygons_files_names[i] for i in control_ind])
-        test_polygons=set(special_polygons)
-        train_polygons=set(polygons_files_names)-test_polygons
+polygons_dir=Constants.path+'polygons/'
+polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
+polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
+special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
 
+all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
+points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
+control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
+control_polygons=set([polygons_files_names[i] for i in control_ind])
+test_polygons=set(special_polygons)
+train_polygons=set(polygons_files_names)-test_polygons
 
+if __name__=='__main__':
         create_data_points(control_polygons, train_polygons, train_or_test='train')
         create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
@@ -246,7 +249,7 @@ def plot_eigs():
    ev=[[],[],[]]
    lab=[ 'all_polygons','control polygons', 'test']
    color=['red', 'black', 'blue']
-   for i,type in enumerate([train_polygons+test_polygons, control_polygons, test_polygons]):
+   for i,type in enumerate([train_polygons.union(test_polygons), control_polygons, test_polygons]):
      for name in type:
         p=torch.load(name)
         ev[i].append(p['eigen'][-1])
@@ -257,7 +260,9 @@ def plot_eigs():
    plt.legend()    
    plt.show()
    plt.title('principal eigenvalue distribution')
-plot_eigs()
+
+if __name__=='__main__':   
+  plot_eigs()
 
 
 

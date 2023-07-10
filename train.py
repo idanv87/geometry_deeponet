@@ -28,7 +28,7 @@ experment_name=str(datetime.datetime.now().date()) + '_' + str(datetime.datetime
 experment_path=experment_dir+experment_name
 # print(experment_path)
 
-lr=0.01
+lr=0.001
 epochs = Constants.num_epochs
 # optimizer
 optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -77,7 +77,6 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     print('Training')
     model.train()
     train_running_loss = 0.0
-    train_running_correct = 0
     counter = 0
     total = 0
     prog_bar = tqdm(enumerate(train_dataloader), total=int(len(train_dataset)/train_dataloader.batch_size))

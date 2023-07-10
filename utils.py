@@ -371,13 +371,19 @@ def save_plots(train_loss, valid_loss, test_loss):
 
     plt.figure(figsize=(10, 7))
     plt.plot(
-        train_loss, color='orange', linestyle='-', 
+        train_loss[1:], color='orange', linestyle='-', 
         label='train loss'
     )
     plt.plot(
-        valid_loss, color='red', linestyle='-', 
+        valid_loss[1:], color='red', linestyle='-', 
         label='validataion loss'
     )
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.savefig(Constants.path+'figures/train_val_loss.png')
+
+    plt.figure(figsize=(10, 7))
     plt.plot(
         test_loss, color='blue', linestyle='-', 
         label='test loss'
@@ -385,7 +391,7 @@ def save_plots(train_loss, valid_loss, test_loss):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.savefig(Constants.path+'figures/loss.png')
+    plt.savefig(Constants.path+'figures/test_loss.png')
 
     plt.show()
 
