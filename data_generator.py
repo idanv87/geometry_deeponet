@@ -113,9 +113,8 @@ def creat_polygons_data(num_samples):
 def create_special_polygons():
      path=Constants.path+'polygons/rect.pt'
      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
-     path=Constants.path+'polygons/special1.pt'
-     data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
-) 
+#      path=Constants.path+'polygons/special1.pt'
+#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))) 
           
                
   
@@ -223,8 +222,8 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
     return      
 if __name__=='__main__':
         pass
-        create_special_polygons()
-        creat_polygons_data(6) 
+        # create_special_polygons()
+        # creat_polygons_data(7) 
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
@@ -239,6 +238,7 @@ test_polygons=set(special_polygons)
 train_polygons=set(polygons_files_names)-test_polygons
 
 if __name__=='__main__':
+        pass
         create_data_points(control_polygons, train_polygons, train_or_test='train')
         create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
@@ -261,10 +261,32 @@ def plot_eigs():
    plt.show()
    plt.title('principal eigenvalue distribution')
 
-if __name__=='__main__':   
+
+def plot_polygons(dir, name):
+        fig, axs = plt.subplots(len(dir))
+        fig.suptitle(name)
+        for j, name in enumerate(dir):
+                p=torch.load(name)
+                
+                coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+                coord.append(coord[0]) #repeat the first point to create a 'closed loop'
+                xs, ys = zip(*coord) #create lists of x and y values
+                axs[j].plot(xs,ys) 
+                axs[j].scatter(p['control_points'][:,0], p['control_points'][:,1])
+        # plt.title(str(name))        
+        plt.show()    
+
+
+if __name__=='__main__': 
+  pass
   plot_eigs()
+  plot_polygons(control_polygons, 'control_polygons')   
+  plot_polygons(test_polygons, 'test_polygons')   
+  plot_polygons(train_polygons, 'train_polygons')  
 
+           
 
+ 
 
 
 # print(Mu)

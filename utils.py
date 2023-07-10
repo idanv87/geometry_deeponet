@@ -297,7 +297,7 @@ class EarlyStopping():
 
 
 # training function
-def fit(model, train_dataloader, train_dataset, optimizer, criterion):
+def fit(model, train_dataloader, train_dataset, optimizer, criterion, device):
     print('Training')
     model.train()
     train_running_loss = 0.0
@@ -413,7 +413,8 @@ class Test_function:
         pass
 
     def call(self, x,y):
-        return np.cos(x)*np.sin(y)
+        # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
+        return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
       
 def calc_min_angle(geo):
     seg1=[]

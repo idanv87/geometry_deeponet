@@ -42,7 +42,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--lr-scheduler', dest='lr_scheduler', action='store_true')
 parser.add_argument('--early-stopping', dest='early_stopping', action='store_true')
 args = vars(parser.parse_args())
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+device = Constants.device
 
 # total parameters and trainable parameters
 total_params = sum(p.numel() for p in model.parameters())
@@ -83,7 +83,7 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     for i, data in prog_bar:
         counter += 1
         x1,x2,x3,x4,output=data
-        x1,x2,x3,x4,output = x1.to(device), x2.to(device),x3.to(device),x4.to(device),output.to(device)
+        x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
         total += output.size(0)
         optimizer.zero_grad()
         outputs = model(x3,x4,x1,x2)
@@ -115,7 +115,7 @@ def validate(model, dataloader, dataset, criterion):
         for i, data in prog_bar:
             counter += 1
             x1,x2,x3,x4,output=data
-            x1,x2,x3,x4,output = x1.to(device), x2.to(device),x3.to(device),x4.to(device),output.to(device)
+            x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
             total += output.size(0)
             outputs = model(x3,x4,x1,x2)
             loss = criterion(outputs, output)

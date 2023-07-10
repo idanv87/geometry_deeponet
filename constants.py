@@ -1,6 +1,8 @@
 import os
 import torch
 class Constants:
+       
+       device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
        dtype=torch.float32
        path='/Users/idanversano/Documents/clones/deeponet_data/'
        output_path='/Users/idanversano/Documents/clones/deeponet_output/'
@@ -13,7 +15,7 @@ class Constants:
        h=0.2
 
        
-       num_control_polygons=2
+       num_control_polygons=3
        batch_size=32
        num_epochs=50
        pts_per_polygon=25
