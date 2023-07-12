@@ -101,7 +101,9 @@ dim=Constants.dim
 pts_per_polygon=Constants.pts_per_polygon
 ev_per_polygon=Constants.ev_per_polygon
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
-print(count_trainable_params(model))
+# best_model=torch.load(Constants.path+'best_model/'+'best.pth')
+# model.load_state_dict(best_model['model_state_dict'])
+# print(count_trainable_params(model))
 
 if __name__=='__main__':
    pass

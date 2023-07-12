@@ -468,6 +468,10 @@ def Gauss_zeidel(A, b):
     # print(f"Solution: {x}")
     # error = np.dot(A, x) - b
     return x, it_count, np.max(abs(np.dot(A, x) - b))
+
+def solve_helmholtz(M, interior_indices, f):
+               A=-M[interior_indices][:,interior_indices]-Constants.k*scipy.sparse.identity(len(interior_indices))
+               return scipy.sparse.linalg.spsolve(A,f[interior_indices])
     # print(f"Error: {error}")  
 # def generate_shape():
 #     V=[[0,0],[1,0],[1,1],[0,1]]

@@ -6,7 +6,7 @@ import meshio
 import optimesh
 import pickle
 import datetime
-
+import time 
 from utils import *
 from constants import Constants
 from pathlib import Path
@@ -36,9 +36,9 @@ class Polygon:
         def laplacian(self):
                 return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')
         
-        def solve_helmholtz(self,f):
-               A=-self.M[self.interior_indices][:,self.interior_indices]-Constants.k*scipy.sparse.identity(len(self.interior_indices))
-               return scipy.sparse.linalg.spsolve(A,f[self.interior_indices])
+        # def solve_helmholtz(self,f):
+        #        A=-self.M[self.interior_indices][:,self.interior_indices]-Constants.k*scipy.sparse.identity(len(self.interior_indices))
+        #        return scipy.sparse.linalg.spsolve(A,f[self.interior_indices])
 
 
         def is_legit(self):
@@ -80,16 +80,16 @@ class data_point:
                 self.polygon=Polygon(X, cells, v)
                 
                 self.path=path
-                self.value={'eigen':None, 'control_points':None, 'interior_points':None, 'generators':v, 'X':X, 'cells':cells,'ind':None}
+                self.value={'eigen':None, 'interior_points':None, 'generators':v, 'X':X, 'cells':cells,'ind':None, 'interior_indices':self.polygon.interior_indices, 'M':self.polygon.M, 'legit':self.polygon.is_legit()}
                 
                 if self.polygon.is_legit():
                         
                         self.value['eigen']=self.polygon.ev
                         interior_points=X[self.polygon.interior_indices]
                         ind=interior_points[:, 0].argsort()
+
                         self.value['ind']=ind
                         self.value['interior_points']=interior_points[ind]
-                        self.value['control_points']=spread_points(Constants.pts_per_polygon, self.value['interior_points'])
                         self.save_data()
                 #
                 
@@ -121,29 +121,39 @@ def creat_polygons_data(num_samples):
 
 
 
-def create_data_point(X,func,p):
-            assert p.is_legit
+def create_data_point(X,func,M, indices,legit):
+            assert legit
             f=np.array(list(map(func, X[:,0],X[:,1])))  
-            u=p.solve_helmholtz(f)
+            
+                 
+            u=solve_helmholtz(M,indices,f)
+
+            
             return f,u
 
 class branc_point:
     
     def __init__(self,f, main_polygons):
+                
         self.f=f
         self.main_polygons=main_polygons
+        
+
         self.b1, self.b2= self.calculate_branch()
+
 
     def calculate_branch(self):
         x=[]
         y=[]
    
         for p in self.main_polygons:
-        #   x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
-          x_interior_points=p['control_points']
-         
-          x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
-          y.append(p['eigen'])
+             
+                
+                x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
+                
+                x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
+
+                y.append(p['eigen'])
         #   print(p['eigen'].shape)
         x=np.hstack(x).reshape((len(x), len(x[0])))
         # print(np.hstack(y).shape)
@@ -181,34 +191,34 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
            
            for func in funcs:
                 # func=Gaussian(mu).call
-                
-                p=Polygon(df['X'], df['cells'], df['generators'])  
-                f,u=create_data_point(df['X'],func,p)
-               
+          
+            
+                f,u=create_data_point(df['X'],func,df['M'], df['interior_indices'],df['legit'])
                 u=u[df['ind']]
-
+                
                 f_x=branc_point(func, main_polygons).b1
                 ev_x=branc_point(func,main_polygons).b2
+
                 for i in range(df['interior_points'].shape[0]):
                     
                    
                         
-                    y=df['interior_points'][i].reshape([Constants.dim,1])
-                    # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
-                    ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
-                    output=u[i]
-                    # sort indices
+                        y=df['interior_points'][i].reshape([Constants.dim,1])
+                        # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                        ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
+                        output=u[i]
+                        # sort indices
 
 
-                    name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
-                    
-                    data_names.append(name+'.pt')
-                    
-                    save_file(np_to_torch(y),Constants.path+'y/', name)
-                    save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
-                    save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
-                    save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
-                    save_file(np_to_torch(output),Constants.path+'output/', name)
+                        name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+                        
+                        data_names.append(name+'.pt')
+                        
+                        save_file(np_to_torch(y),Constants.path+'y/', name)
+                        save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
+                        save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
+                        save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
+                        save_file(np_to_torch(output),Constants.path+'output/', name)
         if train_or_test=='train':
           save_file(data_names,Constants.path+'train_data_names/','train_data_names')
         else:  
@@ -227,7 +237,7 @@ def create_special_polygons():
 if __name__=='__main__':
         pass
         # create_special_polygons()
-        # creat_polygons_data(5)
+        # creat_polygons_data(20)
 
 
 
@@ -247,7 +257,7 @@ control_polygons=set([train_polygons[i] for i in control_ind])
 create_data_points(control_polygons, test_polygons, train_or_test='test')
 if __name__=='__main__':
         pass
-        create_data_points(control_polygons, train_polygons, train_or_test='train')
+        # create_data_points(control_polygons, train_polygons, train_or_test='train')
         # create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
 
@@ -284,12 +294,16 @@ def plot_polygons(dir, name):
 
                 coord.append(coord[0]) #repeat the first point to create a 'closed loop'
                 xs, ys = zip(*coord) #create lists of x and y values
+                
+
+                control_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
                 if len(dir)==1:
                   axs.plot(xs,ys) 
-                  axs.scatter(p['control_points'][:,0], p['control_points'][:,1])
+                  
+                  axs.scatter(control_points[:,0], control_points[:,1])
                 else:
                   axs[j].plot(xs,ys) 
-                  axs[j].scatter(p['control_points'][:,0], p['control_points'][:,1])
+                  axs[j].scatter(control_points[:,0], control_points[:,1])
                        
         # plt.title(str(name))        
            
@@ -297,7 +311,7 @@ def plot_polygons(dir, name):
 # print(train_polygons)
 if __name__=='__main__': 
   pass
-#   plot_eigs()
+  plot_eigs()
   plot_polygons(control_polygons, 'control_polygons')   
   plot_polygons(test_polygons, 'test_polygons')   
   plot_polygons(train_polygons, 'train_polygons')  

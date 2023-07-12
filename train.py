@@ -28,7 +28,8 @@ experment_name=str(datetime.datetime.now().date()) + '_' + str(datetime.datetime
 experment_path=experment_dir+experment_name
 # print(experment_path)
 
-lr=0.0001
+lr=0.001
+
 epochs = Constants.num_epochs
 # optimizer
 optimizer = optim.Adam(model.parameters(), lr=lr)
