@@ -8,18 +8,20 @@ class Constants:
        output_path='/Users/idanversano/Documents/clones/deeponet_output/'
 
        num_samples=5
-       num_edges=9
+       num_edges=7
        var_center=0
        var_angle=0.4
        radius=3
        h=0.2
 
        
-       num_control_polygons=3
-       batch_size=32
-       num_epochs=50
+       num_control_polygons=5
+       batch_size=64
+       num_epochs=40
        pts_per_polygon=25
        ev_per_polygon=10
+
+       k=2.17
        
        dim=2
        num_ev=4

@@ -1,11 +1,13 @@
 import os
 import pickle
 from random import sample
+from typing import Callable
 
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.modules.module import Module
 import torch.optim as optim
 import numpy as np
 
@@ -67,6 +69,8 @@ class trunk(nn.Module):
          s=torch.flatten(s,start_dim=1)
          self.activation(self.linear(s))
          return self.activation(self.linear(s))
+    
+
 
 
 
@@ -97,13 +101,16 @@ dim=Constants.dim
 pts_per_polygon=Constants.pts_per_polygon
 ev_per_polygon=Constants.ev_per_polygon
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
-
+print(count_trainable_params(model))
 
 if __name__=='__main__':
+   pass
+   
+
    # best_model=torch.load(Constants.path+'best_model/'+'2023-07-10_10.00.42.817019.pth')
    # model.load_state_dict(best_model['model_state_dict'])
    # model.eval()
-   from dataset import train_dataloader
+   # from dataset import train_dataloader
 
    # test_epoch_loss = validate(
    #      model, test_dataloader, test_dataset, torch.nn.MSELoss()

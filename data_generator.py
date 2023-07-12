@@ -9,6 +9,8 @@ import datetime
 
 from utils import *
 from constants import Constants
+from pathlib import Path
+import shutil
 
 
 class Polygon:
@@ -35,7 +37,7 @@ class Polygon:
                 return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')
         
         def solve_helmholtz(self,f):
-               A=-self.M[self.interior_indices][:,self.interior_indices]-scipy.sparse.identity(len(self.interior_indices))
+               A=-self.M[self.interior_indices][:,self.interior_indices]-Constants.k*scipy.sparse.identity(len(self.interior_indices))
                return scipy.sparse.linalg.spsolve(A,f[self.interior_indices])
 
 
@@ -110,11 +112,8 @@ def creat_polygons_data(num_samples):
 #      path=Constants.path+'special_polygons/special1.pt'
 #      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
 # ) 
-def create_special_polygons():
-     path=Constants.path+'polygons/rect.pt'
-     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
-#      path=Constants.path+'polygons/special1.pt'
-#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))) 
+
+#      data_point(path, np.array([[0,-1],[0.5,1],[0,1],[-0.5,0]])) 
           
                
   
@@ -169,10 +168,8 @@ def create_main_polygons(control_polygons):
 def create_data_points(control_polygons, train_polygons, train_or_test):
     if train_or_test=='train':
         funcs=[Gaussian(mu).call for mu in create_mu()]
-        # polygons_dir=Constants.path+'polygons/'
     else:
          funcs=[Test_function().call]    
-        #  polygons_dir=Constants.path+'special_polygons/'
     
     data_names=[]
     main_polygons=create_main_polygons(control_polygons)
@@ -220,39 +217,50 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
 
     
     return      
+
+def create_special_polygons():
+     path=Constants.path+'polygons/rect.pt'
+     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+     path=Constants.path+'polygons/special1.pt'
+     data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 ))) 
+
 if __name__=='__main__':
         pass
         # create_special_polygons()
-        # creat_polygons_data(7) 
+        # creat_polygons_data(5)
+
+
 
 polygons_dir=Constants.path+'polygons/'
 polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
 polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
-special_polygons=[n for n in polygons_files_names if n.endswith('rect.pt') or n.endswith('special1.pt') ]
 
-all_eigs=[torch.load(name)['eigen'][-1] for name in polygons_files_names]
+test_polygons=[Constants.path+'polygons/rect.pt']
+train_polygons= list(set(polygons_files_names)-set(test_polygons))
+
+all_eigs=[torch.load(name)['eigen'][-1] for name in train_polygons]
 points=spread_points(Constants.num_control_polygons, np.vstack((all_eigs,all_eigs)).T)[:,0]
 control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
-control_polygons=set([polygons_files_names[i] for i in control_ind])
-test_polygons=set(special_polygons)
-train_polygons=set(polygons_files_names)-test_polygons
+control_polygons=set([train_polygons[i] for i in control_ind])
 
+
+create_data_points(control_polygons, test_polygons, train_or_test='test')
 if __name__=='__main__':
         pass
         create_data_points(control_polygons, train_polygons, train_or_test='train')
-        create_data_points(control_polygons, test_polygons, train_or_test='test')
+        # create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
 
 
 
 def plot_eigs():
    ev=[[],[],[]]
-   lab=[ 'all_polygons','control polygons', 'test']
+   lab=['train_polygons','control polygons', 'test' ]
    color=['red', 'black', 'blue']
-   for i,type in enumerate([train_polygons.union(test_polygons), control_polygons, test_polygons]):
+   for i,type in enumerate([ train_polygons, control_polygons, test_polygons]):
      for name in type:
-        p=torch.load(name)
-        ev[i].append(p['eigen'][-1])
+                p=torch.load(name)
+                ev[i].append(p['eigen'][-1])
 
    plt.figure(figsize=(10, 7))  
    for i in range(3):
@@ -263,28 +271,41 @@ def plot_eigs():
 
 
 def plot_polygons(dir, name):
+        print(len(dir))
         fig, axs = plt.subplots(len(dir))
         fig.suptitle(name)
         for j, name in enumerate(dir):
                 p=torch.load(name)
                 
                 coord =[p['generators'][i] for i in range(p['generators'].shape[0])]
+                print(' ')
+                print(name)
+                print(p['eigen'][-1])
+
                 coord.append(coord[0]) #repeat the first point to create a 'closed loop'
                 xs, ys = zip(*coord) #create lists of x and y values
-                axs[j].plot(xs,ys) 
-                axs[j].scatter(p['control_points'][:,0], p['control_points'][:,1])
+                if len(dir)==1:
+                  axs.plot(xs,ys) 
+                  axs.scatter(p['control_points'][:,0], p['control_points'][:,1])
+                else:
+                  axs[j].plot(xs,ys) 
+                  axs[j].scatter(p['control_points'][:,0], p['control_points'][:,1])
+                       
         # plt.title(str(name))        
-        plt.show()    
+           
 
-
+# print(train_polygons)
 if __name__=='__main__': 
   pass
-  plot_eigs()
+#   plot_eigs()
   plot_polygons(control_polygons, 'control_polygons')   
   plot_polygons(test_polygons, 'test_polygons')   
   plot_polygons(train_polygons, 'train_polygons')  
+  plt.show()
 
-           
+#         
+        
+ 
 
  
 

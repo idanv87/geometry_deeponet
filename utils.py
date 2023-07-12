@@ -414,6 +414,7 @@ class Test_function:
 
     def call(self, x,y):
         # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
+        # return x**2+y
         return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
       
 def calc_min_angle(geo):
@@ -471,8 +472,14 @@ def Gauss_zeidel(A, b):
 # def generate_shape():
 #     V=[[0,0],[1,0],[1,1],[0,1]]
 #     for v in V:
-
-
+# p=torch.load(Constants.path+'polygons/special1.pt')
+# geo=dmsh.Polygon(p['generators'])
+# for i in range(len(geo.__dict__['paths'])):
+#         p1=geo.__dict__['paths'][i].__dict__['x0']
+#         p2=geo.__dict__['paths'][i].__dict__['x1']
+#         v=p2-p1
+#         n=np.array([-v[1],v[0]])
+#         print(np.dot(n,v))
 
 
 
