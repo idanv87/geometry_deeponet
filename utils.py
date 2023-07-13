@@ -1,20 +1,22 @@
+from tqdm import tqdm
+import datetime
+import pickle
+
+
 import numpy as np
 import math, random
 import scipy
 import os
 from typing import List, Tuple
 from shapely import geometry
-import datetime
+
 
 from constants import Constants
 from pydec.dec import simplicial_complex 
-import pickle
+
 import sklearn
 import argparse
 import torch
-from tqdm import tqdm
-# from matplotlib.patches import Polygon
-
 import dmsh
 
 
@@ -118,10 +120,7 @@ from scipy.integrate import solve_ivp
 
 import numpy as np
 from scipy.integrate import solve_ivp
-def exponential_decay(t, y): return -0.5 * y
-# sol = solve_ivp(exponential_decay, [0, 10], [0])
-# plt.plot(sol.t, sol.y)
-# plt.show()
+
 
 def polygon_centre_area(vertices):
     x=vertices[:,0]
@@ -143,11 +142,6 @@ def map_right(p1,p2,p3):
       
       return np.squeeze(A),B
 
-# plt.scatter(X[:,0],X[:,1])
-# plt.scatter(X[:10,0],X[:10,1],color='blue')
-# plt.scatter(v[:,0],v[:,1],color= 'red')
-# # plt.scatter(X[:,0],X[:,1],'r')
-# print(geo.__dict__['paths'][0].__dict__)
 
 def is_between(p1, p2, point):
     crossproduct = (point[1] - p1[1]) * (p2[0] - p1[0]) - (point[0] - p1[0]) * (p2[1] - p1[1])
@@ -177,8 +171,8 @@ def on_boundary(point, geo):
 
 
 def create_mu():
-    x=np.linspace(-1,1,5)
-    y=np.linspace(-1,1,5)
+    x=np.linspace(-1,1,Constants.gauss_points)
+    y=np.linspace(-1,1,Constants.gauss_points)
     x,y=np.meshgrid(x,y)
     # A=np.zeros((x.shape[0], x.shape[1]),dtype=tuple)
     mu=[]
@@ -296,31 +290,6 @@ class EarlyStopping():
                 self.early_stop = True        
 
 
-# training function
-def fit(model, train_dataloader, train_dataset, optimizer, criterion, device):
-    print('Training')
-    model.train()
-    train_running_loss = 0.0
-    train_running_correct = 0
-    counter = 0
-    total = 0
-    prog_bar = tqdm(enumerate(train_dataloader), total=int(len(train_dataset)/train_dataloader.batch_size))
-    for i, data in prog_bar:
-        counter += 1
-        data, target = data[0].to(device), data[1].to(device)
-        total += target.size(0)
-        optimizer.zero_grad()
-        outputs = model(data)
-        loss = criterion(outputs, target)
-        train_running_loss += loss.item()
-        _, preds = torch.max(outputs.data, 1)
-        train_running_correct += (preds == target).sum().item()
-        loss.backward()
-        optimizer.step()
-        
-    train_loss = train_running_loss / counter
-    train_accuracy = 100. * train_running_correct / total
-    return train_loss, train_accuracy
 
 def np_to_torch(x):
     return torch.tensor(x, dtype=Constants.dtype)

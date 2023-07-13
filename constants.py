@@ -3,7 +3,6 @@ import torch
 class Constants:
        
        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
        dtype=torch.float32
        
        
@@ -16,6 +15,7 @@ class Constants:
        var_angle=0.4
        radius=3
        h=0.2
+       gauss_points=5
 
        
        num_control_polygons=2
@@ -33,10 +33,7 @@ class Constants:
 
        isExist = os.path.exists(path+'polygons')
        if not isExist:
-              os.makedirs(path+'polygons')     
-    #    isExist = os.path.exists(path+'special_polygons')
-    #    if not isExist:
-    #           os.makedirs(path+'special_polygons')   
+              os.makedirs(path+'polygons')    
 
            
 
@@ -58,5 +55,4 @@ class Constants:
        main_polygons_pathes=[]   
        
 
-# print(os.getcwd()+'/deeponet_data/')
-         
+

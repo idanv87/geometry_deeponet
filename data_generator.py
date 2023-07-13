@@ -1,16 +1,20 @@
+import datetime
+import time 
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 import dmsh
 import meshio
 import optimesh
-import pickle
-import datetime
-import time 
+
+
+
 from utils import *
 from constants import Constants
 from pathlib import Path
-import shutil
+
 
 
 class Polygon:
