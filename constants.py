@@ -3,7 +3,10 @@ import torch
 class Constants:
        
        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
        dtype=torch.float32
+       
+       
        path='/Users/idanversano/Documents/clones/deeponet_data/'
        output_path='/Users/idanversano/Documents/clones/deeponet_output/'
 
@@ -15,19 +18,17 @@ class Constants:
        h=0.2
 
        
-       num_control_polygons=5
-       batch_size=64
+       num_control_polygons=2
+       batch_size=128
        num_epochs=40
-       pts_per_polygon=40
+       pts_per_polygon=10
        ev_per_polygon=10
 
        k=2.17
        
        dim=2
        num_ev=4
-       isExist = os.path.exists(path+'train')
-       if not isExist:
-              os.makedirs(path+'train')
+
 
 
        isExist = os.path.exists(path+'polygons')

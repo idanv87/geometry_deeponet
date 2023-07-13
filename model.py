@@ -62,14 +62,20 @@ class branch(nn.Module):
 class trunk(nn.Module):
     def __init__(self, n, p):
       super().__init__()
-      self.linear=nn.Linear(in_features=n*n, out_features=p, bias=True)
-      self.activation=torch.nn.Tanh()
+      self.linear1=nn.Linear(in_features=n*n, out_features=3, bias=True)
+      self.linear2=nn.Linear(in_features=3, out_features=p, bias=True)
+      self.activation1=torch.nn.Tanh()
+      self.activation2=torch.nn.Tanh()
+      
     def forward(self,x):
+         
          s=torch.matmul(x, torch.transpose(x,1,2))
          s=torch.flatten(s,start_dim=1)
-         self.activation(self.linear(s))
-         return self.activation(self.linear(s))
-    
+
+         s=self.activation1(self.linear1(s))
+         s=self.activation2(self.linear2(s))
+         return s
+
 
 
 
@@ -84,11 +90,12 @@ class deeponet(nn.Module):
       self.trunk1=trunk(dim,p)
       self.trunk2=trunk(ev_per_polygon,p)
 
+      self.linear1=nn.Linear(in_features=2*p, out_features=2*p, bias=False)
+
     def forward(self,x,lx,y,ly):
-      #  s1=self.trunk1(y)
-      #  s2=self.trunk2(ly)
        s1=torch.cat(( self.trunk1(y),self.trunk2(ly/10)), dim=-1)
-       s2=torch.cat(( self.branch1(x),self.branch2(lx/10)), dim=-1)
+       s2=self.linear1(torch.cat(( self.branch1(x),self.branch2(lx/10)), dim=-1))
+       
      
        return torch.sum(s1*s2, dim=-1)
 
@@ -101,9 +108,10 @@ dim=Constants.dim
 pts_per_polygon=Constants.pts_per_polygon
 ev_per_polygon=Constants.ev_per_polygon
 model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
+
 # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
 # model.load_state_dict(best_model['model_state_dict'])
-# print(count_trainable_params(model))
+print(count_trainable_params(model))
 
 if __name__=='__main__':
    pass

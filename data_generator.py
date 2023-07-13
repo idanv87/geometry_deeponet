@@ -214,15 +214,17 @@ def create_data_points(control_polygons, train_polygons, train_or_test):
                         
                         data_names.append(name+'.pt')
                         
-                        save_file(np_to_torch(y),Constants.path+'y/', name)
-                        save_file(np_to_torch(ev_y),Constants.path+'ev_y/', name)
-                        save_file(np_to_torch(f_x),Constants.path+'f_x/', name)
-                        save_file(np_to_torch(ev_x),Constants.path+'ev_x/', name)
-                        save_file(np_to_torch(output),Constants.path+'output/', name)
-        if train_or_test=='train':
-          save_file(data_names,Constants.path+'train_data_names/','train_data_names')
-        else:  
-          save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
+                        out_path=Constants.path+train_or_test
+
+                        save_file(np_to_torch(y),out_path+'/y/', name)
+                        save_file(np_to_torch(ev_y),out_path+'/ev_y/', name)
+                        save_file(np_to_torch(f_x),out_path+'/f_x/', name)
+                        save_file(np_to_torch(ev_x),out_path+'/ev_x/', name)
+                        save_file(np_to_torch(output),out_path+'/output/', name)
+        # if train_or_test=='train':
+        #   save_file(data_names,Constants.path+'train_data_names/','train_data_names')
+        # else:  
+        #   save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
 
 
     
@@ -234,17 +236,15 @@ def create_special_polygons():
      path=Constants.path+'polygons/special1.pt'
      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 ))) 
 
+
+      
 if __name__=='__main__':
         pass
-        # create_special_polygons()
-        # creat_polygons_data(20)
+        create_special_polygons()
+        creat_polygons_data(5)
 
 
-
-polygons_dir=Constants.path+'polygons/'
-polygons_raw_names=next(os.walk(polygons_dir), (None, None, []))[2]
-polygons_files_names=[polygons_dir+n for n in polygons_raw_names if n.endswith('.pt')]
-
+polygons_files_names=extract_path_from_dir(Constants.path+'polygons/')
 test_polygons=[Constants.path+'polygons/rect.pt']
 train_polygons= list(set(polygons_files_names)-set(test_polygons))
 
@@ -254,19 +254,24 @@ control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([train_polygons[i] for i in control_ind])
 
 
-create_data_points(control_polygons, test_polygons, train_or_test='test')
+def add_new_polygon(train_or_test='train'):
+     path=Constants.path+'polygons/new_polygon.pt'
+     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+     create_data_points(control_polygons, [path], train_or_test='test')
+
+
+
 if __name__=='__main__':
         pass
-        # create_data_points(control_polygons, train_polygons, train_or_test='train')
-        # create_data_points(control_polygons, test_polygons, train_or_test='test')
+        create_data_points(control_polygons, train_polygons, train_or_test='train')
         print('finished creating data')
-
+       
+create_data_points(control_polygons, test_polygons, train_or_test='test')
 
 
 def plot_eigs():
    ev=[[],[],[]]
    lab=['train_polygons','control polygons', 'test' ]
-   color=['red', 'black', 'blue']
    for i,type in enumerate([ train_polygons, control_polygons, test_polygons]):
      for name in type:
                 p=torch.load(name)
@@ -307,15 +312,15 @@ def plot_polygons(dir, name):
                        
         # plt.title(str(name))        
            
-
+# add_new_polygon()
 # print(train_polygons)
-if __name__=='__main__': 
-  pass
-  plot_eigs()
-  plot_polygons(control_polygons, 'control_polygons')   
-  plot_polygons(test_polygons, 'test_polygons')   
-  plot_polygons(train_polygons, 'train_polygons')  
-  plt.show()
+# if __name__=='__main__': 
+#   pass
+#   plot_eigs()
+#   plot_polygons(control_polygons, 'control_polygons')   
+#   plot_polygons(test_polygons, 'test_polygons')   
+#   plot_polygons(train_polygons, 'train_polygons')  
+#   plt.show()
 
 #         
         
