@@ -8,7 +8,7 @@ from constants import Constants
 from utils import solve_helmholtz, Test_function, Gauss_zeidel, plot3d, spread_points, np_to_torch
 import matplotlib.pyplot as plt
 from model import model
-from data_generator import create_data_points, control_polygons
+from data_generator import create_data_points, control_polygons, add_new_polygon
 
 
 
@@ -48,29 +48,25 @@ def hint_iteration(A,b, n_it, points, model):
         k_it+=1
         
         if k_it % 5 >0:
-            # y=hint_block(np.dot(A,np.squeeze(x_0))-np.squeeze(b), points)
-            # print(y.shape)
-            
-            # x=x_0+hint_block(np.dot(A,x_0)-b, points)
             x=GS_block(A,np.squeeze(b),np.squeeze(x_0))
           
         else:
-            
-            # x=np.squeeze(x_0)+np.squeeze(hint_block(np.dot(A,np.squeeze(x_0))-np.squeeze(b), points, model))
+            x=np.squeeze(x_0)+np.squeeze(hint_block(np.dot(A,np.squeeze(x_0))-np.squeeze(b), points, model))
             pass
         print(np.linalg.norm(np.dot(A,x)-b))
         if   np.allclose(np.dot(A,x),b, 1e-10):
             return k_it,  np.dot(A,x)-b
     
     return k_it, x-x_0
-pol_path=Constants.path+'polygons/rect.pt'
+# add_new_polygon()
+pol_path=Constants.path+'polygons/rect2.pt'
 p=torch.load(pol_path)
-err=np.sin(p['interior_points'][:,0])
+b=np.sin(p['interior_points'][:,0])
 A=p['M'][p['interior_indices']][:,p['interior_indices']]
 A=A.todense()
 # print(type(err))
-it,err=hint_iteration(A,err,500, p['interior_points'], model)
-# print(err)
+it,err=hint_iteration(A,b,100, p['interior_points'], model)
+print(err)
 
 
 # p=torch.load(Constants.path+'polygons/special1.pt')

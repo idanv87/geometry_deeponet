@@ -261,7 +261,7 @@ control_polygons=set([train_polygons[i] for i in control_ind])
 
 
 def add_new_polygon(train_or_test='train'):
-     path=Constants.path+'polygons/new_polygon.pt'
+     path=Constants.path+'polygons/rect2.pt'
      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
      create_data_points(control_polygons, [path], train_or_test='test')
 
