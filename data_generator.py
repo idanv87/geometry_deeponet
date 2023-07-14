@@ -179,60 +179,62 @@ def create_main_polygons(control_polygons):
    return x        
 
 
-def create_data_points(control_polygons, train_polygons, train_or_test):
-    if train_or_test=='train':
-        funcs=[Gaussian(mu).call for mu in create_mu()]
-    else:
-         funcs=[Test_function().call]    
-    
-    data_names=[]
-    main_polygons=create_main_polygons(control_polygons)
+def create_data_points(control_polygons, train_polygons, train_or_test, func=None):
+        assert train_or_test in set(['train', 'test', 'hints'])
 
-    for file in train_polygons:
+        if train_or_test=='train':
+                funcs=[Gaussian(mu).call for mu in create_mu()]
+        if train_or_test=='test':
+                funcs=[Test_function().call]    
+        if train_or_test=='hints':
+                funcs=[func]   
         
-        if os.path.isfile(file):
-           df=torch.load(file)
-           
-           for func in funcs:
-                # func=Gaussian(mu).call
-          
-            
-                f,u=create_data_point(df['X'],func,df['M'], df['interior_indices'],df['legit'])
-                u=u[df['ind']]
+        main_polygons=create_main_polygons(control_polygons)
+ 
+        data=[]
+        for file in train_polygons:
+        
+                if os.path.isfile(file):
+                        df=torch.load(file)
                 
-                f_x=branc_point(func, main_polygons).b1
-                ev_x=branc_point(func,main_polygons).b2
+                for func in funcs:
 
-                for i in range(df['interior_points'].shape[0]):
-                    
-                   
+                        f,u=create_data_point(df['X'],func,df['M'], df['interior_indices'],df['legit'])
+                        u=u[df['ind']]
                         
-                        y=df['interior_points'][i].reshape([Constants.dim,1])
-                        # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
-                        ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
-                        output=u[i]
-                        # sort indices
+                        f_x=branc_point(func, main_polygons).b1
+                        ev_x=branc_point(func,main_polygons).b2
 
-
-                        name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+                        for i in range(df['interior_points'].shape[0]):
                         
-                        data_names.append(name+'.pt')
+                                y=df['interior_points'][i].reshape([Constants.dim,1])
+                                # ev_y=df['eigen'].reshape([Constants.ev_per_polygon,1])
+                                ev_y=df['eigen'].reshape([df['eigen'].shape[0],1])
+                                output=u[i]
+                                # sort indices
+
+
+                                name= str(datetime.datetime.now().date()) + '_' + str(datetime.datetime.now().time()).replace(':', '.')
+                                
+                                # data_names.append(name+'.pt')
+                                
+                                out_path=Constants.path+train_or_test
+                                if train_or_test=='hints':
+                                        data.append((np_to_torch(y),np_to_torch(ev_y[-Constants.ev_per_polygon:]),np_to_torch(f_x),np_to_torch(ev_x[-Constants.ev_per_polygon:])))
+                                else:
+                                        save_file(np_to_torch(y),out_path+'/y/', name)
+                                        save_file(np_to_torch(ev_y),out_path+'/ev_y/', name)
+                                        save_file(np_to_torch(f_x),out_path+'/f_x/', name)
+                                        save_file(np_to_torch(ev_x),out_path+'/ev_x/', name)
+                                        save_file(np_to_torch(output),out_path+'/output/', name)
+                                
+                                
                         
-                        out_path=Constants.path+train_or_test
-
-                        save_file(np_to_torch(y),out_path+'/y/', name)
-                        save_file(np_to_torch(ev_y),out_path+'/ev_y/', name)
-                        save_file(np_to_torch(f_x),out_path+'/f_x/', name)
-                        save_file(np_to_torch(ev_x),out_path+'/ev_x/', name)
-                        save_file(np_to_torch(output),out_path+'/output/', name)
-        # if train_or_test=='train':
-        #   save_file(data_names,Constants.path+'train_data_names/','train_data_names')
-        # else:  
-        #   save_file(data_names,Constants.path+'test_data_names/','test_data_names')  
+        return data
 
 
-    
-    return      
+   
+     
 
 def create_special_polygons():
      path=Constants.path+'polygons/rect.pt'
@@ -244,8 +246,8 @@ def create_special_polygons():
       
 if __name__=='__main__':
         pass
-        create_special_polygons()
-        creat_polygons_data(5)
+        # create_special_polygons()
+        # creat_polygons_data(5)
 
 
 polygons_files_names=extract_path_from_dir(Constants.path+'polygons/')
@@ -268,9 +270,11 @@ def add_new_polygon(train_or_test='train'):
 if __name__=='__main__':
         pass
         create_data_points(control_polygons, train_polygons, train_or_test='train')
+        create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
        
-create_data_points(control_polygons, test_polygons, train_or_test='test')
+
+
 
 
 def plot_eigs():

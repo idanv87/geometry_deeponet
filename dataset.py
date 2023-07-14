@@ -4,22 +4,14 @@ import os
 import pickle
 from random import sample
 
-import matplotlib.pyplot as plt
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
 import numpy as np
-import torch.utils.data as data_utils
-import dmsh
-
 from utils import *
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, Subset
 
-from data_generator import add_new_polygon
 
 
 #plot polygon:
@@ -95,7 +87,12 @@ y, ev_y, f_x, ev_x, output  =load_data_names('test')
 test_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
 test_dataloader = DataLoader (test_dataset, batch_size=Constants.batch_size, shuffle=False)
 
-# print(len(train_dataloader))
+# y, ev_y, f_x, ev_x, output  =load_data_names('hints')
+
+# hints_dataset = SonarDataset([y, ev_y, f_x, ev_x], output)
+# hints_dataloader = DataLoader (hints_dataset, batch_size=len(y), shuffle=False)
+
+# print(len(hints_dataloader))
 
 
 

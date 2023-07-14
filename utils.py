@@ -402,49 +402,55 @@ def calc_min_angle(geo):
         angle.append(np.dot(p2-p1,p3-p1)/(np.linalg.norm(p2-p1)*np.linalg.norm(p3-p1)))
     return np.arccos(angle) 
 
-def Gauss_zeidel(A, b):
-    ITERATION_LIMIT = 1000
 
-# # initialize the matrix
-#     A = np.array(
-#         [
-#             [10.0, -1.0, 2.0, 0.0],
-#             [-1.0, 11.0, -1.0, 3.0],
-#             [2.0, -1.0, 10.0, -1.0],
-#             [0.0, 3.0, -1.0, 8.0],
-#         ]
-#     )
-#     # initialize the RHS vector
-#     b = np.array([6.0, 25.0, -11.0, 15.0])
 
-    print("System of equations:")
-    for i in range(A.shape[0]):
-        row = [f"{A[i,j]:3g}*x{j+1}" for j in range(A.shape[1])]
-        print("[{0}] = [{1:3g}]".format(" + ".join(row), b[i]))
+def Gauss_zeidel(A, b, x):
+    ITERATION_LIMIT = 2
 
-    x = np.zeros_like(b, np.float_)
+   
+   
+
+    # x = b*0
     for it_count in range(1, ITERATION_LIMIT):
         x_new = np.zeros_like(x, dtype=np.float_)
         # print(f"Iteration {it_count}: {x}")
         for i in range(A.shape[0]):
             s1 = np.dot(A[i, :i], x_new[:i])
             s2 = np.dot(A[i, i + 1 :], x[i + 1 :])
+
             x_new[i] = (b[i] - s1 - s2) / A[i, i]
-        if np.allclose(x, x_new, rtol=1e-8):
+        if np.allclose(x, x_new, rtol=1e-10):
             break
         x = x_new
 
     # print(f"Solution: {x}")
     # error = np.dot(A, x) - b
-    return x, it_count, np.max(abs(np.dot(A, x) - b))
+    #  it_count, np.max(abs(np.dot(A, x) - b))
+    return x
+    # return x, it_count, np.max(abs(np.dot(A, x) - b))
 
+# p=torch.load(Constants.path+'polygons/rect.pt')
+# M=p['M']
+# interior_indices=p['interior_indices']
+# f=np.array(list(map(Test_function().call, p['X'][:,0],p['X'][:,1]))) 
+# solve_helmholtz(M, interior_indices, f)
 def solve_helmholtz(M, interior_indices, f):
                A=-M[interior_indices][:,interior_indices]-Constants.k*scipy.sparse.identity(len(interior_indices))
+            #    x,y,e=Gauss_zeidel(A,f[interior_indices])
+            #    print(e)
                return scipy.sparse.linalg.spsolve(A,f[interior_indices])
+
+# solve_helmholtz(M, interior_indices, f)
 
 def extract_path_from_dir(dir):
     raw_names=next(os.walk(dir), (None, None, []))[2]
     return [dir+n for n in raw_names if n.endswith('.pt')]
+
+def plot3d(x,y,z,color='black'):
+        fig = plt.figure()
+        ax = fig.add_subplot(projection='3d')
+        ax.scatter(x, y, z, color=color)
+        
     # print(f"Error: {error}")  
 # def generate_shape():
 #     V=[[0,0],[1,0],[1,1],[0,1]]
@@ -507,4 +513,6 @@ def extract_path_from_dir(dir):
 # p1=np.array([0,0])
 # p2=np.array([1,0])
 # print(is_between(p1,p2,point))
-
+# x=np.array([-1])
+# x_0=np.array([1])
+# print(np.allclose(x, x_0, 1e-6))

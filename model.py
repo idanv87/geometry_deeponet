@@ -66,12 +66,13 @@ class trunk(nn.Module):
       self.linear2=nn.Linear(in_features=3, out_features=p, bias=True)
       self.activation1=torch.nn.Tanh()
       self.activation2=torch.nn.Tanh()
+      self.in_size=n*n
       
     def forward(self,x):
          
          s=torch.matmul(x, torch.transpose(x,1,2))
          s=torch.flatten(s,start_dim=1)
-
+         
          s=self.activation1(self.linear1(s))
          s=self.activation2(self.linear2(s))
          return s

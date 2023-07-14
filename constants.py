@@ -25,7 +25,7 @@ class Constants:
        pts_per_polygon=10
        ev_per_polygon=10
 
-       k=2.17
+       k=9.12
        
        dim=2
        num_ev=4
