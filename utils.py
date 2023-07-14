@@ -406,11 +406,7 @@ def calc_min_angle(geo):
 
 def Gauss_zeidel(A, b, x):
     ITERATION_LIMIT = 2
-
-   
-   
-
-    # x = b*0
+     # x = b*0
     for it_count in range(1, ITERATION_LIMIT):
         x_new = np.zeros_like(x, dtype=np.float_)
         # print(f"Iteration {it_count}: {x}")
@@ -419,16 +415,23 @@ def Gauss_zeidel(A, b, x):
             s2 = np.dot(A[i, i + 1 :], x[i + 1 :])
 
             x_new[i] = (b[i] - s1 - s2) / A[i, i]
-        if np.allclose(x, x_new, rtol=1e-10):
-            break
+        # if np.allclose(x, x_new, rtol=1e-10):
+        #     break
         x = x_new
 
+
     # print(f"Solution: {x}")
-    # error = np.dot(A, x) - b
+    # error = np.linalg.norm(abs(np.dot(A, x) - b))
+    # print(error)
     #  it_count, np.max(abs(np.dot(A, x) - b))
     return x
     # return x, it_count, np.max(abs(np.dot(A, x) - b))
-
+# pol_path=Constants.path+'polygons/rect.pt'
+# p=torch.load(pol_path)
+# err=np.sin(p['interior_points'][:,0])
+# A=p['M'][p['interior_indices']][:,p['interior_indices']]
+# A=A.todense()
+# Gauss_zeidel(A,err,err*0)
 # p=torch.load(Constants.path+'polygons/rect.pt')
 # M=p['M']
 # interior_indices=p['interior_indices']

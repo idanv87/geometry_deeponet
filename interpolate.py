@@ -55,22 +55,22 @@ def hint_iteration(A,b, n_it, points, model):
             x=GS_block(A,np.squeeze(b),np.squeeze(x_0))
           
         else:
-            x=np.squeeze(x_0)+np.squeeze(hint_block(np.dot(A,np.squeeze(x_0))-np.squeeze(b), points, model))
-
+            
+            # x=np.squeeze(x_0)+np.squeeze(hint_block(np.dot(A,np.squeeze(x_0))-np.squeeze(b), points, model))
             pass
-           
-        if np.allclose(x, x_0, 1e-6) or np.allclose(np.dot(A,x),b, 1e-6):
+        print(np.linalg.norm(np.dot(A,x)-b))
+        if   np.allclose(np.dot(A,x),b, 1e-10):
             return k_it,  np.dot(A,x)-b
     
     return k_it, x-x_0
-pol_path=Constants.path+'polygons/rect2.pt'
+pol_path=Constants.path+'polygons/rect.pt'
 p=torch.load(pol_path)
 err=np.sin(p['interior_points'][:,0])
 A=p['M'][p['interior_indices']][:,p['interior_indices']]
 A=A.todense()
 # print(type(err))
-it,err=hint_iteration(A,err,50, p['interior_points'], model)
-print(err)
+it,err=hint_iteration(A,err,500, p['interior_points'], model)
+# print(err)
 
 
 # p=torch.load(Constants.path+'polygons/special1.pt')
