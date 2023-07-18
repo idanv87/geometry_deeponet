@@ -25,6 +25,8 @@ class Polygon:
                 self.sc=simplicial_complex(vertices, triangles)
                 self.M=(self.sc[0].star_inv)@(-(self.sc[0].d).T)@(self.sc[1].star)@self.sc[0].d
                 self.generators=generators
+              
+
                 self.boundary_indices=[i for i in range(generators.shape[0])] 
                 self.calc_boundary_indices()
                 self.interior_indices=list(set(range(self.vertices.shape[0]))-set(self.boundary_indices))
@@ -137,8 +139,9 @@ def create_data_point(X,func,M, indices,legit):
 
 class branc_point:
     
-    def __init__(self,f, main_polygons):
-                
+    def __init__(self,f, main_polygons, support_vertices):
+
+        self.chi=chi_function(support_vertices).call        
         self.f=f
         self.main_polygons=main_polygons
         
@@ -154,8 +157,9 @@ class branc_point:
              
                 
                 x_interior_points=spread_points(Constants.pts_per_polygon, p['interior_points'])
-                
-                x.append(list(map(self.f, x_interior_points[:,0],x_interior_points[:,1]))  )
+                l1=list(map(self.f, x_interior_points[:,0],x_interior_points[:,1])) 
+                l2= list(map(self.chi, x_interior_points[:,0],x_interior_points[:,1])) 
+                x.append([l1[i]*l2[i] for i in range(len(l1))] )
 
                 y.append(p['eigen'])
         #   print(p['eigen'].shape)
@@ -202,8 +206,8 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
                         f,u=create_data_point(df['X'],func,df['M'], df['interior_indices'],df['legit'])
                         u=u[df['ind']]
                         
-                        f_x=branc_point(func, main_polygons).b1
-                        ev_x=branc_point(func,main_polygons).b2
+                        f_x=branc_point(func, main_polygons,df['generators'] ).b1
+                        ev_x=branc_point(func,main_polygons, df['generators']).b2
 
                         for i in range(df['interior_points'].shape[0]):
                         
@@ -237,21 +241,23 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
      
 
 def create_special_polygons():
-     path=Constants.path+'polygons/rect.pt'
-     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
-     path=Constants.path+'polygons/special1.pt'
-     data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 ))) 
+     path=Constants.path+'polygons/lshape.pt'
+     data_point(path, np.array([[0,0],[1,0],[1,1/4],[1/4,1/4],[1/4,1],[0,1]])) 
+#      path=Constants.path+'polygons/rect.pt'
+#      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+#      path=Constants.path+'polygons/special1.pt'
+#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 ))) 
 
 
       
 if __name__=='__main__':
         pass
         # create_special_polygons()
-        # creat_polygons_data(5)
+        # creat_polygons_data(20)
 
 
 polygons_files_names=extract_path_from_dir(Constants.path+'polygons/')
-test_polygons=[Constants.path+'polygons/rect.pt']
+test_polygons=[Constants.path+'polygons/lshape.pt']
 train_polygons= list(set(polygons_files_names)-set(test_polygons))
 
 all_eigs=[torch.load(name)['eigen'][-1] for name in train_polygons]
@@ -260,22 +266,23 @@ control_ind=[all_eigs.index(points[i]) for i in range(len(points))]
 control_polygons=set([train_polygons[i] for i in control_ind])
 
 
-def add_new_polygon(train_or_test='train'):
-     path=Constants.path+'polygons/rect2.pt'
-     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
-     create_data_points(control_polygons, [path], train_or_test='test')
 
 
 
 if __name__=='__main__':
         pass
-        create_data_points(control_polygons, train_polygons, train_or_test='train')
-        create_data_points(control_polygons, test_polygons, train_or_test='test')
+        # create_data_points(control_polygons, train_polygons, train_or_test='train')
+        # create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
        
 
 
 
+
+def add_new_polygon(train_or_test='train'):
+     path=Constants.path+'polygons/rect2.pt'
+     data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+#      create_data_points(control_polygons, [path], train_or_test='test')
 
 def plot_eigs():
    ev=[[],[],[]]
@@ -322,13 +329,13 @@ def plot_polygons(dir, name):
            
 # add_new_polygon()
 # print(train_polygons)
-# if __name__=='__main__': 
-#   pass
-#   plot_eigs()
-#   plot_polygons(control_polygons, 'control_polygons')   
-#   plot_polygons(test_polygons, 'test_polygons')   
-#   plot_polygons(train_polygons, 'train_polygons')  
-#   plt.show()
+if __name__=='__main__': 
+  pass
+  plot_eigs()
+  plot_polygons(control_polygons, 'control_polygons')   
+  plot_polygons(test_polygons, 'test_polygons')   
+  plot_polygons(train_polygons, 'train_polygons')  
+  plt.show()
 
 #         
         

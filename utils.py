@@ -18,6 +18,9 @@ import sklearn
 import argparse
 import torch
 import dmsh
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
+
 
 
 parser = argparse.ArgumentParser()
@@ -383,8 +386,8 @@ class Test_function:
 
     def call(self, x,y):
         # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
-        # return x**2+y
-        return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
+        return x**2+y
+        # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
       
 def calc_min_angle(geo):
     seg1=[]
@@ -454,6 +457,27 @@ def plot3d(x,y,z,color='black'):
         ax = fig.add_subplot(projection='3d')
         ax.scatter(x, y, z, color=color)
         
+
+class chi_function:
+     def __init__(self, vertices) -> None:
+          self.polygon=Polygon([(vertices[i,0],vertices[i,1]) for i in range(vertices.shape[0])])
+# polygon = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
+# print(polygon.contains(point))
+
+     def is_inside(self,x,y):
+        #   point = Point(0.5, 0.5)
+        point=Point(x,y)
+        return self.polygon.contains(point)
+     
+     def call(self, x,y):
+          if self.is_inside(x,y):
+               return 1
+          else:
+               return 0
+# v=np.array([[0,0],[1,0],[1,1],[0,1]])
+# chi=chi_function(v)
+# # print(chi.call(2,0.5))
+
     # print(f"Error: {error}")  
 # def generate_shape():
 #     V=[[0,0],[1,0],[1,1],[0,1]]

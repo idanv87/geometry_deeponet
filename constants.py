@@ -19,8 +19,8 @@ class Constants:
        gauss_points=5
 
        
-       num_control_polygons=2
-       batch_size=128
+       num_control_polygons=5
+       batch_size=32
        num_epochs=40
        pts_per_polygon=10
        ev_per_polygon=10
@@ -28,7 +28,7 @@ class Constants:
        k=9.12
        
        dim=2
-       num_ev=4
+       # num_ev=4
 
 
 

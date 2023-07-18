@@ -58,6 +58,12 @@ class SonarDataset(Dataset):
         self.x3 = X[2]
         self.x4 = X[3]
         self.y = y
+
+        self.x1 = [torch.load(name) for name in X[0]]
+        self.x2 = [torch.load(name) for name in X[1]]
+        self.x3 = [torch.load(name) for name in X[2]]
+        self.x4 = [torch.load(name) for name in X[3]]
+        self.y = [torch.load(name) for name in y]
         
  
     def __len__(self):
@@ -68,7 +74,9 @@ class SonarDataset(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
              idx = idx.tolist()
-        return torch.load(self.x1[idx]), torch.load(self.x2[idx])[-Constants.ev_per_polygon:], torch.load(self.x3[idx]), torch.load(self.x4[idx])[-Constants.ev_per_polygon:], torch.load(self.y[idx])
+        
+        return self.x1[idx], self.x2[idx][-Constants.ev_per_polygon:], self.x3[idx], self.x4[idx][-Constants.ev_per_polygon:], self.y[idx]
+        # return torch.load(self.x1[idx]), torch.load(self.x2[idx])[-Constants.ev_per_polygon:], torch.load(self.x3[idx]), torch.load(self.x4[idx])[-Constants.ev_per_polygon:], torch.load(self.y[idx])
    
     
 
