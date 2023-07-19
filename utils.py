@@ -23,10 +23,10 @@ from shapely.geometry.polygon import Polygon
 
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--lr-scheduler', dest='lr_scheduler', action='store_true')
-parser.add_argument('--early-stopping', dest='early_stopping', action='store_true')
-args = vars(parser.parse_args())
+# parser = argparse.ArgumentParser()
+# parser.add_argument('--lr-scheduler', dest='lr_scheduler', action='store_true')
+# parser.add_argument('--early-stopping', dest='early_stopping', action='store_true')
+# args = vars(parser.parse_args())
 
 def clip(value, lower, upper):
     """
@@ -386,7 +386,7 @@ class Test_function:
 
     def call(self, x,y):
         # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
-        return x**2+y
+        return x*(x-1)*(x-0.25)*y*(y-1)*(y-0.25)
         # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
       
 def calc_min_angle(geo):

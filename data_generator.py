@@ -78,7 +78,7 @@ class data_point:
             v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
             v[:,0]-=np.mean(v[:,0])
             v[:,1]-=np.mean(v[:,1])
-            print(v.shape)
+    
             geo = dmsh.Polygon(v)
             if np.min(calc_min_angle(geo))>(math.pi/8):
                 X, cells = dmsh.generate(geo, Constants.h)
@@ -291,8 +291,12 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
 def create_special_polygons():
      path=Constants.path+'polygons/lshape.pt'
      data_point(path, np.array([[0,0],[1,0],[1,1/4],[1/4,1/4],[1/4,1],[0,1]])) 
-#      path=Constants.path+'polygons/rect.pt'
-#      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]])) 
+     for k in list(np.linspace(1,5,20)):
+
+        a=k+1
+        b=(1/(k+1))
+        path=Constants.path+'polygons/rect'+str(k)+'.pt'
+        data_point(path, np.array([[0,0],[a,0],[a,b],[0,b]])) 
 #      path=Constants.path+'polygons/special1.pt'
 #      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 ))) 
 
@@ -300,8 +304,8 @@ def create_special_polygons():
       
 if __name__=='__main__':
         pass
-        create_special_polygons()
-        creat_polygons_data(5)
+        # create_special_polygons()
+        # creat_polygons_data(5)
 
 
 polygons_files_names=extract_path_from_dir(Constants.path+'polygons/')
@@ -319,8 +323,8 @@ control_polygons=set([train_polygons[i] for i in control_ind])
 
 if __name__=='__main__':
         pass
-        create_data_points(control_polygons, train_polygons, train_or_test='train')
-        create_data_points(control_polygons, test_polygons, train_or_test='test')
+        # create_data_points(control_polygons, train_polygons, train_or_test='train')
+        # create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
        
 
@@ -379,7 +383,7 @@ def plot_polygons(dir, name):
 # print(train_polygons)
 if __name__=='__main__': 
   pass
-  plot_eigs()
+#   plot_eigs()
   plot_polygons(control_polygons, 'control_polygons')   
   plot_polygons(test_polygons, 'test_polygons')   
   plot_polygons(train_polygons, 'train_polygons')  

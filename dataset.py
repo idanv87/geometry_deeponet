@@ -53,13 +53,14 @@ def load_data_names(train_or_test):
 
 class SonarDataset(Dataset):
     def __init__(self, X, y):
+        self.load_type=True
         #  X is list of length num-inputs. each item in the list is a list of file names.
-
-        # self.x = [[torch.load(name) for name in X[k]] for k in range(len(X))]
-        # self.y = [[torch.load(name) for name in y[k]] for k in range(len(y))]
-
-        self.x = [[name for name in X[k]] for k in range(len(X))]
-        self.y = [[name for name in y[k]] for k in range(len(y))]
+        if self.load_type:
+            self.x = [[torch.load(name) for name in X[k]] for k in range(len(X))]
+            self.y = [[torch.load(name) for name in y[k]] for k in range(len(y))]
+        else:
+            self.x = [[name for name in X[k]] for k in range(len(X))]
+            self.y = [[name for name in y[k]] for k in range(len(y))]
          
     def __len__(self):
         # this should return the size of the dataset
@@ -68,12 +69,17 @@ class SonarDataset(Dataset):
 
  
     def __getitem__(self, idx):
+
         if torch.is_tensor(idx):
-             idx = idx.tolist()
+            idx = idx.tolist()
+        if self.load_type:     
+            return [self.x[k][idx] for k in range(len(self.x))], [self.y[k][idx] for k in range(len(self.y))]
+        else:
+            return [torch.load(self.x[k][idx]) for k in range(len(self.x))], [torch.load(self.y[k][idx]) for k in range(len(self.y))]
+
+
 
         # print(self.x[5][0].shape)
-        # return [self.x[k][idx] for k in range(len(self.x))], [self.y[k][idx] for k in range(len(self.y))]
-        return [torch.load(self.x[k][idx]) for k in range(len(self.x))], [torch.load(self.y[k][idx]) for k in range(len(self.y))]
 
     
         
