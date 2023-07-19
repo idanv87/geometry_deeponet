@@ -83,16 +83,16 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     prog_bar = tqdm(enumerate(train_dataloader), total=int(len(train_dataset)/train_dataloader.batch_size))
     for i, data in prog_bar:
         counter += 1
-        x1,x2,x3,x4,output=data
+        input,output=data
+        input=[input[k].to(Constants.device) for k in range(len(input))]
+        output=[output[k].to(Constants.device) for k in range(len(output))]
      
-        x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
-        total += output.size(0)
+        # x1,x2,x3,x4,x5,x6,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),x5.to(Constants.device),x6.to(Constants.device),output.to(Constants.device)
+        total += output[0].size(0)
         optimizer.zero_grad()
-        outputs = model(x3,x4,x1,x2)
+        outputs = model(input)
+        loss = torch.mean(torch.stack([criterion(outputs[k], output[k]) for k in range(len(output))]))
 
-      
-    
-        loss = criterion(outputs, output)
         train_running_loss += loss.item()
       
        
@@ -116,15 +116,14 @@ def validate(model, dataloader, dataset, criterion):
     with torch.no_grad():
         for i, data in prog_bar:
             counter += 1
-            x1,x2,x3,x4,output=data
-            x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
-            total += output.size(0)
-            outputs = model(x3,x4,x1,x2)
-            loss = criterion(outputs, output)
-            
+            input,output=data
+            input=[input[k].to(Constants.device) for k in range(len(input))]
+            output=[output[k].to(Constants.device) for k in range(len(output))]
+            total += output[0].size(0)
+            outputs = model(input)
+            loss = torch.mean(torch.stack([criterion(outputs[k], output[k]) for k in range(len(output))]))
             val_running_loss += loss.item()
-            # _, preds = torch.max(outputs.data, 1)
-            # val_running_correct += (preds == output).sum().item()
+
         
         val_loss = val_running_loss / counter
         

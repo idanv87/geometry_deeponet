@@ -8,12 +8,13 @@ import math
 import cmath
 
 import scipy
+import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
-# from utils import *
+from utils import *
 
 
 
@@ -21,6 +22,8 @@ from shapely.geometry.polygon import Polygon
 # of a triangle given coordinate
 # of all three vertices
 import math
+
+
 
 # returns square of distance b/w two points
 # def tanacos(x):
@@ -67,13 +70,18 @@ def get_angle(A, B, C):
 
 
 # vertices=[[0,0.],[1,0.],[1.,1],[0.,1]]
-vertices=[[0,0],[1,0],[1,1/4],[1/4,1/4],[1/4,1],[0,1]]
-point=(0.5,0.1)
-def find_mv_coords(vertices, point):
+# vertices=[[0,0],[1,0],[1,1/4],[1/4,1/4],[1/4,1],[0,1]]
+# point=(0.5,0.1)
+def find_meanvalue_coords(vertices, point):
         
         gamma=[]
         betta=[]
         polygon=Polygon([(vertices[i][0],vertices[i][1]) for i in range(len(vertices))])
+        # plt.scatter(np.array(vertices)[:,0], np.array(vertices)[:,1])
+        # plt.scatter(point[0], point[1])
+        # plt.show()
+     
+
         assert polygon.contains(Point(point[0],point[1]))
         for i in range(len(vertices)):
             gamma.append(get_angle(point,vertices[i],vertices[(i+1) % len(vertices)] )[0])
@@ -82,22 +90,75 @@ def find_mv_coords(vertices, point):
         w=[(math.tan(betta[i])+math.tan(gamma[i]))/(math.sqrt(lengthSquare(point, vertices[i]))) for i in range(len(gamma))]    
         return [w[i]/np.sum(w) for i in range(len(w)) ]
 	    
-def map_circle_to_n_gon(n):
-    x=[]
-    y=[]
+def map_circle_to_n_gon(n,r,theta):
+    z=r*cmath.exp(1j*theta)
+    value1=scipy.special.hyp2f1(1/n, 2/n, 1+1/n, z**n, out=None)
+    value=z*((1-z**n)**(2/n))*((z**n-1)**(-2/n))*value1
+    x=value.real
+    y=value.imag
 
-    for r in list(np.linspace(0, 0.95, 100)):   
-        for theta in list(np.linspace(0, 2*np.pi, 100)):
-            z=r*cmath.exp(1j*theta)
-            value1=scipy.special.hyp2f1(1/n, 2/n, 1+1/n, z**n, out=None)
-            value=z*((1-z**n)**(2/n))*((z**n-1)**(-2/n))*value1
-            x.append(value.real)
-            y.append(value.imag)
+    # for r in list(np.linspace(0, 0.9, 200)):   
+    #     for theta in list(np.linspace(0, 2*np.pi, 100)):
+    #         z=r*cmath.exp(1j*theta)
+    #         value1=scipy.special.hyp2f1(1/n, 2/n, 1+1/n, z**n, out=None)
+    #         value=z*((1-z**n)**(2/n))*((z**n-1)**(-2/n))*value1
+    #         x.append(value.real)
+    #         y.append(value.imag)
     return x, y
-x,y=map_circle_to_n_gon(5)
+def map_regular_n_gon_to_polygon(generators_of_target_polygon, xi,eta):
+    generators=generators_of_target_polygon
+    #   generators np array of shape (n,2) 
+    n=len(generators)
+    reg_vertices=[cmath.exp(k*2*math.pi*1J/n) for k in range(n)]
+    # reg_vertices=[reg_vertices[k]-reg_vertices[0] for k in range(n)]
+    # angles=[k*2*math.pi/n/math.pi*180 for k in range(n)]
+    x=[reg_vertices[i].real*2 for i in range(n)]
+    y=[reg_vertices[i].imag*2 for i in range(n)]
+    w=find_meanvalue_coords([[x[i],y[i]] for i in range(n)],(xi, eta))
+    return np.matmul(np.array(w),generators)
+
+def map_circle_to_polygon(vertices_target,r,theta):
+      x,y=map_circle_to_n_gon(len(vertices_target),r, theta )
+      return map_regular_n_gon_to_polygon(vertices_target, x,y)
+      
+class  Map_circle_to_polygon:
+        def __init__(self, vertices_target):
+            self.vertices= vertices_target
+        def call(self,x,y):
+              r=np.sqrt(x**2+y**2)
+              theta=np.arctan2(y, x)
+              return map_circle_to_polygon(self.vertices, r, theta)
+              
+
+
+# x=[]
+# y=[]
+# n=5
+# for r in list(np.linspace(0.1, 0.99, 200)):   
+#         for theta in list(np.linspace(0, 2*np.pi, 100)):
+#             z=r*cmath.exp(1j*theta)
+#             value1=scipy.special.hyp2f1(1/n, 2/n, 1+1/n, z**n, out=None)
+#             value=z*((1-z**n)**(2/n))*((z**n-1)**(-2/n))*value1
+#             x.append(value.real)
+#             y.append(value.imag)
+# reg_vertices=[cmath.exp(k*2*math.pi*1J/n) for k in range(n)]
+# plt.scatter(x,y)
+# x=[reg_vertices[i].real for i in range(n)]
+# y=[reg_vertices[i].imag for i in range(n)]
+# plt.scatter(x,y,color='red')
+# plt.show()
+
+
+
+# w=map_circle_to_polygon(np.array([[0,0],[1,0],[1,1],[0,1]]),0.5,math.pi)
+
+# print(w)
+      
+
+# x,y=map_circle_to_n_gon(5)
 # print(y)
-plt.scatter(x,y)
-plt.show()
+# plt.scatter(x,y)
+# plt.show()
 # w=find_mv_coords(vertices, point)
 
 

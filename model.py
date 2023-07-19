@@ -12,36 +12,15 @@ import torch.optim as optim
 import numpy as np
 
 from utils import *
-# from dataset import train_dataloader, train_dataset, val_dataset, val_dataloader, test_dataloader, test_dataset
+
 from tqdm import tqdm
 import argparse
 import time
+from constants import model_constants
 
 
-def validate(model, dataloader, dataset, criterion):
-    # print('Validating')
-    model.eval()
-    val_running_loss = 0.0
-    counter = 0
-    total = 0
-    prog_bar = tqdm(enumerate(dataloader), total=int(len(dataset)/dataloader.batch_size))
-    with torch.no_grad():
-        for i, data in prog_bar:
-            counter += 1
-            x1,x2,x3,x4,output=data
-            x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
-            total += output.size(0)
-            outputs = model(x3,x4,x1,x2)
-            loss = criterion(outputs, output)
-            
-            val_running_loss += loss.item()
-            # _, preds = torch.max(outputs.data, 1)
-            # val_running_correct += (preds == output).sum().item()
-        
-        val_loss = val_running_loss / counter
-        
-        return val_loss
-
+# 
+# print(len(train_dataset))
 
 
 
@@ -85,20 +64,28 @@ class trunk(nn.Module):
 class deeponet(nn.Module):
     def __init__(self, pts_per_polygon, ev_per_polygon, dim, p):
       super().__init__()
+      # self.branch1=branch(pts_per_polygon,p)
+      # self.branch2=branch(ev_per_polygon,p)
+
       self.branch1=branch(pts_per_polygon,p)
-      self.branch2=branch(ev_per_polygon,p)
+      self.branch2=branch(pts_per_polygon,p)
       
       self.trunk1=trunk(dim,p)
       self.trunk2=trunk(ev_per_polygon,p)
 
+
+
+
       self.linear1=nn.Linear(in_features=2*p, out_features=2*p, bias=False)
 
-    def forward(self,x,lx,y,ly):
+    def forward(self,input):
+       y,ly,x,lx,f_circle,f_polygon=input
        s1=torch.cat(( self.trunk1(y),self.trunk2(ly/10)), dim=-1)
-       s2=self.linear1(torch.cat(( self.branch1(x),self.branch2(lx/10)), dim=-1))
+       s2=self.linear1(torch.cat(( self.branch1(f_circle),self.branch2(f_polygon)), dim=-1))
        
      
-       return torch.sum(s1*s2, dim=-1)
+       return [torch.sum(s1*s2, dim=-1)]
+
 
 
 
@@ -112,7 +99,7 @@ model=deeponet(pts_per_polygon, ev_per_polygon, dim, p)
 
 # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
 # model.load_state_dict(best_model['model_state_dict'])
-print(count_trainable_params(model))
+print('number of model parameters: '+str(count_trainable_params(model)))
 
 if __name__=='__main__':
    pass
@@ -164,3 +151,26 @@ if __name__=='__main__':
 #    print(model(x3,x4,x1,x2))
 
 
+# def validate(model, dataloader, dataset, criterion):
+#     # print('Validating')
+#     model.eval()
+#     val_running_loss = 0.0
+#     counter = 0
+#     total = 0
+#     prog_bar = tqdm(enumerate(dataloader), total=int(len(dataset)/dataloader.batch_size))
+#     with torch.no_grad():
+#         for i, data in prog_bar:
+#             counter += 1
+#             x1,x2,x3,x4,output=data
+#             x1,x2,x3,x4,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),output.to(Constants.device)
+#             total += output.size(0)
+#             outputs = model(x3,x4,x1,x2)
+#             loss = criterion(outputs, output)
+            
+#             val_running_loss += loss.item()
+#             # _, preds = torch.max(outputs.data, 1)
+#             # val_running_correct += (preds == output).sum().item()
+        
+#         val_loss = val_running_loss / counter
+        
+#         return val_loss

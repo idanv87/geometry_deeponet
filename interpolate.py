@@ -39,7 +39,7 @@ def hint_block(err, points, model):
 def GS_block(A,b, x):
     return Gauss_zeidel(A,b, x)
 
-def hint_iteration(A,b, n_it, points, model):
+def hint_iterations(A,b, n_it, points, model):
 
     k_it=0
     x=0*b
@@ -59,14 +59,14 @@ def hint_iteration(A,b, n_it, points, model):
     
     return k_it, x-x_0
 # add_new_polygon()
-pol_path=Constants.path+'polygons/rect2.pt'
-p=torch.load(pol_path)
-b=np.sin(p['interior_points'][:,0])
-A=p['M'][p['interior_indices']][:,p['interior_indices']]
-A=A.todense()
-# print(type(err))
-it,err=hint_iteration(A,b,100, p['interior_points'], model)
-print(err)
+# pol_path=Constants.path+'polygons/rect2.pt'
+# p=torch.load(pol_path)
+# b=np.sin(p['interior_points'][:,0])
+# A=p['M'][p['interior_indices']][:,p['interior_indices']]
+# A=A.todense()
+# # print(type(err))
+# it,err=hint_iterations(A,b,100, p['interior_points'], model)
+# print(err)
 
 
 # p=torch.load(Constants.path+'polygons/special1.pt')

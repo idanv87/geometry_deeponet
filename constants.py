@@ -1,5 +1,8 @@
 import os
 import torch
+import numpy as np
+import math
+import cmath
 # heelo
 class Constants:
        
@@ -18,12 +21,19 @@ class Constants:
        h=0.2
        gauss_points=5
 
-       
-       num_control_polygons=5
-       batch_size=32
+       model_dimension=None
+       num_control_polygons=1
+       batch_size=64
        num_epochs=40
        pts_per_polygon=10
-       ev_per_polygon=10
+       points_on_circle=[]
+       for r in list(np.linspace(0,0.99,50)):
+              for theta in list(np.linspace(0,2*math.pi,50)):
+                     z=r*cmath.exp(theta*1j)
+                     points_on_circle.append([z.real,z.imag ])
+
+       points_on_circle=np.array(points_on_circle)
+       ev_per_polygon=11
 
        k=9.12
        
@@ -55,5 +65,8 @@ class Constants:
        polygon_train_pathes=[]    
        main_polygons_pathes=[]   
        
+
+class model_constants:
+       dim=None
 
 

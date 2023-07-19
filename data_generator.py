@@ -14,7 +14,7 @@ import optimesh
 from utils import *
 from constants import Constants
 from pathlib import Path
-
+from coords import Map_circle_to_polygon
 
 
 class Polygon:
@@ -40,7 +40,7 @@ class Polygon:
         
 
         def laplacian(self):
-                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=Constants.ev_per_polygon+1,return_eigenvectors=False, which='SM')
+                return scipy.sparse.linalg.eigs(-self.M[self.interior_indices][:,self.interior_indices],k=Constants.ev_per_polygon,return_eigenvectors=False, which='SM')
         
         # def solve_helmholtz(self,f):
         #        A=-self.M[self.interior_indices][:,self.interior_indices]-Constants.k*scipy.sparse.identity(len(self.interior_indices))
@@ -78,6 +78,7 @@ class data_point:
             v=(np.sqrt(math.pi)/np.sqrt(polygon_centre_area(v)))*v
             v[:,0]-=np.mean(v[:,0])
             v[:,1]-=np.mean(v[:,1])
+            print(v.shape)
             geo = dmsh.Polygon(v)
             if np.min(calc_min_angle(geo))>(math.pi/8):
                 X, cells = dmsh.generate(geo, Constants.h)
@@ -87,7 +88,7 @@ class data_point:
                 
                 self.path=path
                 self.value={'eigen':None, 'interior_points':None, 'generators':v, 'X':X, 'cells':cells,'ind':None, 'interior_indices':self.polygon.interior_indices, 'M':self.polygon.M, 'legit':self.polygon.is_legit()}
-                
+              
                 if self.polygon.is_legit():
                         
                         self.value['eigen']=self.polygon.ev
@@ -137,9 +138,46 @@ def create_data_point(X,func,M, indices,legit):
             
             return f,u
 
+class branc_point2:
+    
+    def __init__(self,f, input_polygon_interior, target_polygon=None):
+        self.f=f
+        self.target_polygon=target_polygon
+        if target_polygon is not None:
+             
+              self.transform=Map_circle_to_polygon(target_polygon).call
+              self.interior_points=Constants.points_on_circle
+        else:
+                
+                self.interior_points=input_polygon_interior
+        
+        self.values= self.calculate_branch()
+
+
+    def calculate_branch(self):
+        x=[]
+        y=[]
+        x_interior_points=spread_points(Constants.pts_per_polygon, self.interior_points)
+        if self.target_polygon is not None:
+                xi=np.array(list(map(self.transform, x_interior_points[:,0],x_interior_points[:,1]))  )
+        else:
+                xi=x_interior_points        
+                
+              
+        l1=list(map(self.f, xi[:,0],xi[:,1]))  
+        x.append([l1[i] for i in range(len(l1))] )
+        # y.append(p['eigen'])
+
+        x=np.hstack(x).reshape((len(x), len(x[0])))
+        # print(np.hstack(y).shape)
+        # y=np.hstack(y).reshape((len(y), len(y[0])))
+        return x.transpose()
+    
 class branc_point:
     
     def __init__(self,f, main_polygons, support_vertices):
+        # calculate mapping from  circle to regular polygon to train polygon
+        # evaluate f on circle.
 
         self.chi=chi_function(support_vertices).call        
         self.f=f
@@ -206,6 +244,8 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
                         f,u=create_data_point(df['X'],func,df['M'], df['interior_indices'],df['legit'])
                         u=u[df['ind']]
                         
+                        f_circle=branc_point2(func, None, df['generators'] ).values
+                        f_polygon=branc_point2(func, df['interior_points']).values
                         f_x=branc_point(func, main_polygons,df['generators'] ).b1
                         ev_x=branc_point(func,main_polygons, df['generators']).b2
 
@@ -224,12 +264,20 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
                                 
                                 out_path=Constants.path+train_or_test
                                 if train_or_test=='hints':
-                                        data.append((np_to_torch(y),np_to_torch(ev_y[-Constants.ev_per_polygon:]),np_to_torch(f_x),np_to_torch(ev_x[-Constants.ev_per_polygon:])))
+                                        data.append((np_to_torch(y),np_to_torch(ev_y[-Constants.ev_per_polygon:]),np_to_torch(f_x),np_to_torch(ev_x[-Constants.ev_per_polygon:])
+                                                     ,np_to_torch(f_circle),np_to_torch(f_polygon)
+                                                     )
+                                                    
+                                                    )
                                 else:
+                                       
                                         save_file(np_to_torch(y),out_path+'/y/', name)
                                         save_file(np_to_torch(ev_y),out_path+'/ev_y/', name)
                                         save_file(np_to_torch(f_x),out_path+'/f_x/', name)
                                         save_file(np_to_torch(ev_x),out_path+'/ev_x/', name)
+                                        save_file(np_to_torch(ev_x),out_path+'/ev_x/', name)
+                                        save_file(np_to_torch(f_circle),out_path+'/f_circle/', name)
+                                        save_file(np_to_torch(f_polygon),out_path+'/f_polygon/', name)
                                         save_file(np_to_torch(output),out_path+'/output/', name)
                                 
                                 
@@ -252,8 +300,8 @@ def create_special_polygons():
       
 if __name__=='__main__':
         pass
-        # create_special_polygons()
-        # creat_polygons_data(20)
+        create_special_polygons()
+        creat_polygons_data(5)
 
 
 polygons_files_names=extract_path_from_dir(Constants.path+'polygons/')
@@ -271,8 +319,8 @@ control_polygons=set([train_polygons[i] for i in control_ind])
 
 if __name__=='__main__':
         pass
-        # create_data_points(control_polygons, train_polygons, train_or_test='train')
-        # create_data_points(control_polygons, test_polygons, train_or_test='test')
+        create_data_points(control_polygons, train_polygons, train_or_test='train')
+        create_data_points(control_polygons, test_polygons, train_or_test='test')
         print('finished creating data')
        
 
