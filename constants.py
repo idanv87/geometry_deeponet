@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import math
 import cmath
-# heelo
+
 class Constants:
        
        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,9 +23,9 @@ class Constants:
 
        model_dimension=None
        num_control_polygons=1
-       batch_size=64
+       batch_size=32
        num_epochs=100
-       pts_per_polygon=10
+       pts_per_polygon=20
        points_on_circle=[]
        for r in list(np.linspace(0,0.99,50)):
               for theta in list(np.linspace(0,2*math.pi,50)):
@@ -35,7 +35,7 @@ class Constants:
        points_on_circle=np.array(points_on_circle)
        ev_per_polygon=11
 
-       k=9.12
+       k=20.12
        
        dim=2
        # num_ev=4
