@@ -36,10 +36,10 @@ class interplation_block:
 def hint_block(err, points, model):
     # p=torch.load(pol_path)
 
-    # data=create_data_points(control_polygons,[pol_path], 'hints',interplation_block(points, err).call)
-    data = create_data_points(
-        control_polygons, [pol_path], "hints", Test_function().call
-    )
+    data=create_data_points(control_polygons,[pol_path], 'hints',interplation_block(points, err).call)
+    # data = create_data_points(
+    #     control_polygons, [pol_path], "hints", Test_function().call
+    # )
 
     solution = []
     for dat in data:
@@ -89,11 +89,12 @@ def hint_iterations(A, b, n_it, points, model):
 
 
 # add_new_polygon()
-pol_path = Constants.path + "polygons/lshape.pt"
+pol_path = Constants.path + "hints_polygons/lshape.pt"
 p = torch.load(pol_path)
 # print(len(p['interior_points']))
 f = Test_function().call
 b = np.array(list(map(f, p["interior_points"][:, 0], p["interior_points"][:, 1])))
+print(b.shape)
 A = -p["M"][p["interior_indices"]][
     :, p["interior_indices"]
 ] - Constants.k * scipy.sparse.identity(len(p["interior_indices"]))

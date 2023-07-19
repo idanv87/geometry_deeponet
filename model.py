@@ -13,17 +13,6 @@ import numpy as np
 
 from utils import *
 
-from tqdm import tqdm
-import argparse
-import time
-
-# from constants import model_constants
-
-
-#
-# print(len(train_dataset))
-
-
 class branch(nn.Module):
     def __init__(self, n, p):
         super().__init__()
@@ -69,7 +58,8 @@ class deeponet(nn.Module):
         self.trunk1 = trunk(dim, p)
         self.trunk2 = trunk(ev_per_polygon, p)
 
-        self.linear1 = nn.Linear(in_features=2 * p, out_features=2 * p, bias=False)
+        self.linear1 = nn.Linear(
+            in_features=2 * p, out_features=2 * p, bias=False)
 
     def forward(self, input):
         y, ly, x, lx, f_circle, f_polygon = input
@@ -92,7 +82,7 @@ model = deeponet(pts_per_polygon, ev_per_polygon, dim, p)
 print("number of model parameters: " + str(count_trainable_params(model)))
 
 if __name__ == "__main__":
-    
+
     pass
 
     # best_model=torch.load(Constants.path+'best_model/'+'2023-07-10_10.00.42.817019.pth')

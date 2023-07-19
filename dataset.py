@@ -7,7 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset, Subset
 
-from constants import Constants, model_constants
+from constants import Constants
 from utils import *
 
 
@@ -22,7 +22,7 @@ def load_data_names(train_or_test):
 
 class SonarDataset(Dataset):
     def __init__(self, X, y):
-        self.load_type = True
+        self.load_type = False
         #  X is list of length num-inputs. each item in the list is a list of file names.
         if self.load_type:
             self.x = [[torch.load(name) for name in X[k]] for k in range(len(X))]
@@ -50,20 +50,20 @@ class SonarDataset(Dataset):
             ]
 
 
-# input, output = load_data_names("train")
-# my_dataset = SonarDataset(input, output)
+input, output = load_data_names("train")
+my_dataset = SonarDataset(input, output)
 
-# train_size = int(0.7 * len(my_dataset))
-# val_size = len(my_dataset) - train_size
+train_size = int(0.7 * len(my_dataset))
+val_size = len(my_dataset) - train_size
 
-# train_dataset, val_dataset = torch.utils.data.random_split(
-#     my_dataset, [train_size, val_size]
-# )
+train_dataset, val_dataset = torch.utils.data.random_split(
+    my_dataset, [train_size, val_size]
+)
 
-# val_dataloader = DataLoader(val_dataset, batch_size=Constants.batch_size, shuffle=True)
-# train_dataloader = DataLoader(
-#     train_dataset, batch_size=Constants.batch_size, shuffle=True
-# )
+val_dataloader = DataLoader(val_dataset, batch_size=Constants.batch_size, shuffle=True)
+train_dataloader = DataLoader(
+    train_dataset, batch_size=Constants.batch_size, shuffle=True
+)
 
 
 input, output = load_data_names("test")

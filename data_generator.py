@@ -73,7 +73,8 @@ class Polygon:
 
 
 class data_point:
-    def __init__(self, path, special=None):
+    def __init__(self, path,h, special=None):
+        self.h=h
         if special is not None:
 
             v = special
@@ -94,7 +95,7 @@ class data_point:
 
         geo = dmsh.Polygon(v)
         if np.min(calc_min_angle(geo)) > (math.pi / 8):
-            X, cells = dmsh.generate(geo, Constants.h)
+            X, cells = dmsh.generate(geo, self.h)
 
             X, cells = optimesh.optimize_points_cells(
                 X, cells, "CVT (full)", 1.0e-6, 120
@@ -129,9 +130,6 @@ class data_point:
         torch.save(self.value, self.path)
 
 
-
-
-
 def creat_polygons_data(num_samples):
     for i in range(num_samples):
         uniq_filename = (
@@ -140,26 +138,18 @@ def creat_polygons_data(num_samples):
             + str(datetime.datetime.now().time()).replace(":", ".")
         )
         path = Constants.path + "polygons/" + uniq_filename + ".pt"
-        data_point(path)
+        data_point(path, Constants.h)
 
-
-# def create_special_polygons():
-#      path=Constants.path+'special_polygons/rect.pt'
-#      data_point(path, np.array([[0,0],[1,0],[1,1],[0,1]]))
-#      path=Constants.path+'special_polygons/special1.pt'
-#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,15 ))
-# )
-
-#      data_point(path, np.array([[0,-1],[0.5,1],[0,1],[-0.5,0]]))
 
 
 def create_data_point(X, func, M, indices, legit):
-    assert legit
-    f = np.array(list(map(func, X[:, 0], X[:, 1])))
+        assert legit
+        f = np.array(list(map(func, X[:, 0], X[:, 1])))
+       
+        u = solve_helmholtz(M, indices, f)
+       
 
-    u = solve_helmholtz(M, indices, f)
-
-    return f, u
+        return f, u
 
 
 class branc_point2:
@@ -259,25 +249,35 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
     if train_or_test == "hints":
         funcs = [func]
 
-    main_polygons = create_main_polygons(control_polygons)
+#     main_polygons = create_main_polygons(control_polygons)
 
     data = []
     for file in train_polygons:
+      
+        print('\n generate '+file)
 
         if os.path.isfile(file):
             df = torch.load(file)
 
-        for func in funcs:
+        
 
+        for func in funcs:
+            
             f, u = create_data_point(
                 df["X"], func, df["M"], df["interior_indices"], df["legit"]
             )
+            
+           
             # u=u[df['ind']]
-
+            
             f_circle = branc_point2(func, None, df["generators"]).values
             f_polygon = branc_point2(func, df["interior_points"]).values
-            f_x = branc_point(func, main_polygons, df["generators"]).b1
-            ev_x = branc_point(func, main_polygons, df["generators"]).b2
+           
+        #     f_x = branc_point(func, main_polygons, df["generators"]).b1
+        #     ev_x = branc_point(func, main_polygons, df["generators"]).b2
+            f_x=0
+            ev_x=0
+        
 
             for i in range(df["interior_points"].shape[0]):
 
@@ -319,30 +319,30 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
                     save_file(np_to_torch(f_polygon), out_path + "/f_polygon/", name)
                     save_file(np_to_torch(output), out_path + "/output/", name)
 
+    
     return data
 
 
-def create_special_polygons():
+def create_special_polygons(h=Constants.h):
+        path = Constants.path + "hints_polygons/lshape.pt"
+        # data_point(path, 0.1, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
 
-    path = Constants.path + "polygons/lshape.pt"
-    data_point(
-        path, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]])
-    )
-    for k in list(np.linspace(1, 3, 20)):
-        a = k + 1
-        b = 1 / (k + 1)
-        path = Constants.path + "polygons/rect" + str(k) + ".pt"
-        data_point(path, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
+        path = Constants.path + "polygons/lshape.pt"
+       
+        data_point(path, h, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+        for k in list(np.linspace(0, 2, 3)):
+    
+                a = k + 1
+                b = 1 / (k + 1)
+                path = Constants.path + "polygons/rect" + str(k) + ".pt"
+                data_point(path, h, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
 
-
-#      path=Constants.path+'polygons/special1.pt'
-#      data_point(path, np.array(generate_polygon((0.,0.), Constants.radius, 0,0,8 )))
 
 
 if __name__ == "__main__":
     pass
-    # create_special_polygons()
-    # creat_polygons_data(5)
+    create_special_polygons()
+#     creat_polygons_data(5)
 
 
 polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
@@ -359,17 +359,9 @@ control_polygons = set([train_polygons[i] for i in control_ind])
 
 if __name__ == "__main__":
     pass
-    # create_data_points(control_polygons, train_polygons, train_or_test='train')
-    # create_data_points(control_polygons, test_polygons, train_or_test='test')
+    create_data_points(control_polygons, train_polygons, train_or_test='train')
+    create_data_points(control_polygons, test_polygons, train_or_test='test')
     print("finished creating data")
-
-
-def add_new_polygon(train_or_test="train"):
-    path = Constants.path + "polygons/rect2.pt"
-    data_point(path, np.array([[0, 0], [1, 0], [1, 1], [0, 1]]))
-
-
-#      create_data_points(control_polygons, [path], train_or_test='test')
 
 
 def plot_eigs():
@@ -412,16 +404,16 @@ def plot_polygons(dir, name):
             axs[j].plot(xs, ys)
             axs[j].scatter(control_points[:, 0], control_points[:, 1])
 
-
+    # plt.title(str(name))
 
 
 if __name__ == "__main__":
     pass
     plot_eigs()
-    #   plot_polygons(control_polygons, 'control_polygons')
-    #   plot_polygons(test_polygons, 'test_polygons')
-    #   plot_polygons(train_polygons, 'train_polygons')
-    plt.show()
+#     #   plot_polygons(control_polygons, 'control_polygons')
+#     #   plot_polygons(test_polygons, 'test_polygons')
+#     #   plot_polygons(train_polygons, 'train_polygons')
+#     plt.show()
 
 
 #

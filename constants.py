@@ -18,14 +18,14 @@ class Constants:
        var_center=0
        var_angle=0.4
        radius=3
-       h=0.2
+       h=0.1
        gauss_points=5
 
-       model_dimension=None
+  
        num_control_polygons=1
-       batch_size=32
-       num_epochs=100
-       pts_per_polygon=20
+       batch_size=128
+       num_epochs=2
+       pts_per_polygon=30
        points_on_circle=[]
        for r in list(np.linspace(0,0.99,50)):
               for theta in list(np.linspace(0,2*math.pi,50)):
@@ -33,9 +33,9 @@ class Constants:
                      points_on_circle.append([z.real,z.imag ])
 
        points_on_circle=np.array(points_on_circle)
-       ev_per_polygon=11
+       ev_per_polygon=4
 
-       k=20.12
+       k=10
        
        dim=2
        # num_ev=4
@@ -45,6 +45,10 @@ class Constants:
        isExist = os.path.exists(path+'polygons')
        if not isExist:
               os.makedirs(path+'polygons')    
+       
+       isExist = os.path.exists(path+'hints_polygons')
+       if not isExist:
+              os.makedirs(path+'hints_polygons')   
 
            
 
@@ -64,9 +68,9 @@ class Constants:
                        
        polygon_train_pathes=[]    
        main_polygons_pathes=[]   
+       model_dimension=None
        
 
-class model_constants:
-       dim=None
+
 
 
