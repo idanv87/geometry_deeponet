@@ -11,49 +11,47 @@ from constants import Constants
 from utils import *
 
 
-def load_data_names(train_or_test):
-    dirs = ["/y/", "/ev_y/", "/f_x/", "/ev_x/", "/f_circle/", "/f_polygon/", "/output/"]
-    out_path = Constants.path + train_or_test
+def load_data_names(dirs):
+    # dirs = ["/input/", "/output/"]
+    # out_path = Constants.path + train_or_test
     data = []
     for dir in dirs:
         data.append(extract_path_from_dir(out_path + dir))
-    return [data[0], data[1], data[2], data[3], data[4], data[5]], [data[6]]
+    return data[:-1], data[-1]
 
 
 class SonarDataset(Dataset):
-    def __init__(self, X, y):
-
-        self.load_type = False
+    def __init__(self, X, Y):
+        
+        self.data_len=len(X)
+        self.load_type = True
 
         #  X is list of length num-inputs. each item in the list is a list of file names.
         if self.load_type:
-            self.x = [[torch.load(name) for name in X[k]] for k in range(len(X))]
-            self.y = [[torch.load(name) for name in y[k]] for k in range(len(y))]
+            self.x = [torch.load(name) for name in X]
+            self.y = [torch.load(name) for name in Y]
         else:
-            self.x = [[name for name in X[k]] for k in range(len(X))]
-            self.y = [[name for name in y[k]] for k in range(len(y))]
+            self.x = X
+            self.y = Y
 
     def __len__(self):
         # this should return the size of the dataset
-        assert len(self.x[0]) == len(self.y[0])
-        return len(self.x[0])
+        return self.data_len
 
     def __getitem__(self, idx):
 
         if torch.is_tensor(idx):
             idx = idx.tolist()
+
         if self.load_type:
-            return [self.x[k][idx] for k in range(len(self.x))], [
-                self.y[k][idx] for k in range(len(self.y))
-            ]
+            return self.x[idx], self.y[idx]
+            
         else:
-            return [torch.load(self.x[k][idx]) for k in range(len(self.x))], [
-                torch.load(self.y[k][idx]) for k in range(len(self.y))
-            ]
+            return torch.load(self.x[idx]), torch.load(self.y[idx])
 
 
-input, output = load_data_names("train")
-my_dataset = SonarDataset(input, output)
+
+my_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),extract_path_from_dir(Constants.path+'train/output/'))
 
 train_size = int(0.7 * len(my_dataset))
 val_size = len(my_dataset) - train_size
@@ -68,11 +66,14 @@ train_dataloader = DataLoader(
 )
 
 
-input, output = load_data_names("test")
-test_dataset = SonarDataset(input, output)
+
+test_dataset = SonarDataset(extract_path_from_dir(Constants.path+'test/input/'),extract_path_from_dir(Constants.path+'test/output/'))
 test_dataloader = DataLoader(
     test_dataset, batch_size=Constants.batch_size, shuffle=False
 )
+
+
+pass
 
 # input,output=next(iter(test_dataloader))
 # print('\n single input data-point dimensions:')
@@ -81,7 +82,7 @@ test_dataloader = DataLoader(
 # print([out[0].shape for out in output])
 
 # for input, output in train_dataloader:
-#     print(output[0][7])
+#     print(input[0].shape)
 # model_constants.dim=[input[k].shape[1] for k in range(len(input))]
 # print(model_constants.dim)
 

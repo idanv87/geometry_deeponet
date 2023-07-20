@@ -276,9 +276,16 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
         if os.path.isfile(file):
             df = torch.load(file)
 
-        if df['is_rect']:
+        if df['is_rect'] and train_or_test=='train':
             funcs=[sin_function(ind[0], ind[1], df['a'], df['b']).call for ind in Constants.l]
             ev_s= [math.pi**2*((ind[0]/df['a'])**2+ (ind[1]/df['b'])**2) for ind in Constants.l]
+
+        if df['is_rect'] and train_or_test=='test':
+            n=1
+            m=1
+            funcs=[sin_function(n, m, df['a'], df['b']).call]
+            ev_s= [math.pi**2*((n/df['a'])**2+ (m/df['b'])**2)]    
+            
             
             
         for j,func in enumerate(funcs):
@@ -350,24 +357,29 @@ def create_special_polygons(h=Constants.h):
         # path = Constants.path + "hints_polygons/lshape.pt"
         # data_point(path, 0.1, False, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
 
-        path = Constants.path + "polygons/lshape.pt"
-        data_point(path, h, False, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
-        for k in list(np.linspace(0, 1.9,2 )):
-                a = k + 1
-                b = 1 / (k + 1)
-                path = Constants.path + "polygons/rect" + str(k) + ".pt"
-                data_point(path, h, True, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
+        path = Constants.path + "polygons/rect.pt"
+        data_point(path, h, True, np.array([[0, 0], [1, 0], [1, 1], [0, 1]]))
+
+        path = Constants.path + "polygons/rect2.pt"
+        data_point(path, h, True, np.array([[0, 0], [1, 0], [1, 1], [0, 1]]))
+        # path = Constants.path + "polygons/lshape.pt"
+        # data_point(path, h, False, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+        # for k in list(np.linspace(0, 1.9,2 )):
+        #         a = k + 1
+        #         b = 1 / (k + 1)
+        #         path = Constants.path + "polygons/rect" + str(k) + ".pt"
+        #         data_point(path, h, True, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
 
 
 
 if __name__ == "__main__":
     pass
-    create_special_polygons()
+#     create_special_polygons()
 #     creat_polygons_data(5)
 
 
 polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
-test_polygons = [Constants.path + "polygons/lshape.pt"]
+test_polygons = [Constants.path + "polygons/rect.pt"]
 train_polygons = list(set(polygons_files_names) - set(test_polygons))
 
 all_eigs = [torch.load(name)["eigen"][-1] for name in train_polygons]

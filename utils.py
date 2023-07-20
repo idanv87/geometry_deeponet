@@ -395,13 +395,19 @@ class Test_function:
         # return x**2+y
         # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
         return (
-            np.sin(x + 1.11654098)
-            * np.sin(x - 1.56315737)
-            * np.sin(x + 0.44661639)
-            * np.sin(y + 1.11654098)
-            * np.sin(y - 1.56315737)
-            * np.sin(y + 0.44661639)
+            np.sin(x + math.sqrt(math.pi))
+            * np.sin(x - math.sqrt(math.pi))
+            * np.sin(y + math.sqrt(math.pi))
+            * np.sin(y - math.sqrt(math.pi))
         )
+        # return (
+        #     np.sin(x + 1.11654098)
+        #     * np.sin(x - 1.56315737)
+        #     * np.sin(x + 0.44661639)
+        #     * np.sin(y + 1.11654098)
+        #     * np.sin(y - 1.56315737)
+        #     * np.sin(y + 0.44661639)
+        # )
 
 
 def calc_min_angle(geo):
@@ -507,5 +513,67 @@ class sin_function:
         self.m=m
         self.a=a
         self.b=b
-    def call(self,x,y):
-        return np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b)   
+        self.wn=math.pi**2*(n**2/a**2+m**2/b**2)
+    def call(self,x,y, solve=False):
+        if solve:
+            try:
+                return (1/(self.wn-Constants.k))*torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
+            except:
+                return (1/(self.wn-Constants.k))*np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
+
+        else:    
+            try:
+                return torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
+            except:
+                return np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
+            
+
+
+          
+    
+
+#loss function with rel/abs Lp loss
+class LpLoss:
+    def __init__(self, d=2, p=2, size_average=True, reduction=True):
+        super(LpLoss, self).__init__()
+
+        #Dimension and Lp-norm type are postive
+        assert d > 0 and p > 0
+
+        self.d = d
+        self.p = p
+        self.reduction = reduction
+        self.size_average = size_average
+
+    def abs(self, x, y):
+        num_examples = x.size()[0]
+
+        #Assume uniform mesh
+        h = 1.0 / (x.size()[1] - 1.0)
+
+        all_norms = (h**(self.d/self.p))*torch.norm(x.view(num_examples,-1) - y.view(num_examples,-1), self.p, 1)
+
+        if self.reduction:
+            if self.size_average:
+                return torch.mean(all_norms)
+            else:
+                return torch.sum(all_norms)
+
+        return all_norms
+
+    def rel(self, x, y):
+        num_examples = x.size()[0]
+
+        diff_norms = torch.norm(x.reshape(num_examples,-1) - y.reshape(num_examples,-1), self.p, 1)
+        y_norms = torch.norm(y.reshape(num_examples,-1), self.p, 1)
+
+        if self.reduction:
+            if self.size_average:
+                return torch.mean(diff_norms/y_norms)
+            else:
+                return torch.sum(diff_norms/y_norms)
+
+        return diff_norms/y_norms
+
+    def __call__(self, x, y):
+        return self.rel(x, y)
