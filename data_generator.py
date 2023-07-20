@@ -18,9 +18,17 @@ from pydec.dec import simplicial_complex
 
 
 class Polygon:
-    def __init__(self, vertices, triangles, generators):
+    def __init__(self, vertices, triangles, generators, is_rect=False):
         self.geo = dmsh.Polygon(generators)
         self.vertices = vertices
+        if is_rect:
+                self.a=abs(vertices[0,0])*2
+                self.b=abs(vertices[0,1])*2
+                
+        else:
+                self.a=None
+                self.b=None
+
         self.triangles = triangles
         self.sc = simplicial_complex(vertices, triangles)
         self.M = (
@@ -36,7 +44,14 @@ class Polygon:
         self.interior_indices = list(
             set(range(self.vertices.shape[0])) - set(self.boundary_indices)
         )
-        self.ev = self.laplacian().real
+        if is_rect:
+                
+                indices=[(1,1), (1,2),(2,1),(2,2)]
+                self.ev=np.flip((math.pi**2)*np.array([(ind[0]/self.a)**2+(ind[1]/self.b)**2 for ind in indices]))
+        else:        
+                self.ev = self.laplacian().real
+        
+   
 
     def calc_boundary_indices(self):
         for i in range(self.generators.shape[0], (self.vertices).shape[0]):
@@ -73,8 +88,9 @@ class Polygon:
 
 
 class data_point:
-    def __init__(self, path,h, special=None):
+    def __init__(self, path,h, is_rect, special=None ):
         self.h=h
+        self.is_rect=is_rect
         if special is not None:
 
             v = special
@@ -101,7 +117,7 @@ class data_point:
                 X, cells, "CVT (full)", 1.0e-6, 120
             )
 
-            self.polygon = Polygon(X, cells, v)
+            self.polygon = Polygon(X, cells, v, self.is_rect)
 
             self.path = path
             self.value = {
@@ -114,6 +130,9 @@ class data_point:
                 "interior_indices": self.polygon.interior_indices,
                 "M": self.polygon.M,
                 "legit": self.polygon.is_legit(),
+                'a':self.polygon.a,
+                'b':self.polygon.b,
+                'is_rect':self.is_rect
             }
 
             if self.polygon.is_legit():
@@ -138,18 +157,11 @@ def creat_polygons_data(num_samples):
             + str(datetime.datetime.now().time()).replace(":", ".")
         )
         path = Constants.path + "polygons/" + uniq_filename + ".pt"
-        data_point(path, Constants.h)
+        data_point(path, Constants.h,False)
 
 
 
-def create_data_point(X, func, M, indices, legit):
-        assert legit
-        f = np.array(list(map(func, X[:, 0], X[:, 1])))
-       
-        u = solve_helmholtz(M, indices, f)
-       
 
-        return f, u
 
 
 class branc_point2:
@@ -238,6 +250,11 @@ def create_main_polygons(control_polygons):
             x.append(df)
     return x
 
+def create_data_point(X, func, M, indices, legit, is_rect):
+        assert legit
+        f = np.array(list(map(func, X[:, 0], X[:, 1])))
+        u = solve_helmholtz(M, indices, f)
+        return f, u
 
 def create_data_points(control_polygons, train_polygons, train_or_test, func=None):
     assert train_or_test in set(["train", "test", "hints"])
@@ -259,13 +276,19 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
         if os.path.isfile(file):
             df = torch.load(file)
 
-        
-
-        for func in funcs:
+        if df['is_rect']:
+            funcs=[sin_function(ind[0], ind[1], df['a'], df['b']).call for ind in Constants.l]
+            ev_s= [math.pi**2*((ind[0]/df['a'])**2+ (ind[1]/df['b'])**2) for ind in Constants.l]
             
-            f, u = create_data_point(
-                df["X"], func, df["M"], df["interior_indices"], df["legit"]
-            )
+            
+        for j,func in enumerate(funcs):
+            if df['is_rect']:
+                u=(1/(ev_s[j]-Constants.k))*np.array(list(map(funcs[j], df['interior_points'][:, 0], df['interior_points'][:, 1])))
+
+            else:
+                f, u = create_data_point(
+                  df["X"], func, df["M"], df["interior_indices"], df["legit"], df['is_rect']
+                 )
             
            
             # u=u[df['ind']]
@@ -324,18 +347,16 @@ def create_data_points(control_polygons, train_polygons, train_or_test, func=Non
 
 
 def create_special_polygons(h=Constants.h):
-        path = Constants.path + "hints_polygons/lshape.pt"
-        # data_point(path, 0.1, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+        # path = Constants.path + "hints_polygons/lshape.pt"
+        # data_point(path, 0.1, False, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
 
         path = Constants.path + "polygons/lshape.pt"
-       
-        data_point(path, h, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
-        for k in list(np.linspace(0, 2, 3)):
-    
+        data_point(path, h, False, np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+        for k in list(np.linspace(0, 1.9,2 )):
                 a = k + 1
                 b = 1 / (k + 1)
                 path = Constants.path + "polygons/rect" + str(k) + ".pt"
-                data_point(path, h, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
+                data_point(path, h, True, np.array([[0, 0], [a, 0], [a, b], [0, b]]))
 
 
 

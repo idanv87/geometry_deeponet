@@ -22,7 +22,9 @@ def load_data_names(train_or_test):
 
 class SonarDataset(Dataset):
     def __init__(self, X, y):
+
         self.load_type = False
+
         #  X is list of length num-inputs. each item in the list is a list of file names.
         if self.load_type:
             self.x = [[torch.load(name) for name in X[k]] for k in range(len(X))]
@@ -72,12 +74,14 @@ test_dataloader = DataLoader(
     test_dataset, batch_size=Constants.batch_size, shuffle=False
 )
 
-input,output=next(iter(test_dataloader))
-print('\n single input data-point dimensions:')
-print([inp[0].shape for inp in input])
-print('\n single output data-point dimensions:')
-print([out[0].shape for out in output])
+# input,output=next(iter(test_dataloader))
+# print('\n single input data-point dimensions:')
+# print([inp[0].shape for inp in input])
+# print('\n single output data-point dimensions:')
+# print([out[0].shape for out in output])
 
+# for input, output in train_dataloader:
+#     print(output[0][7])
 # model_constants.dim=[input[k].shape[1] for k in range(len(input))]
 # print(model_constants.dim)
 

@@ -23,9 +23,9 @@ class Constants:
 
   
        num_control_polygons=1
-       batch_size=128
-       num_epochs=2
-       pts_per_polygon=30
+       batch_size=32
+       num_epochs=20
+       pts_per_polygon=20
        points_on_circle=[]
        for r in list(np.linspace(0,0.99,50)):
               for theta in list(np.linspace(0,2*math.pi,50)):
@@ -65,7 +65,12 @@ class Constants:
        if not isExist:
               os.makedirs(path+'data_sets')         
               
-                       
+       l=[]
+       for i in range(1,5):
+              for j in range(1,5):
+                     l.append((i,j))
+       
+
        polygon_train_pathes=[]    
        main_polygons_pathes=[]   
        model_dimension=None

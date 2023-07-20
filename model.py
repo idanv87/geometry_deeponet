@@ -30,8 +30,8 @@ class branch(nn.Module):
 class trunk(nn.Module):
     def __init__(self, n, p):
         super().__init__()
-        self.linear1 = nn.Linear(in_features=n * n, out_features=3, bias=True)
-        self.linear2 = nn.Linear(in_features=3, out_features=p, bias=True)
+        self.linear1 = nn.Linear(in_features=n * n, out_features=2, bias=True)
+        self.linear2 = nn.Linear(in_features=2, out_features=p, bias=True)
         self.activation1 = torch.nn.Tanh()
         self.activation2 = torch.nn.Tanh()
         self.in_size = n * n
@@ -39,6 +39,7 @@ class trunk(nn.Module):
     def forward(self, x):
 
         s = torch.matmul(x, torch.transpose(x, 1, 2))
+        
         s = torch.flatten(s, start_dim=1)
 
         s = self.activation1(self.linear1(s))

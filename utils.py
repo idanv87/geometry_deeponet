@@ -395,12 +395,12 @@ class Test_function:
         # return x**2+y
         # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
         return (
-            (x + 1.11654098)
-            * (x - 1.56315737)
-            * (x + 0.44661639)
-            * (y + 1.11654098)
-            * (y - 1.56315737)
-            * (y + 0.44661639)
+            np.sin(x + 1.11654098)
+            * np.sin(x - 1.56315737)
+            * np.sin(x + 0.44661639)
+            * np.sin(y + 1.11654098)
+            * np.sin(y - 1.56315737)
+            * np.sin(y + 0.44661639)
         )
 
 
@@ -499,3 +499,13 @@ class chi_function:
             return 1
         else:
             return 0
+
+
+class sin_function:
+    def __init__(self,n,m,a,b): 
+        self.n=n
+        self.m=m
+        self.a=a
+        self.b=b
+    def call(self,x,y):
+        return np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b)   
