@@ -11,13 +11,13 @@ from constants import Constants
 from utils import *
 
 
-def load_data_names(dirs):
-    # dirs = ["/input/", "/output/"]
-    # out_path = Constants.path + train_or_test
-    data = []
-    for dir in dirs:
-        data.append(extract_path_from_dir(out_path + dir))
-    return data[:-1], data[-1]
+# def load_data_names(dirs):
+#     # dirs = ["/input/", "/output/"]
+#     # out_path = Constants.path + train_or_test
+#     data = []
+#     for dir in dirs:
+#         data.append(extract_path_from_dir(out_path + dir))
+#     return data[:-1], data[-1]
 
 
 class SonarDataset(Dataset):
