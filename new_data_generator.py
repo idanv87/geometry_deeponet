@@ -19,21 +19,23 @@ from geometry import rectangle, circle, Polygon
 
 
 def generate_domains():
-        rect=rectangle(1,2)
-        rect.create_mesh(Constants.h)
-        rect.save(Constants.path + "polygons/rect_train.pt")
+        for a in list(np.linspace(0.5,3,50)):
+            rect=rectangle(a,1/a)
+            rect.create_mesh(Constants.h)
+            rect.save(Constants.path + "polygons/rect_train"+str(a)+".pt")
         p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
         p.create_mesh(Constants.h)
         p.save(Constants.path + "polygons/lshape.pt")
 
 # generate_domains()
+
 polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
 test_domains = [Constants.path + "polygons/lshape.pt"]
 train_domains = list(set(polygons_files_names) - set(test_domains))      
 
 train_modes=[]
-for i in range(1,5):
-        for j in range(1,5):
+for i in range(1,10,2):
+        for j in range(1,10,2):
                 train_modes.append((i,j))
 
 test_modes=[(1,2)]                
@@ -44,7 +46,7 @@ train_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in t
 
 
 test_domains=[torch.load(name) for name in test_domains]
-test_functions=[[sin_function(ind[0], ind[1], 1, 1).call for ind in test_modes] for rect in test_domains ]
+test_functions=[[Test_function() for ind in test_modes] for rect in test_domains ]
 test_modes=[[sin_function(ind[0], ind[1], 1, 1).wn for ind in test_modes] for rect in test_domains ]
 
 
@@ -85,7 +87,14 @@ def create_train_data(train_domains, train_functions, train_modes, dir_path):
 if __name__=="__main__":              
     create_train_data(train_domains, train_functions, train_modes, Constants.path+'train/')
     create_train_data(test_domains, test_functions, test_modes, Constants.path+'test/')
-pass
+    fig,ax=plt.subplots(1)
+    ev_train=[domain['principal_ev'] for domain in train_domains]
+    ev_test=[domain['principal_ev'] for domain in test_domains]
+    ax.scatter(ev_train,np.zeros(len(train_domains)), color='black')
+    ax.scatter(ev_test, np.ones(len(test_domains)), color='red')
+    ax.set_title(f'eigenvalues')
+    plt.show()
+
 
     # self.transform = Map_circle_to_polygon(target_polygon).call
     #                 list(

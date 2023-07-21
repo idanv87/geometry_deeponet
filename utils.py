@@ -388,17 +388,19 @@ class Gaussian:
 class Test_function:
     def __init__(self):
         pass
-
-    def call(self, x, y):
+   
+    def __call__(self, x, y):
         # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
         # return x*(x-1)*(x-0.25)*y*(y-1)*(y-0.25)
         # return x**2+y
         # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
         return (
-            np.sin(x + math.sqrt(math.pi))
-            * np.sin(x - math.sqrt(math.pi))
-            * np.sin(y + math.sqrt(math.pi))
-            * np.sin(y - math.sqrt(math.pi))
+            np.sin(x)
+            * np.sin(x - 2.67969834)
+            *np.sin(x - 0.66992459 )
+            *np.sin(y)
+            * np.sin(y - 2.67969834)
+            *np.sin(y - 0.66992459 )
         )
         # return (
         #     np.sin(x + 1.11654098)
@@ -577,3 +579,5 @@ class LpLoss:
 
     def __call__(self, x, y):
         return self.rel(x, y)
+    
+   
