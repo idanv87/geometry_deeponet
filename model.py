@@ -75,7 +75,7 @@ class deeponet(nn.Module):
 
 p = 2
 dim = Constants.dim
-num_hot_spots = int((int(1/Constants.h)-1)**2/(Constants.hot_spots_ratio**2))
+num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle=len(circle().hot_points)
 ev_per_polygon = Constants.ev_per_polygon
 model = deeponet(num_hot_spots, pts_per_circle, ev_per_polygon, dim, p)

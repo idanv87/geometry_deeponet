@@ -106,12 +106,14 @@ class rectangle:
 
 class Polygon:
     def __init__(self, generators ):
+        
         self.generators= (np.sqrt(math.pi) / np.sqrt(polygon_centre_area(generators))) * generators
         # v[:, 0] -= np.mean(v[:, 0])
         # v[:, 1] -= np.mean(v[:, 1])
         self.geo = dmsh.Polygon(self.generators)
 
     def create_mesh(self, h):
+      
         if np.min(calc_min_angle(self.geo)) > (math.pi / 8):
             X, cells = dmsh.generate(self.geo, h )
 
@@ -132,8 +134,9 @@ class Polygon:
         self.interior_indices = list(
             set(range(self.vertices.shape[0])) - set(self.boundary_indices)
         )
-        self.interior_points=X[self.interior_indices]
-        self.hot_points=self.interior_points[::3]
+        self.interior_points=self.vertices[self.interior_indices]
+
+        self.hot_points=spread_points(int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2)), self.interior_points)
         self.ev = self.laplacian().real
         
    
@@ -179,7 +182,7 @@ class Polygon:
         plt.show()
 
     @classmethod
-    def solve_helmholtz_equation(cls,func,domain):
+    def solve_helmholtz_equation(self,func,domain):
         M=domain['M']
         b=func(domain['interior_points'][:,0], domain['interior_points'][:,1])
         A = -M - Constants.k * scipy.sparse.identity(
@@ -189,11 +192,26 @@ class Polygon:
         return scipy.sparse.linalg.spsolve(A, b)
 
 
-# p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
-# p.create_mesh(Constants.h)
-# p.save(Constants.path + "polygons/lshape_train.pt")
-domain=torch.load(Constants.path + "polygons/lshape_train.pt")
-u=Polygon.solve_helmholtz_equation(np.sin,domain)
+# rect=rectangle(1,2)
+# rect.create_mesh(Constants.h)
+# rect.save(Constants.path + "polygons/rect_train.pt")
+# # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+# # p.create_mesh(Constants.h)
+# # p.save(Constants.path + "polygons/lshape.pt")
+# domain=torch.load(Constants.path + "polygons/rect_train.pt")
+# plt.scatter(domain['interior_points'][:,0], domain['interior_points'][:,1], color='red')
+# plt.scatter(domain['hot_points'][:,0], domain['hot_points'][:,1],color='black')
+# plt.show()
+# print(len(domain['hot_points']))
+# print(int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2)))
+# domain=torch.load(Constants.path + "polygons/rect_train.pt")
+# print(len(domain['hot_points']))
+
+# u=Polygon.solve_helmholtz_equation(np.sin,domain)
+# plt.scatter(domain['interior_points'][:,0], domain['interior_points'][:,1])
+# # plt.scatter(domain['hot_points'][:,0], domain['hot_points'][:,1],color='red')
+
+# plt.show()
 
 
 

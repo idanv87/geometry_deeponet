@@ -22,7 +22,6 @@ from utils import *
 
 class SonarDataset(Dataset):
     def __init__(self, X, Y):
-        
         self.data_len=len(X)
         self.load_type = True
 
@@ -56,6 +55,7 @@ my_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),e
 train_size = int(0.7 * len(my_dataset))
 val_size = len(my_dataset) - train_size
 
+
 train_dataset, val_dataset = torch.utils.data.random_split(
     my_dataset, [train_size, val_size]
 )
@@ -74,6 +74,14 @@ test_dataloader = DataLoader(
 
 
 pass
+
+
+# input,output=next(iter(train_dataloader))
+# print('\n single input data-point dimensions:')
+# print([inp[0].shape for inp in input])
+# print('\n single output data-point dimensions:')
+# print([out[0].shape for out in output])
+
 
 # input,output=next(iter(test_dataloader))
 # print('\n single input data-point dimensions:')

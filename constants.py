@@ -25,7 +25,7 @@ class Constants:
        num_control_polygons=1
        batch_size=32
        num_epochs=20
-       hot_spots_ratio=3
+       hot_spots_ratio=2
 
        pts_per_polygon=10
        points_on_circle=[]
