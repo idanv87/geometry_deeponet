@@ -349,29 +349,26 @@ class SaveBestModel:
 
 
 def save_plots(train_loss, valid_loss, test_loss, metric_type:str):
-    """
-    Function to save the loss and accuracy plots to disk.
-    """
+
     # accuracy plots
+    fig, ax=plt.subplots(1,2)
+    # plt.figure(figsize=(10, 7))
+    ax[0].plot(train_loss[1:], color="orange", linestyle="-", label="train")
+    ax[0].plot(valid_loss[1:], color="red", linestyle="-", label="validataion")
+    ax[0].set(xlabel='Epochs', ylabel=metric_type)
+    ax[0].legend(loc="upper right")
 
-    plt.figure(figsize=(10, 7))
-    plt.plot(train_loss[1:], color="orange", linestyle="-", label="train"+ metric_type)
-    plt.plot(valid_loss[1:], color="red", linestyle="-", label="validataion"+ metric_type)
-    plt.xlabel("Epochs")
-    plt.ylabel(metric_type)
-    plt.legend()
-    plt.savefig(Constants.path + "figures/train_val_"+ metric_type+".png")
-    plt.title(metric_type)
+    ax[1].plot(test_loss, color="blue", linestyle="-", label="test")
+    ax[1].set(xlabel='Epochs', ylabel=metric_type)
+    ax[1].legend(loc="upper right")
 
-    plt.figure(figsize=(10, 7))
-    plt.plot(test_loss, color="blue", linestyle="-", label="test"+ metric_type)
-    plt.xlabel("Epochs")
-    plt.ylabel(metric_type)
-    plt.legend()
-    plt.savefig(Constants.path + "figures/test_"+ metric_type+".png")
-    plt.title(metric_type)
-
+    fig.suptitle("metric type: "+metric_type)
+   
+    plt.savefig(Constants.path + "figures/"+ metric_type+".png")
     plt.show()
+
+
+  
 
 
 # def plot_polygon(coord):

@@ -52,7 +52,9 @@ train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for in
 train_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in train_modes] for rect in train_domains ]
 
 test_domains=[torch.load(name) for name in test_domains]
-test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in test_modes] for rect in test_domains ]
+# test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in test_modes] for rect in test_domains ]
+test_functions=[[Test_function() for ind in test_modes] for rect in test_domains ]
+
 test_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in test_modes] for rect in test_domains ]
 
 

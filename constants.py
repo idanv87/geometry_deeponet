@@ -37,7 +37,7 @@ class Constants:
        points_on_circle=np.array(points_on_circle)
        ev_per_polygon=4
 
-       k=10
+       k=5
        
        dim=2
        # num_ev=4

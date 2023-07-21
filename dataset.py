@@ -75,6 +75,18 @@ test_dataloader = DataLoader(
 
 pass
 
+def data_analysis():
+    alloutputs=[]
+    for input,output in train_dataloader:
+        alloutputs.append(output[0])
+    print(f"max {torch.max(torch.cat(alloutputs))}")
+    print(f"min {torch.min(torch.cat(alloutputs))}")
+
+    alloutputs=[]
+    for input,output in test_dataloader:
+        alloutputs.append(output[0])
+    print(f"max {torch.max(torch.cat(alloutputs))}")
+    print(f"min {torch.min(torch.cat(alloutputs))}")
 
 # input,output=next(iter(train_dataloader))
 # print('\n single input data-point dimensions:')
