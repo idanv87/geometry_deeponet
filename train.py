@@ -169,6 +169,7 @@ def validate(model, dataloader, dataset, criterion):
         coords=torch.cat(coords,axis=0)
         prediction=torch.cat(prediction,axis=0)
         y_test=torch.cat(y_test,axis=0)
+        # plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
         val_loss = val_running_loss / counter
 
         return val_loss

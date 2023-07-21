@@ -10,6 +10,7 @@ import torch.nn.functional as F
 from torch.nn.modules.module import Module
 import torch.optim as optim
 import numpy as np
+from geometry import circle
 
 from utils import *
 
@@ -48,12 +49,12 @@ class trunk(nn.Module):
 
 
 class deeponet(nn.Module):
-    def __init__(self, pts_per_polygon, ev_per_polygon, dim, p):
+    def __init__(self, pts_per_polygon, pts_per_circle, ev_per_polygon, dim, p):
         super().__init__()
         # self.branch1=branch(pts_per_polygon,p)
         # self.branch2=branch(ev_per_polygon,p)
 
-        self.branch1 = branch(pts_per_polygon, p)
+        self.branch1 = branch(pts_per_circle, p)
         self.branch2 = branch(pts_per_polygon, p)
 
         self.trunk1 = trunk(dim, p)
@@ -63,7 +64,7 @@ class deeponet(nn.Module):
             in_features=2 * p, out_features=2 * p, bias=False)
 
     def forward(self, input):
-        y, ly, x, lx, f_circle, f_polygon = input
+        y, ly, f_circle, f_polygon = input
         s1 = torch.cat((self.trunk1(y), self.trunk2(ly / 10)), dim=-1)
         s2 = self.linear1(
             torch.cat((self.branch1(f_circle), self.branch2(f_polygon)), dim=-1)
@@ -74,9 +75,10 @@ class deeponet(nn.Module):
 
 p = 2
 dim = Constants.dim
-pts_per_polygon = Constants.pts_per_polygon
+num_hot_spots = int((int(1/Constants.h)-1)**2/(Constants.hot_spots_ratio**2))
+pts_per_circle=len(circle().hot_points)
 ev_per_polygon = Constants.ev_per_polygon
-model = deeponet(pts_per_polygon, ev_per_polygon, dim, p)
+model = deeponet(num_hot_spots, pts_per_circle, ev_per_polygon, dim, p)
 
 # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
 # model.load_state_dict(best_model['model_state_dict'])

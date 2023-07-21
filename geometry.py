@@ -18,6 +18,29 @@ from pydec.dec import simplicial_complex
 
 # sin_function(ind[0], ind[1], df['a'], df['b']).call
 # u=(1/(ev_s[j]-Constants.k))*np.array(list(map(funcs[j], df['interior_points'][:, 0], df['interior_points'][:, 1])))
+class circle:
+    def __init__(self,R=1):
+        vertices=[]
+        for i,r in enumerate(list(np.linspace(0,R,20))):
+            for j,theta in enumerate(list(np.linspace(0,2*math.pi,20))):
+                if i%4==0 and j%2 ==0:
+                    vertices.append([r*math.cos(theta), r*math.sin(theta)])
+        self.hot_points=np.array(vertices)
+       
+
+    def plot(self):
+        plt.scatter(self.hot_points[:,0], self.hot_points[:,1],color='red')
+        plt.title('unit circle')
+        plt.show()    
+
+class L_shape:
+    def __init__(self,R=1):
+        vertices=[]
+        for i,r in enumerate(list(np.linspace(0,R,20))):
+            for j,theta in enumerate(list(np.linspace(0,2*math.pi,20))):
+                if i%4==0 and j%2 ==0:
+                    vertices.append([r*math.cos(theta), r*math.sin(theta)])
+        self.hot_points=np.array(vertices)
 
 
 class rectangle:
@@ -33,25 +56,24 @@ class rectangle:
        
 
     def plot(self):
-        plt.scatter(self.interior_points[:,0], self.interior_points[:,1])
+        plt.scatter(self.interior_points[:,0], self.interior_points[:,1],color='black')
+        plt.scatter(self.hot_points[:,0], self.hot_points[:,1],color='red')
         plt.show()
 
     def create_mesh(self,h):
         n=int(1/h)
         x,y=np.meshgrid(np.linspace(0,self.a,n)[1:-1], np.linspace(0,self.b,n)[1:-1])
         vertices=[]
+        hot_points=[]
         for i in range(n-2):
             for j  in range(n-2):
                 vertices.append([x[i,j],y[i,j]])
-        self.interior_points=np.array(vertices)    
-        self.hot_points= self.create_hot_points()
+                if i %Constants.hot_spots_ratio ==0 and j%Constants.hot_spots_ratio==0:
+                    hot_points.append([x[i,j],y[i,j]])
 
-    def create_hot_points(self):
-        return self.interior_points[0:Constants.pts_per_polygon]
-    
-        
+        self.interior_points=np.array(vertices)   
+        self.hot_points =np.array(hot_points)
 
-    
     def apply_function_on_rectangle(self, func, plot=False):
         
         value=func(self.interior_points[:, 0], self.interior_points[:, 1])
@@ -87,7 +109,11 @@ class rectangle:
 
 
 # rect=rectangle(1,2)
-# print(torch.tensor(rect.apply_function_on_rectangle(np.sin)))
-# rect.save(Constants.path + "polygons/rect3.pt")
-# # rect.create_mesh(1/20)
+# # print(torch.tensor(rect.apply_function_on_rectangle(np.sin)))
+# # rect.save(Constants.path + "polygons/rect3.pt")
+# rect.create_mesh(1/20)
+# print(rect.hot_points.shape)
+# print(rect.interior_points.shape)
+
+# rect.plot()
 # rect.plot()

@@ -25,6 +25,8 @@ class Constants:
        num_control_polygons=1
        batch_size=32
        num_epochs=20
+       hot_spots_ratio=3
+
        pts_per_polygon=10
        points_on_circle=[]
        for r in list(np.linspace(0,0.99,50)):

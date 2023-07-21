@@ -15,7 +15,7 @@ from utils import *
 from constants import Constants
 from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
-from geometry import rectangle
+from geometry import rectangle, circle
 
 
 def generate_domains():
@@ -42,7 +42,7 @@ test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind
 test_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in test_modes] for rect in test_domains ]
 
 
-circle_hot_points=np.array([[0,0],[0,0.5]])
+circle_hot_points=circle().hot_points
 
 def create_train_data(train_domains, train_functions, train_modes, dir_path):
 
