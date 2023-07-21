@@ -19,35 +19,47 @@ from geometry import rectangle, circle, Polygon
 
 
 def generate_domains():
-        for a in list(np.linspace(0.5,3,50)):
-            rect=rectangle(a,1/a)
-            rect.create_mesh(Constants.h)
-            rect.save(Constants.path + "polygons/rect_train"+str(a)+".pt")
+        # for a in list(np.linspace(0.5,3,50)):
+        #     rect=rectangle(a,1/a)
+        #     rect.create_mesh(Constants.h)
+        #     rect.save(Constants.path + "polygons/rect_train_"+str(a)+".pt")
+        rect=rectangle(1,1)
+        rect.create_mesh(Constants.h)
+        rect.save(Constants.path + "polygons/rect_train_"+str(1)+".pt")
         p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
         p.create_mesh(Constants.h)
         p.save(Constants.path + "polygons/lshape.pt")
 
 # generate_domains()
 
-polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
-test_domains = [Constants.path + "polygons/lshape.pt"]
-train_domains = list(set(polygons_files_names) - set(test_domains))      
+# for large data
+# polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
+# test_domains = [Constants.path + "polygons/lshape.pt"]
+# train_domains = list(set(polygons_files_names) - set(test_domains))      
+
+train_domains=[Constants.path + "polygons/rect_train_"+str(1)+".pt"]
+test_domains=[Constants.path + "polygons/rect_train_"+str(1)+".pt"]
 
 train_modes=[]
 for i in range(1,10,2):
         for j in range(1,10,2):
                 train_modes.append((i,j))
 
-test_modes=[(1,2)]                
+test_modes=[(1,1)]                
 
 train_domains=[torch.load(name) for name in train_domains]
 train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in train_modes] for rect in train_domains ]
 train_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in train_modes] for rect in train_domains ]
 
-
 test_domains=[torch.load(name) for name in test_domains]
-test_functions=[[Test_function() for ind in test_modes] for rect in test_domains ]
-test_modes=[[sin_function(ind[0], ind[1], 1, 1).wn for ind in test_modes] for rect in test_domains ]
+test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in test_modes] for rect in test_domains ]
+test_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in test_modes] for rect in test_domains ]
+
+
+# lshape version:
+# test_domains=[torch.load(name) for name in test_domains]
+# test_functions=[[Test_function() for ind in test_modes] for rect in test_domains ]
+# test_modes=[[sin_function(ind[0], ind[1], 1, 1).wn for ind in test_modes] for rect in test_domains ]
 
 
 circle_hot_points=circle().hot_points

@@ -15,7 +15,8 @@ import torch.optim as optim
 import numpy as np
 import matplotlib.pyplot as plt
 
-from utils import SaveBestModel, LRScheduler, save_plots
+from special_functions import norms
+from utils import SaveBestModel, LRScheduler, save_plots, EarlyStopping
 from dataset import (
     train_dataloader,
     train_dataset,
@@ -87,6 +88,7 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     print("Training")
     model.train()
     train_running_loss = 0.0
+    train_running_acc = 0.0
     counter = 0
     total = 0
     prog_bar = tqdm(
@@ -106,8 +108,11 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
         loss = torch.mean(
             torch.stack([criterion(outputs[k], output[k]) for k in range(len(output))])
         )
-
+        relative_loss = torch.mean(
+            torch.stack([norms.relative_L2(outputs[k], output[k]) for k in range(len(output))])
+        )
         train_running_loss += loss.item()
+        train_running_acc += relative_loss.item()
 
         loss.backward()
 
@@ -117,7 +122,8 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
         optimizer.step()
 
     train_loss = train_running_loss / counter
-    return train_loss
+    train_acc = train_running_acc / counter
+    return train_loss, train_acc
 
 def plot_results(x,y,y_test, y_pred):
     error=np.linalg.norm(y_test-y_pred)/np.linalg.norm(y_test)
@@ -134,11 +140,13 @@ def plot_results(x,y,y_test, y_pred):
     ax[2].set_title('error')
    
     plt.show()
-    
-def validate(model, dataloader, dataset, criterion):
+
+
+def predict(model, dataloader, dataset, criterion):
     # print('Validating')
     model.eval()
     val_running_loss = 0.0
+    val_running_acc = 0.0
     counter = 0
     total = 0
     prog_bar = tqdm(
@@ -156,12 +164,20 @@ def validate(model, dataloader, dataset, criterion):
             output = [output[k].to(Constants.device) for k in range(len(output))]
             total += output[0].size(0)
             y_pred = model(input)
+
             loss = torch.mean(
                 torch.stack(
                     [criterion(y_pred[k], output[k]) for k in range(len(output))]
                 )
             )
+            relative_loss = torch.mean(
+                torch.stack(
+                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
+                )
+            )
+
             val_running_loss += loss.item()
+            val_running_acc+=relative_loss.item()
 
             coords.append(input[0])
             prediction.append(y_pred[0])
@@ -172,8 +188,47 @@ def validate(model, dataloader, dataset, criterion):
         y_test=torch.cat(y_test,axis=0)
         # plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
         val_loss = val_running_loss / counter
+        val_acc = val_running_acc / counter
 
-        return val_loss
+        return val_loss, val_acc
+    
+def validate(model, dataloader, dataset, criterion):
+    # print('Validating')
+    model.eval()
+    val_running_loss = 0.0
+    val_running_acc = 0.0
+    counter = 0
+    total = 0
+    prog_bar = tqdm(
+        enumerate(dataloader), total=int(len(dataset) / dataloader.batch_size)
+    )
+
+    with torch.no_grad():
+        for i, data in prog_bar:
+            counter += 1
+            input, output = data
+            input = [input[k].to(Constants.device) for k in range(len(input))]
+            output = [output[k].to(Constants.device) for k in range(len(output))]
+            total += output[0].size(0)
+            y_pred = model(input)
+            loss = torch.mean(
+                torch.stack(
+                    [criterion(y_pred[k], output[k]) for k in range(len(output))]
+                )
+            )
+            relative_loss = torch.mean(
+                torch.stack(
+                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
+                )
+            )
+            val_running_loss += loss.item()
+            val_running_acc += relative_loss.item()
+
+        val_loss = val_running_loss / counter
+        val_acc = val_running_acc / counter
+
+
+        return val_loss, val_acc
 
 
 # either initialize early stopping or learning rate scheduler
@@ -188,9 +243,9 @@ start = time.time()
 
 for epoch in range(epochs):
     print(f"Epoch {epoch+1} of {epochs}")
-    train_epoch_loss = fit(model, train_dataloader, train_dataset, optimizer, criterion)
-    test_epoch_loss = validate(model, test_dataloader, test_dataset, criterion)
-    val_epoch_loss = validate(model, val_dataloader, val_dataset, criterion)
+    train_epoch_loss, train_epoch_acc = fit(model, train_dataloader, train_dataset, optimizer, criterion)
+    test_epoch_loss, test_epoch_acc  = predict(model, test_dataloader, test_dataset, criterion)
+    val_epoch_loss, val_epoch_acc  = validate(model, val_dataloader, val_dataset, criterion)
 
     
 
@@ -199,6 +254,12 @@ for epoch in range(epochs):
     val_loss.append(val_epoch_loss)
 
     test_loss.append(test_epoch_loss)
+
+    train_accuracy.append(train_epoch_acc)
+
+    val_accuracy.append(val_epoch_acc)
+
+    test_accuracy.append(test_epoch_acc)
 
     save_best_model(val_epoch_loss, epoch, model, optimizer, criterion)
     print("-" * 50)
@@ -213,7 +274,8 @@ for epoch in range(epochs):
 end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
-save_plots(train_loss, val_loss, test_loss)
+save_plots(train_loss, val_loss, test_loss, "Loss")
+save_plots(train_accuracy, val_accuracy, test_accuracy, "Relative L2")
 
 print("TRAINING COMPLETE")
 

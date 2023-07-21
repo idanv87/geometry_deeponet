@@ -348,26 +348,28 @@ class SaveBestModel:
             )
 
 
-def save_plots(train_loss, valid_loss, test_loss):
+def save_plots(train_loss, valid_loss, test_loss, metric_type:str):
     """
     Function to save the loss and accuracy plots to disk.
     """
     # accuracy plots
 
     plt.figure(figsize=(10, 7))
-    plt.plot(train_loss[1:], color="orange", linestyle="-", label="train loss")
-    plt.plot(valid_loss[1:], color="red", linestyle="-", label="validataion loss")
+    plt.plot(train_loss[1:], color="orange", linestyle="-", label="train"+ metric_type)
+    plt.plot(valid_loss[1:], color="red", linestyle="-", label="validataion"+ metric_type)
     plt.xlabel("Epochs")
-    plt.ylabel("Loss")
+    plt.ylabel(metric_type)
     plt.legend()
-    plt.savefig(Constants.path + "figures/train_val_loss.png")
+    plt.savefig(Constants.path + "figures/train_val_"+ metric_type+".png")
+    plt.title(metric_type)
 
     plt.figure(figsize=(10, 7))
-    plt.plot(test_loss, color="blue", linestyle="-", label="test loss")
+    plt.plot(test_loss, color="blue", linestyle="-", label="test"+ metric_type)
     plt.xlabel("Epochs")
-    plt.ylabel("Loss")
+    plt.ylabel(metric_type)
     plt.legend()
-    plt.savefig(Constants.path + "figures/test_loss.png")
+    plt.savefig(Constants.path + "figures/test_"+ metric_type+".png")
+    plt.title(metric_type)
 
     plt.show()
 

@@ -24,7 +24,7 @@ class Constants:
   
        num_control_polygons=1
        batch_size=32
-       num_epochs=20
+       num_epochs=4
        hot_spots_ratio=2
 
        pts_per_polygon=10
