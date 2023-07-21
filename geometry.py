@@ -33,17 +33,11 @@ class circle:
         plt.title('unit circle')
         plt.show()    
 
-class L_shape:
-    def __init__(self,R=1):
-        vertices=[]
-        for i,r in enumerate(list(np.linspace(0,R,20))):
-            for j,theta in enumerate(list(np.linspace(0,2*math.pi,20))):
-                if i%4==0 and j%2 ==0:
-                    vertices.append([r*math.cos(theta), r*math.sin(theta)])
-        self.hot_points=np.array(vertices)
+
 
 
 class rectangle:
+    
     def __init__(self, a,b): 
         self.a= a*np.sqrt(math.pi/a/b)
         self.b= b*np.sqrt(math.pi/a/b)
@@ -106,6 +100,109 @@ class rectangle:
 
         assert abs(mode-Constants.k)>1e-6
         return 1/(mode-Constants.k)*b
+
+
+
+
+class Polygon:
+    def __init__(self, generators ):
+        self.generators= (np.sqrt(math.pi) / np.sqrt(polygon_centre_area(generators))) * generators
+        # v[:, 0] -= np.mean(v[:, 0])
+        # v[:, 1] -= np.mean(v[:, 1])
+        self.geo = dmsh.Polygon(self.generators)
+
+    def create_mesh(self, h):
+        if np.min(calc_min_angle(self.geo)) > (math.pi / 8):
+            X, cells = dmsh.generate(self.geo, h )
+
+            X, cells = optimesh.optimize_points_cells(
+                X, cells, "CVT (full)", 1.0e-6, 120
+            )
+        self.vertices=X
+        self.sc = simplicial_complex(X, cells)
+        self.M = (
+            (self.sc[0].star_inv)
+            @ (-(self.sc[0].d).T)
+            @ (self.sc[1].star)
+            @ self.sc[0].d
+        )
+
+        self.boundary_indices = [i for i in range(self.generators.shape[0])]
+        self.calc_boundary_indices()
+        self.interior_indices = list(
+            set(range(self.vertices.shape[0])) - set(self.boundary_indices)
+        )
+        self.interior_points=X[self.interior_indices]
+        self.hot_points=self.interior_points[::3]
+        self.ev = self.laplacian().real
+        
+   
+
+    def calc_boundary_indices(self):
+        for i in range(self.generators.shape[0], (self.vertices).shape[0]):
+            if on_boundary(self.vertices[i], self.geo):
+                self.boundary_indices.append(i)
+
+    def laplacian(self):
+        return scipy.sparse.linalg.eigs(
+            -self.M[self.interior_indices][:, self.interior_indices],
+            k=Constants.ev_per_polygon,
+            return_eigenvectors=False,
+            which="SM",
+        )
+    
+
+
+    def is_legit(self):
+        if np.min(abs(self.sc[1].star.diagonal())) > 0:
+            return True
+        else:
+            return False
+
+    def save(self, path):
+            assert self.is_legit()
+            data={
+                "ev": self.ev,
+                "principal_ev":self.ev[-1],
+                "interior_points": self.interior_points,
+                "hot_points": self.hot_points,
+                "generators": self.generators,
+                "M":self.M[self.interior_indices][:, self.interior_indices],
+                "legit": True,
+                'type':'polygon'
+             }
+            torch.save(data, path)
+
+    def plot(self):
+        plt.scatter(self.interior_points[:,0], self.interior_points[:,1],color='black')
+        plt.scatter(self.hot_points[:,0], self.hot_points[:,1],color='red')
+        plt.show()
+
+    @classmethod
+    def solve_helmholtz_equation(cls,func,domain):
+        M=domain['M']
+        b=func(domain['interior_points'][:,0], domain['interior_points'][:,1])
+        A = -M - Constants.k * scipy.sparse.identity(
+        len(domain['interior_points'])
+    )
+
+        return scipy.sparse.linalg.spsolve(A, b)
+
+
+# p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+# p.create_mesh(Constants.h)
+# p.save(Constants.path + "polygons/lshape_train.pt")
+domain=torch.load(Constants.path + "polygons/lshape_train.pt")
+u=Polygon.solve_helmholtz_equation(np.sin,domain)
+
+
+
+
+
+
+
+
+
 
 
 # rect=rectangle(1,2)

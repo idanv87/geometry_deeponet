@@ -15,7 +15,7 @@ from utils import *
 from constants import Constants
 from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
-from geometry import rectangle, circle
+from geometry import rectangle, circle, Polygon
 
 
 def generate_domains():
