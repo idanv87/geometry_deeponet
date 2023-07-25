@@ -49,10 +49,9 @@ class SonarDataset(Dataset):
             return torch.load(self.x[idx]), torch.load(self.y[idx])
 
 
-
 my_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),extract_path_from_dir(Constants.path+'train/output/'))
 
-train_size = int(0.7 * len(my_dataset))
+train_size = int(0.8 * len(my_dataset))
 val_size = len(my_dataset) - train_size
 
 
@@ -66,6 +65,17 @@ train_dataloader = DataLoader(
 )
 
 
+# print(len(val_dataset))
+
+# train_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),extract_path_from_dir(Constants.path+'train/output/'))
+# train_dataloader = DataLoader(
+#     train_dataset, batch_size=Constants.batch_size, shuffle=True
+# )
+# val_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),extract_path_from_dir(Constants.path+'train/output/'))
+# val_dataloader = DataLoader(
+#     val_dataset, batch_size=Constants.batch_size, shuffle=True
+# )
+
 
 test_dataset = SonarDataset(extract_path_from_dir(Constants.path+'test/input/'),extract_path_from_dir(Constants.path+'test/output/'))
 test_dataloader = DataLoader(
@@ -73,14 +83,16 @@ test_dataloader = DataLoader(
 )
 
 
-pass
 
 def data_analysis():
     alloutputs=[]
+    coords=[]
+    u=[]
     for input,output in train_dataloader:
         alloutputs.append(output[0])
     print(f"max {torch.max(torch.cat(alloutputs))}")
     print(f"min {torch.min(torch.cat(alloutputs))}")
+
 
     alloutputs=[]
     for input,output in test_dataloader:
@@ -88,11 +100,21 @@ def data_analysis():
     print(f"max {torch.max(torch.cat(alloutputs))}")
     print(f"min {torch.min(torch.cat(alloutputs))}")
 
-# input,output=next(iter(train_dataloader))
-# print('\n single input data-point dimensions:')
-# print([inp[0].shape for inp in input])
-# print('\n single output data-point dimensions:')
-# print([out[0].shape for out in output])
+    x=[]    
+    y=[]
+    u=[]
+    f=[]
+    for input,output in train_dataloader:
+        print(input[0])
+        
+        # u.append(output[0])
+        # f.append((1/(2*math.pi-Constants.k))*torch.sin(math.sqrt(math.pi)*input[0][0,0])*torch.sin(math.sqrt(math.pi)*input[0][1,0]))
+    print(x)
+# data_analysis()        
+
+
+
+# data_analysis()
 
 
 # input,output=next(iter(test_dataloader))
@@ -100,9 +122,15 @@ def data_analysis():
 # print([inp[0].shape for inp in input])
 # print('\n single output data-point dimensions:')
 # print([out[0].shape for out in output])
+# input,output=next(iter(test_dataloader))
+# print('\n single input data-point dimensions:')
+# print([inp[0].shape for inp in input])
+# print('\n single output data-point dimensions:')
+# print([out[0].shape for out in output])
 
-# for input, output in train_dataloader:
-#     print(input[0].shape)
+
+
+
 # model_constants.dim=[input[k].shape[1] for k in range(len(input))]
 # print(model_constants.dim)
 

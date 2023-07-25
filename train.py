@@ -1,5 +1,6 @@
 import os
 import pickle
+import math
 from random import sample
 from tqdm import tqdm
 import argparse
@@ -13,10 +14,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
-import matplotlib.pyplot as plt
+import torch.optim.lr_scheduler as Lambd
+ 
 
 from special_functions import norms
-from utils import SaveBestModel, LRScheduler, save_plots, EarlyStopping
+from utils import SaveBestModel, save_plots, count_trainable_params
+from schedulers.schedulers import LRScheduler, EarlyStopping, cyclical_lr
 from dataset import (
     train_dataloader,
     train_dataset,
@@ -37,23 +40,17 @@ experment_name = (
 experment_path = experment_dir + experment_name
 # print(experment_path)
 
-lr = 0.001
+lr = 0.0001
 
 epochs = Constants.num_epochs
 # optimizer
 optimizer = optim.Adam(model.parameters(), lr=lr)
 # loss function
-# criterion = nn.MSELoss()
 criterion = nn.MSELoss()
-# criterion= LpLoss(size_average=False, p=2)
+lr_scheduler=LRScheduler(optimizer)
+# lr_schedualer=torch.optim.lr_scheduler.CyclicLR(optimizer,1e-5,1e-2, cycle_momentum=False)
 
 save_best_model = SaveBestModel()
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--lr-scheduler", dest="lr_scheduler", action="store_true")
-parser.add_argument("--early-stopping", dest="early_stopping", action="store_true")
-args = vars(parser.parse_args())
 device = Constants.device
 
 # total parameters and trainable parameters
@@ -68,25 +65,25 @@ acc_plot_name = "accuracy"
 model_name = "model"
 
 
-if args["lr_scheduler"]:
-    print("INFO: Initializing learning rate scheduler")
-    lr_scheduler = LRScheduler(optimizer)
-    # change the accuracy, loss plot names and model name
-    loss_plot_name = "lrs_loss"
-    acc_plot_name = "lrs_accuracy"
-    model_name = "lrs_model"
-if args["early_stopping"]:
-    print("INFO: Initializing early stopping")
-    early_stopping = EarlyStopping()
-    # change the accuracy, loss plot names and model name
-    loss_plot_name = "es_loss"
-    acc_plot_name = "es_accuracy"
-    model_name = "es_model"
+# if args["lr_scheduler"]:
+print("INFO: Initializing learning rate scheduler")
+lr_scheduler = LRScheduler(optimizer)
+# change the accuracy, loss plot names and model name
+loss_plot_name = "lrs_loss"
+acc_plot_name = "lrs_accuracy"
+model_name = "lrs_model"
+# if args["early_stopping"]:
+print("INFO: Initializing early stopping")
+early_stopping = EarlyStopping()
+# change the accuracy, loss plot names and model name
+loss_plot_name = "es_loss"
+acc_plot_name = "es_accuracy"
+model_name = "es_model"
 
 
 def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     print("Training")
-    model.train()
+    # model.train()
     train_running_loss = 0.0
     train_running_acc = 0.0
     counter = 0
@@ -95,31 +92,32 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
         enumerate(train_dataloader),
         total=int(len(train_dataset) / train_dataloader.batch_size),
     )
+  
     for i, data in prog_bar:
-        counter += 1
-        input, output = data
-        input = [input[k].to(Constants.device) for k in range(len(input))]
-        output = [output[k].to(Constants.device) for k in range(len(output))]
+            counter += 1
+            input, output = data
+            input = [input[k].to(Constants.device) for k in range(len(input))]
+            output = [output[k].to(Constants.device) for k in range(len(output))]
+            total += output[0].size(0)
+            optimizer.zero_grad()
+            y_pred = model(input)
+        
+            loss = torch.mean(
+                torch.stack(
+                    [criterion(y_pred[k], output[k]) for k in range(len(output))]
+                )
+            )
+            relative_loss = torch.mean(
+                torch.stack(
+                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
+                )
+            )
 
-        # x1,x2,x3,x4,x5,x6,output = x1.to(Constants.device), x2.to(Constants.device),x3.to(Constants.device),x4.to(Constants.device),x5.to(Constants.device),x6.to(Constants.device),output.to(Constants.device)
-        total += output[0].size(0)
-        optimizer.zero_grad()
-        outputs = model(input)
-        loss = torch.mean(
-            torch.stack([criterion(outputs[k], output[k]) for k in range(len(output))])
-        )
-        relative_loss = torch.mean(
-            torch.stack([norms.relative_L2(outputs[k], output[k]) for k in range(len(output))])
-        )
-        train_running_loss += loss.item()
-        train_running_acc += relative_loss.item()
+            train_running_loss += loss.item()
+            train_running_acc+=relative_loss.item()
 
-        loss.backward()
-
-        for p in model.parameters():
-            pass
-
-        optimizer.step()
+            loss.backward()
+            optimizer.step()
 
     train_loss = train_running_loss / counter
     train_acc = train_running_acc / counter
@@ -127,17 +125,17 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
 
 def plot_results(x,y,y_test, y_pred):
     error=np.linalg.norm(y_test-y_pred)/np.linalg.norm(y_test)
-    fig, ax=plt.subplots(1,3)
-    fig.suptitle(f'Error: {error:.3e}')
+    fig, ax=plt.subplots(1,2)
+    fig.suptitle(f'relative L2 Error: {error:.3e}')
     im0=ax[0].scatter(x,y,c=y_test)
     fig.colorbar(im0, ax=ax[0])
     im1=ax[1].scatter(x,y,c=y_pred)
     fig.colorbar(im1, ax=ax[1])
-    im2=ax[2].scatter(x,y,c=abs(y_pred-y_test))
-    fig.colorbar(im2, ax=ax[2])
+    # im2=ax[2].scatter(x,y,c=abs(y_pred-y_test))
+    # fig.colorbar(im2, ax=ax[2])
     ax[0].set_title('test')
     ax[1].set_title('pred')
-    ax[2].set_title('error')
+    # ax[2].set_title('error')
    
     plt.show()
 
@@ -164,7 +162,6 @@ def predict(model, dataloader, dataset, criterion):
             output = [output[k].to(Constants.device) for k in range(len(output))]
             total += output[0].size(0)
             y_pred = model(input)
-
             loss = torch.mean(
                 torch.stack(
                     [criterion(y_pred[k], output[k]) for k in range(len(output))]
@@ -181,12 +178,16 @@ def predict(model, dataloader, dataset, criterion):
 
             coords.append(input[0])
             prediction.append(y_pred[0])
+            
             y_test.append(output[0])
 
         coords=torch.cat(coords,axis=0)
         prediction=torch.cat(prediction,axis=0)
         y_test=torch.cat(y_test,axis=0)
-        # plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+        # print((1/(2*math.pi-Constants.k))*torch.sin(coords[:,0,0]*np.sqrt(math.pi)
+        #                                             )*torch.sin(coords[:,1,0]*np.sqrt(math.pi))-y_test)
+        if epoch== Constants.num_epochs-2:
+          plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
         val_loss = val_running_loss / counter
         val_acc = val_running_acc / counter
 
@@ -211,6 +212,7 @@ def validate(model, dataloader, dataset, criterion):
             output = [output[k].to(Constants.device) for k in range(len(output))]
             total += output[0].size(0)
             y_pred = model(input)
+            
             loss = torch.mean(
                 torch.stack(
                     [criterion(y_pred[k], output[k]) for k in range(len(output))]
@@ -231,7 +233,7 @@ def validate(model, dataloader, dataset, criterion):
         return val_loss, val_acc
 
 
-# either initialize early stopping or learning rate scheduler
+
 
 
 # lists to store per-epoch loss and accuracy values
@@ -242,11 +244,13 @@ test_loss, test_accuracy = [], []
 start = time.time()
 
 for epoch in range(epochs):
+    
     print(f"Epoch {epoch+1} of {epochs}")
+    print(f"number of trainable parameters: {count_trainable_params(model)}")
     train_epoch_loss, train_epoch_acc = fit(model, train_dataloader, train_dataset, optimizer, criterion)
     test_epoch_loss, test_epoch_acc  = predict(model, test_dataloader, test_dataset, criterion)
     val_epoch_loss, val_epoch_acc  = validate(model, val_dataloader, val_dataset, criterion)
-
+    lr_scheduler(val_epoch_loss)
     
 
     train_loss.append(train_epoch_loss)
@@ -263,23 +267,17 @@ for epoch in range(epochs):
 
     save_best_model(val_epoch_loss, epoch, model, optimizer, criterion)
     print("-" * 50)
-    if args["lr_scheduler"]:
-        lr_scheduler(val_epoch_loss)
-    if args["early_stopping"]:
-        early_stopping(val_epoch_loss)
-        if early_stopping.early_stop:
-            break
-    print(f"Train Loss: {train_epoch_loss:.4f}")
-    print(f"Val Loss: {val_epoch_loss:.4f}")
+    print(f"Train Loss: {train_epoch_loss:4e}")
+    print(f"Val Loss: {val_epoch_loss:.4e}")
+    print(f"Train Realtive L2  Error: {train_epoch_acc:.4e}")
+    print(f"Test Realtive L2  Error: {test_epoch_acc:.4e}")
 end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
-save_plots(train_loss, val_loss, test_loss, "Loss")
-save_plots(train_accuracy, val_accuracy, test_accuracy, "Relative L2")
+# save_plots(train_loss, val_loss, test_loss, "Loss")
+# save_plots(train_accuracy, val_accuracy, test_accuracy, "Relative L2")
 
 print("TRAINING COMPLETE")
 
 
-# for i, data in enumerate(train_dataloader):
-#    x1,x2,x3,x4,output=data
-#    print(model(x3,x4,x1,x2))
+

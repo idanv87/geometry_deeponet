@@ -236,71 +236,6 @@ def plot_polygon(path):
     plt.show()
 
 
-class LRScheduler:
-    """
-    Learning rate scheduler. If the validation loss does not decrease for the
-    given number of `patience` epochs, then the learning rate will decrease by
-    by given `factor`.
-    """
-
-    def __init__(self, optimizer, patience=5, min_lr=1e-6, factor=0.5):
-        """
-        new_lr = old_lr * factor
-        :param optimizer: the optimizer we are using
-        :param patience: how many epochs to wait before updating the lr
-        :param min_lr: least lr value to reduce to while updating
-        :param factor: factor by which the lr should be updated
-        """
-        self.optimizer = optimizer
-        self.patience = patience
-        self.min_lr = min_lr
-        self.factor = factor
-        self.lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer,
-            mode="min",
-            patience=self.patience,
-            factor=self.factor,
-            min_lr=self.min_lr,
-            verbose=True,
-        )
-
-    def __call__(self, val_loss):
-        self.lr_scheduler.step(val_loss)
-
-
-class EarlyStopping:
-    """
-    Early stopping to stop the training when the loss does not improve after
-    certain epochs.
-    """
-
-    def __init__(self, patience=5, min_delta=0):
-        """
-        :param patience: how many epochs to wait before stopping when loss is
-               not improving
-        :param min_delta: minimum difference between new loss and old loss for
-               new loss to be considered as an improvement
-        """
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.best_loss = None
-        self.early_stop = False
-
-    def __call__(self, val_loss):
-        if self.best_loss == None:
-            self.best_loss = val_loss
-        elif self.best_loss - val_loss > self.min_delta:
-            self.best_loss = val_loss
-            # reset counter if validation loss improves
-            self.counter = 0
-        elif self.best_loss - val_loss < self.min_delta:
-            self.counter += 1
-            print(f"INFO: Early stopping counter {self.counter} of {self.patience}")
-            if self.counter >= self.patience:
-                print("INFO: Early stopping")
-                self.early_stop = True
-
 
 def np_to_torch(x):
     return torch.tensor(x, dtype=Constants.dtype)
@@ -384,32 +319,6 @@ class Gaussian:
         return gaussian(x, y, self.mu)
 
 
-class Test_function:
-    def __init__(self):
-        pass
-   
-    def __call__(self, x, y):
-        # (x-np.sqrt(math.pi))*(x+np.sqrt(math.pi))
-        # return x*(x-1)*(x-0.25)*y*(y-1)*(y-0.25)
-        # return x**2+y
-        # return -2*y**2+math.pi-2*x**2-x**2*y**2+0.25*math.pi*(x**2+y**2)-math.pi**2/16
-        return (
-            np.sin(x)
-            * np.sin(x - 2.67969834)
-            *np.sin(x - 0.66992459 )
-            *np.sin(y)
-            * np.sin(y - 2.67969834)
-            *np.sin(y - 0.66992459 )
-        )
-        # return (
-        #     np.sin(x + 1.11654098)
-        #     * np.sin(x - 1.56315737)
-        #     * np.sin(x + 0.44661639)
-        #     * np.sin(y + 1.11654098)
-        #     * np.sin(y - 1.56315737)
-        #     * np.sin(y + 0.44661639)
-        # )
-
 
 def calc_min_angle(geo):
     seg1 = []
@@ -487,14 +396,8 @@ def plot3d(x, y, z, color="black"):
     ax.scatter(x, y, z, color=color)
 
 
-class chi_function:
-    def __init__(self, vertices) -> None:
-        self.polygon = Polygon(
-            [(vertices[i, 0], vertices[i, 1]) for i in range(vertices.shape[0])]
-        )
 
-    # polygon = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
-    # print(polygon.contains(point))
+
 
     def is_inside(self, x, y):
         #   point = Point(0.5, 0.5)
@@ -508,75 +411,12 @@ class chi_function:
             return 0
 
 
-class sin_function:
-    def __init__(self,n,m,a,b): 
-        self.n=n
-        self.m=m
-        self.a=a
-        self.b=b
-        self.wn=math.pi**2*(n**2/a**2+m**2/b**2)
-    def call(self,x,y, solve=False):
-        if solve:
-            try:
-                return (1/(self.wn-Constants.k))*torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
-            except:
-                return (1/(self.wn-Constants.k))*np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
-
-        else:    
-            try:
-                return torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
-            except:
-                return np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
-            
-
 
           
-    
+class chi_function:
+    def __init__(self, vertices) -> None:
+        self.polygon = Polygon(
+            [(vertices[i, 0], vertices[i, 1]) for i in range(vertices.shape[0])]
+        ) 
 
-#loss function with rel/abs Lp loss
-class LpLoss:
-    def __init__(self, d=2, p=2, size_average=True, reduction=True):
-        super(LpLoss, self).__init__()
-
-        #Dimension and Lp-norm type are postive
-        assert d > 0 and p > 0
-
-        self.d = d
-        self.p = p
-        self.reduction = reduction
-        self.size_average = size_average
-
-    def abs(self, x, y):
-        num_examples = x.size()[0]
-
-        #Assume uniform mesh
-        h = 1.0 / (x.size()[1] - 1.0)
-
-        all_norms = (h**(self.d/self.p))*torch.norm(x.view(num_examples,-1) - y.view(num_examples,-1), self.p, 1)
-
-        if self.reduction:
-            if self.size_average:
-                return torch.mean(all_norms)
-            else:
-                return torch.sum(all_norms)
-
-        return all_norms
-
-    def rel(self, x, y):
-        num_examples = x.size()[0]
-
-        diff_norms = torch.norm(x.reshape(num_examples,-1) - y.reshape(num_examples,-1), self.p, 1)
-        y_norms = torch.norm(y.reshape(num_examples,-1), self.p, 1)
-
-        if self.reduction:
-            if self.size_average:
-                return torch.mean(diff_norms/y_norms)
-            else:
-                return torch.sum(diff_norms/y_norms)
-
-        return diff_norms/y_norms
-
-    def __call__(self, x, y):
-        return self.rel(x, y)
-    
-   
+#

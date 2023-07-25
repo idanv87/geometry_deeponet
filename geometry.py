@@ -15,6 +15,7 @@ from utils import *
 from constants import Constants
 from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
+from functions.functions import Test_function
 
 # sin_function(ind[0], ind[1], df['a'], df['b']).call
 # u=(1/(ev_s[j]-Constants.k))*np.array(list(map(funcs[j], df['interior_points'][:, 0], df['interior_points'][:, 1])))
@@ -47,6 +48,7 @@ class rectangle:
         self.ev=np.flip((math.pi**2)*np.array([(ind[0]/self.a)**2+(ind[1]/self.b)**2 for ind in indices]))
         self.principal_ev=self.ev[-1]
         self.interior_points=None
+        self.data=None
        
 
     def plot(self):
@@ -67,6 +69,17 @@ class rectangle:
 
         self.interior_points=np.array(vertices)   
         self.hot_points =np.array(hot_points)
+        self.data={
+                "ev": self.ev,
+                "principal_ev":self.principal_ev,
+                "interior_points": self.interior_points,
+                "hot_points": self.hot_points,
+                "generators": self.generators,
+                "legit": True,
+                'a':self.a,
+                'b':self.b,
+                'type':'rectangle'
+             }
 
     def apply_function_on_rectangle(self, func, plot=False):
         
@@ -80,18 +93,7 @@ class rectangle:
 
     
     def save(self, path):
-            data={
-                "ev": self.ev,
-                "principal_ev":self.principal_ev,
-                "interior_points": self.interior_points,
-                "hot_points": self.hot_points,
-                "generators": self.generators,
-                "legit": True,
-                'a':self.a,
-                'b':self.b,
-                'type':'rectangle'
-             }
-            torch.save(data, path)
+        torch.save(self.data, path)
 
     @classmethod
     def solve_helmholtz_equation(cls,f,*args):
@@ -183,22 +185,28 @@ class Polygon:
 
     @classmethod
     def solve_helmholtz_equation(self,func,domain):
+
+        solution=Test_function(domain['generators'], True)
+        return np.array(list(map(solution,domain['interior_points'][:,0], domain['interior_points'][:,1])))
+        return 
         M=domain['M']
         b=func(domain['interior_points'][:,0], domain['interior_points'][:,1])
         A = -M - Constants.k * scipy.sparse.identity(
         len(domain['interior_points'])
     )
+        solution=scipy.sparse.linalg.spsolve(A, b)
 
-        return scipy.sparse.linalg.spsolve(A, b)
-
+        return solution
 
 # rect=rectangle(1,2)
 # rect.create_mesh(Constants.h)
 # rect.save(Constants.path + "polygons/rect_train.pt")
-# # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
-# # p.create_mesh(Constants.h)
-# # p.save(Constants.path + "polygons/lshape.pt")
-# domain=torch.load(Constants.path + "polygons/rect_train.pt")
+# p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+# p.create_mesh(Constants.h)
+
+# p.save(Constants.path + "polygons/lshape.pt")
+# domain=torch.load(Constants.path + "polygons/rect_train_1.pt")
+
 # plt.scatter(domain['interior_points'][:,0], domain['interior_points'][:,1], color='red')
 # plt.scatter(domain['hot_points'][:,0], domain['hot_points'][:,1],color='black')
 # plt.show()

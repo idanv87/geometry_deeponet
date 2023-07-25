@@ -18,13 +18,13 @@ class Constants:
        var_center=0
        var_angle=0.4
        radius=3
-       h=0.1
+       h=1/20
        gauss_points=5
 
   
        num_control_polygons=1
-       batch_size=32
-       num_epochs=4
+       batch_size=8
+       num_epochs=100
        hot_spots_ratio=2
 
        pts_per_polygon=10
@@ -37,7 +37,7 @@ class Constants:
        points_on_circle=np.array(points_on_circle)
        ev_per_polygon=4
 
-       k=5
+       k=2*math.pi+4
        
        dim=2
        # num_ev=4
@@ -80,4 +80,20 @@ class Constants:
 
 
 
+# class father:
+#        def __init__(self,a):  
+#               self.a=a
 
+# class child(father):
+#        def __init__(self,b):
+#               super().__init__('a')
+#               self.b=b
+      
+# x=child('b')
+# vertices=[]
+# n=4
+# x,y=np.meshgrid(np.linspace(0,1,n)[1:-1], np.linspace(0,2,n)[1:-1])
+# for i in range(n-2):
+#             for j  in range(n-2):
+#                 vertices.append([x[i,j],y[i,j]])
+# print(vertices)

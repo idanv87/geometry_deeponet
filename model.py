@@ -14,71 +14,66 @@ from geometry import circle
 
 from utils import *
 
-class branch(nn.Module):
-    def __init__(self, n, p):
-        super().__init__()
-        self.linear = nn.Linear(in_features=n * n, out_features=p, bias=True)
-        self.activation = torch.nn.Tanh()
-        self.n = n
 
-    def forward(self, x):
+# initializer=nn.init.zeros_
 
-        s = torch.matmul(x, torch.transpose(x, 1, 2))
-        s = torch.flatten(s, start_dim=1)
-        return self.activation(self.linear(s))
+class fc(torch.nn.Module):
+    def __init__(self, input_shape, output_shape, num_layers):
+        super().__init__() 
+        self.input_shape=input_shape
+        self.output_shape=output_shape
+        n=40
+        self.activation=torch.nn.ReLU()
+        self.layers=torch.nn.ModuleList([torch.nn.Linear(in_features=self.input_shape,out_features=n,bias=True)])
+        output_shape=n
 
-
-class trunk(nn.Module):
-    def __init__(self, n, p):
-        super().__init__()
-        self.linear1 = nn.Linear(in_features=n * n, out_features=2, bias=True)
-        self.linear2 = nn.Linear(in_features=2, out_features=p, bias=True)
-        self.activation1 = torch.nn.Tanh()
-        self.activation2 = torch.nn.Tanh()
-        self.in_size = n * n
-
-    def forward(self, x):
-
-        s = torch.matmul(x, torch.transpose(x, 1, 2))
+        for j  in range(num_layers):
+            layer=torch.nn.Linear(in_features=output_shape,out_features=n,bias=True)
+            # initializer(layer.weight)
+            output_shape=n
+            self.layers.append(layer)
         
-        s = torch.flatten(s, start_dim=1)
+        self.layers.append(torch.nn.Linear(in_features=output_shape,out_features=self.output_shape,bias=True))
 
-        s = self.activation1(self.linear1(s))
-        s = self.activation2(self.linear2(s))
+
+    def forward(self,y):
+        s=torch.squeeze(y)
+        for layer in self.layers:
+            s=layer(self.activation(s))
+
+
         return s
-
+    
 
 class deeponet(nn.Module):
-    def __init__(self, pts_per_polygon, pts_per_circle, ev_per_polygon, dim, p):
+    def __init__(self, dim, num_hot_spots, pts_per_circle, ev_per_polygon, p):
         super().__init__()
-        # self.branch1=branch(pts_per_polygon,p)
-        # self.branch2=branch(ev_per_polygon,p)
-
-        self.branch1 = branch(pts_per_circle, p)
-        self.branch2 = branch(pts_per_polygon, p)
-
-        self.trunk1 = trunk(dim, p)
-        self.trunk2 = trunk(ev_per_polygon, p)
-
-        self.linear1 = nn.Linear(
-            in_features=2 * p, out_features=2 * p, bias=False)
+        self.branch=fc(num_hot_spots,p,4)
+        self.trunk=fc(dim,p,4)
 
     def forward(self, input):
         y, ly, f_circle, f_polygon = input
-        s1 = torch.cat((self.trunk1(y), self.trunk2(ly / 10)), dim=-1)
-        s2 = self.linear1(
-            torch.cat((self.branch1(f_circle), self.branch2(f_polygon)), dim=-1)
-        )
+        s1=self.branch(f_polygon)
+        s2=self.trunk(y)
+        if len(s1.size())==1:
+            return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
+                          s2.view(1, s2.shape[0], 1)
+                           ))]
+        else:    
+            return [torch.squeeze(torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
+                          s2.view(s2.shape[0], s2.shape[1], 1)
+                           ))]
 
-        return [torch.sum(s1 * s2, dim=-1)]
-
-
-p = 2
+    
+p = 60
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle=len(circle().hot_points)
 ev_per_polygon = Constants.ev_per_polygon
-model = deeponet(num_hot_spots, pts_per_circle, ev_per_polygon, dim, p)
+
+
+
+model = deeponet(dim, num_hot_spots, pts_per_circle, ev_per_polygon, p)
 
 # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
 # model.load_state_dict(best_model['model_state_dict'])
