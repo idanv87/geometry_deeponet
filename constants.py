@@ -18,14 +18,15 @@ class Constants:
        var_center=0
        var_angle=0.4
        radius=3
-       h=1/20
+       h=0.1
        gauss_points=5
 
   
        num_control_polygons=1
-       batch_size=8
+       batch_size=4
        num_epochs=100
-       hot_spots_ratio=2
+       hot_spots_ratio=1
+       num_moments=5
 
        pts_per_polygon=10
        points_on_circle=[]

@@ -1,9 +1,10 @@
 import math
+from typing import Any
 import numpy as np
 import torch
 import sys
 import os
-
+import scipy
 from sympy import *
 from sympy import sin, cos
 
@@ -40,7 +41,7 @@ class Test_function:
         self.solution=solution
         x=symbols('x')
         y=symbols('y')
-        self.function=1
+        self.function=100
         for v in self.v:
             self.function*=sin(x-v)*sin(y-v)
 
@@ -56,6 +57,44 @@ class Test_function:
 
 
                   
+class christofel:
+    def __init__(self, n): 
+        self.n= n
+    def __call__(self, z):
+        n=self.n
+        try:
+            assert abs(z)<1
+   
+            value1 = scipy.special.hyp2f1(1 / n, 2 / n, 1 + 1 / n, z ** n,
+                                  out=None)
+            value = z * (1 - z ** n) ** (2 / n) * (z ** n - 1) ** (-2 / n) * value1
+            return value
+        except:
+            print('z has modulus greater than 1' )
+            assert abs(z)<1
+
+
+def Gauss_zeidel(A, b, x):
+    ITERATION_LIMIT = 2
+    # x = b*0
+    for it_count in range(1, ITERATION_LIMIT):
+        x_new = np.zeros_like(x, dtype=np.float_)
+        # print(f"Iteration {it_count}: {x}")
+        for i in range(A.shape[0]):
+            s1 = np.dot(A[i, :i], x_new[:i])
+            s2 = np.dot(A[i, i + 1 :], x[i + 1 :])
+
+            x_new[i] = (b[i] - s1 - s2) / A[i, i]
+        # if np.allclose(x, x_new, rtol=1e-10):
+        #     break
+        x = x_new
+
+    # print(f"Solution: {x}")
+    # error = np.linalg.norm(abs(np.dot(A, x) - b))
+    # print(error)
+    #  it_count, np.max(abs(np.dot(A, x) - b))
+    return x
+          
 
 
 
@@ -64,8 +103,9 @@ class Test_function:
 
 # domain=torch.load(Constants.path + "polygons/lshape.pt")  
 # f=Test_function(domain['generators'],False)
-# print(np.array(list((map(f,domain['hot_points'][:,0], domain['hot_points'][:,1])))))
+# # print(np.array(list((map(f,domain['hot_points'][:,0], domain['hot_points'][:,1])))))
       
+# print(dtype(f(3,2)))
 
 
 

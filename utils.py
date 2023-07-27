@@ -1,7 +1,7 @@
 from tqdm import tqdm
 import datetime
 import pickle
-import math, random
+import math, random, cmath
 import os
 
 import matplotlib.pyplot as plt
@@ -419,4 +419,28 @@ class chi_function:
             [(vertices[i, 0], vertices[i, 1]) for i in range(vertices.shape[0])]
         ) 
 
-#
+def complex_version(v):
+        assert v.size==2
+        r = np.sqrt(v[0] ** 2 + v[1] ** 2)
+        theta = np.arctan2(v[1], v[0])
+        return r*cmath.exp(1j*theta)
+# def optimal_radius(n):
+#     end_loop=False
+#     # radius=1
+#     circle_hot_points=circle(R=0.99).hot_points_complex
+#     Z=list(map(christofel(n),circle_hot_points))
+#     Z_x=[z.real for z in Z]
+#     Z_y=[z.imag for z in Z]
+#     R=np.max([abs(z) for z in Z])
+#     a=abs(cmath.exp(1 * 2 * math.pi * 1j / n)-1)
+#     area=(n*a**2/4)*(1/np.tan(math.pi/n))
+#     reg_vertices = [np.sqrt(math.pi/area)*cmath.exp(k * 2 * math.pi * 1J / n) for k in
+#                     range(n)]
+    
+#     x = [reg_vertices[i].real  for i in range(n)]
+#     y = [reg_vertices[i].imag  for i in range(n)]
+#     # print(0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))))
+#     plt.scatter(Z_x,Z_y,color='green')
+#     plt.scatter(x,y,color='red')
+#     # plt.show()
+#     return R

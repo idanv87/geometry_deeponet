@@ -10,23 +10,41 @@ import meshio
 import optimesh
 from pathlib import Path
 
-
+import cmath
 from utils import *
 from constants import Constants
-from coords import Map_circle_to_polygon
+# from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
-from functions.functions import Test_function
+from functions.functions import Test_function, christofel
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 
 # sin_function(ind[0], ind[1], df['a'], df['b']).call
 # u=(1/(ev_s[j]-Constants.k))*np.array(list(map(funcs[j], df['interior_points'][:, 0], df['interior_points'][:, 1])))
+
+
+
+
+    
+    # x = value.real
+    # y = value.imag
+    
+    # polygon = Polygon([(vertices[i][0], vertices[i][1]) for i in
+    #                   range(len(vertices))])    
+
+
 class circle:
-    def __init__(self,R=1):
+    def __init__(self,R=0.95):
         vertices=[]
-        for i,r in enumerate(list(np.linspace(0,R,20))):
-            for j,theta in enumerate(list(np.linspace(0,2*math.pi,20))):
-                if i%4==0 and j%2 ==0:
+        vertices_complex=[]
+        for i,r in enumerate(list(np.linspace(0,R,40))):
+            for j,theta in enumerate(list(np.linspace(0,2*math.pi,24))):
+                # if i%4==0 and j%2 ==0:
+                if True:
+                    vertices_complex.append(r*cmath.exp(1j*theta))
                     vertices.append([r*math.cos(theta), r*math.sin(theta)])
         self.hot_points=np.array(vertices)
+        self.hot_points_complex=vertices_complex
        
 
     def plot(self):
@@ -36,13 +54,39 @@ class circle:
 
 
 
+    # while radius==0:
+
+    #     print(type(circle_hot_points))
+    #     optimal_radius(3)
+
+
+def calc_coeff(vertices):
+    n=len(vertices)   
+    a=[]
+    Z=[]
+    for v in vertices:
+        Z.append(complex_version(v))
+    for i  in range(len(Z)):
+        exp1=Z[(i-1) % len(Z)]-Z[i]
+        exp2=Z[(i) % len(Z)]-Z[(i+1)% len(Z)]
+        a.append((exp1.conjugate()/exp1-exp2.conjugate()/exp2)*(1j/2))
+    return a,Z
+
+def calc_moment(k,a,z):
+    return np.sum([a[i]*z[i]**k for i in range(len(a))])
 
 class rectangle:
     
     def __init__(self, a,b): 
-        self.a= a*np.sqrt(math.pi/a/b)
-        self.b= b*np.sqrt(math.pi/a/b)
-        self.generators=np.array([[0,0],[a,0],[a,b],[0,b]])
+        self.a=a
+        self.b=b
+        # self.a= a*np.sqrt(math.pi/a/b)
+        # self.b= b*np.sqrt(math.pi/a/b)
+        self.generators=np.array([[0,0],[self.a,0],[self.a,self.b],[0,self.b]])
+        # p=Polygon(np.array([[0, 0], [a, 0], [a, b], [0,b]]))
+        # p.create_mesh(Constants.h)
+        self.M=[]
+        self.moments=[calc_moment(k,calc_coeff(self.generators)[0],calc_coeff(self.generators)[1]) for k in range(30)]
         self.area=self.a*self.b
         indices=[(1,1), (1,2),(2,1),(2,2)]
         self.ev=np.flip((math.pi**2)*np.array([(ind[0]/self.a)**2+(ind[1]/self.b)**2 for ind in indices]))
@@ -78,6 +122,8 @@ class rectangle:
                 "legit": True,
                 'a':self.a,
                 'b':self.b,
+                'M':self.M,
+                'moments':self.moments,
                 'type':'rectangle'
              }
 
@@ -106,13 +152,19 @@ class rectangle:
 
 
 
+
+
+
 class Polygon:
     def __init__(self, generators ):
-        
-        self.generators= (np.sqrt(math.pi) / np.sqrt(polygon_centre_area(generators))) * generators
+        self.generators=generators
+        # self.generators= (np.sqrt(math.pi) / np.sqrt(polygon_centre_area(generators))) * generators
+        # self.diameter=np.max(np.linalg.norm(self.generators))
         # v[:, 0] -= np.mean(v[:, 0])
         # v[:, 1] -= np.mean(v[:, 1])
         self.geo = dmsh.Polygon(self.generators)
+        self.moments=[calc_moment(k,calc_coeff(self.generators)[0],calc_coeff(self.generators)[1]) for k in range(30)]
+
 
     def create_mesh(self, h):
       
@@ -122,6 +174,8 @@ class Polygon:
             X, cells = optimesh.optimize_points_cells(
                 X, cells, "CVT (full)", 1.0e-6, 120
             )
+        # dmsh.show(X, cells, self.geo)
+            
         self.vertices=X
         self.sc = simplicial_complex(X, cells)
         self.M = (
@@ -173,6 +227,7 @@ class Polygon:
                 "hot_points": self.hot_points,
                 "generators": self.generators,
                 "M":self.M[self.interior_indices][:, self.interior_indices],
+                'moments':self.moments,
                 "legit": True,
                 'type':'polygon'
              }
@@ -197,12 +252,35 @@ class Polygon:
         solution=scipy.sparse.linalg.spsolve(A, b)
 
         return solution
-
+    
+# domain=torch.load(Constants.path + "polygons/rect_train_1.pt")
+# domain=torch.load(Constants.path + "polygons/lshape.pt")
+# print(len(domain['hot_points']))
+# pass
+# # domain=torch.load(Constants.path + "polygons/lshape.pt")
+# plt.scatter(domain['interior_points'][:,0], domain['interior_points'][:,1])
+# plt.scatter(domain['hot_points'][:,0], domain['hot_points'][:,1],color='red')
+# plt.show()
+# print(Constants.h)
+# print(len(domain['hot_points']))
+# p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+# p=rectangle(1,1)
+# p.create_mesh(Constants.h)
+# p.plot()
+# pass
 # rect=rectangle(1,2)
 # rect.create_mesh(Constants.h)
+# print(rect.generators)
 # rect.save(Constants.path + "polygons/rect_train.pt")
 # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+
+# a=0.5
+# b=1/a
+# a= a*np.sqrt(math.pi/a/b)
+# b= b*np.sqrt(math.pi/a/b)
+# p=Polygon(np.array([[0, 0], [a, 0], [a, b], [0,b]]))
 # p.create_mesh(Constants.h)
+# print(p.generators)
 
 # p.save(Constants.path + "polygons/lshape.pt")
 # domain=torch.load(Constants.path + "polygons/rect_train_1.pt")

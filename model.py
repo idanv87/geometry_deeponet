@@ -64,16 +64,47 @@ class deeponet(nn.Module):
                           s2.view(s2.shape[0], s2.shape[1], 1)
                            ))]
 
-    
+
+
+class geo_deeponet(nn.Module):
+    def __init__(self, dim, num_hot_spots, num_moments, ev_per_polygon, p):
+        super().__init__()
+        self.branch1=fc(num_hot_spots,p,4)
+        self.branch2=fc(num_moments,p,4)
+        self.branch3=fc(num_moments,p,4)
+        self.trunk1=fc(dim,p,4)
+        self.trunk2=fc(ev_per_polygon,2*p,4)
+
+
+    def forward(self, input):
+        y, ly, moments,f_polygon = input
+        s1=self.branch1(f_polygon)
+        s2=self.branch2(moments[:,:,0])
+        s3=self.branch3(moments[:,:,1])
+        s4=self.trunk1(y)
+        s5=self.trunk2(ly)
+
+        s1=torch.cat((s1,s2,s3), dim=-1)
+        s2=torch.cat((s4,s5), dim=-1)
+        # s2=s4
+        
+        if len(s1.size())==1:
+            return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
+                          s2.view(1, s2.shape[0], 1)
+                           ))]
+        else:    
+            return [torch.squeeze(torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
+                          s2.view(s2.shape[0], s2.shape[1], 1)
+                           ))]   
 p = 60
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle=len(circle().hot_points)
 ev_per_polygon = Constants.ev_per_polygon
 
+# print(num_hot_spots)
 
-
-model = deeponet(dim, num_hot_spots, pts_per_circle, ev_per_polygon, p)
+model = geo_deeponet(dim, num_hot_spots, Constants.num_moments, ev_per_polygon, p)
 
 # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
 # model.load_state_dict(best_model['model_state_dict'])

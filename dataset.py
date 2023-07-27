@@ -104,12 +104,12 @@ def data_analysis():
     y=[]
     u=[]
     f=[]
-    for input,output in train_dataloader:
-        print(input[0])
+    # for input,output in train_dataloader:
+        # print(input[0])
         
         # u.append(output[0])
         # f.append((1/(2*math.pi-Constants.k))*torch.sin(math.sqrt(math.pi)*input[0][0,0])*torch.sin(math.sqrt(math.pi)*input[0][1,0]))
-    print(x)
+    # print(x)
 # data_analysis()        
 
 

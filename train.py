@@ -40,7 +40,7 @@ experment_name = (
 experment_path = experment_dir + experment_name
 # print(experment_path)
 
-lr = 0.0001
+lr = 0.001
 
 epochs = Constants.num_epochs
 # optimizer
@@ -177,7 +177,12 @@ def predict(model, dataloader, dataset, criterion):
             val_running_acc+=relative_loss.item()
 
             coords.append(input[0])
-            prediction.append(y_pred[0])
+            try:
+                assert y_pred[0].shape[0]>1
+                prediction.append(y_pred[0])
+            except:    
+                prediction.append(torch.unsqueeze(y_pred[0],-1))
+                
             
             y_test.append(output[0])
 
