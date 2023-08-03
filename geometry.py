@@ -1,7 +1,7 @@
 import datetime
 import time
 
-from pylab import figure, cm
+from pylab import figure
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
@@ -15,7 +15,7 @@ from utils import *
 from constants import Constants
 # from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
-from functions.functions import Test_function, christofel
+from functions.functions import Test_function, christofel, sin_function
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -86,7 +86,7 @@ class rectangle:
         # p=Polygon(np.array([[0, 0], [a, 0], [a, b], [0,b]]))
         # p.create_mesh(Constants.h)
         self.M=[]
-        self.moments=[calc_moment(k,calc_coeff(self.generators)[0],calc_coeff(self.generators)[1]) for k in range(30)]
+        self.moments=[calc_moment(k,calc_coeff(self.generators)[0],calc_coeff(self.generators)[1]) for k in range(20)]
         self.area=self.a*self.b
         indices=[(1,1), (1,2),(2,1),(2,2)]
         self.ev=np.flip((math.pi**2)*np.array([(ind[0]/self.a)**2+(ind[1]/self.b)**2 for ind in indices]))
@@ -110,15 +110,15 @@ class rectangle:
                 vertices.append([x[i,j],y[i,j]])
                 if i %Constants.hot_spots_ratio ==0 and j%Constants.hot_spots_ratio==0:
                     hot_points.append([x[i,j],y[i,j]])
-
+                
         self.interior_points=np.array(vertices)   
         self.hot_points =np.array(hot_points)
         self.data={
                 "ev": self.ev,
                 "principal_ev":self.principal_ev,
-                "interior_points": self.interior_points,
-                "hot_points": self.hot_points,
-                "generators": self.generators,
+                "interior_points": self.interior_points[np.lexsort(np.fliplr(self.interior_points).T)],
+               "hot_points": self.hot_points[np.lexsort(np.fliplr(self.hot_points).T)],
+                 "generators": self.generators,
                 "legit": True,
                 'a':self.a,
                 'b':self.b,
@@ -126,16 +126,8 @@ class rectangle:
                 'moments':self.moments,
                 'type':'rectangle'
              }
-
-    def apply_function_on_rectangle(self, func, plot=False):
         
-        value=func(self.interior_points[:, 0], self.interior_points[:, 1])
-        if plot:
-            x,y=np.meshgrid(np.linspace(0,self.a), np.linspace(0,self.b))
-            plt.imshow(func(x,y),extent=[0,self.a,0,self.b], cmap=cm.jet, origin='lower')
-            plt.colorbar()
-            plt.show()
-        return value 
+
 
     
     def save(self, path):
@@ -205,7 +197,7 @@ class Polygon:
     def laplacian(self):
         return scipy.sparse.linalg.eigs(
             -self.M[self.interior_indices][:, self.interior_indices],
-            k=Constants.ev_per_polygon,
+            k=5,
             return_eigenvectors=False,
             which="SM",
         )
@@ -223,8 +215,8 @@ class Polygon:
             data={
                 "ev": self.ev,
                 "principal_ev":self.ev[-1],
-                "interior_points": self.interior_points,
-                "hot_points": self.hot_points,
+                "interior_points": self.interior_points[np.lexsort(np.fliplr(self.interior_points).T)],
+                "hot_points": self.hot_points[np.lexsort(np.fliplr(self.hot_points).T)],
                 "generators": self.generators,
                 "M":self.M[self.interior_indices][:, self.interior_indices],
                 'moments':self.moments,
@@ -252,8 +244,103 @@ class Polygon:
         solution=scipy.sparse.linalg.spsolve(A, b)
 
         return solution
+def analyze_momnets(path, col):         
+    domain=torch.load(path)
+    n=domain['generators'].shape[0]
+    x1=np.array([[domain['moments'][l].real,domain['moments'][l].imag] for l in range(8)])
+    x=x1[:,0]
+    y=x1[:,1]
+    # plt.plot(x,col)
+    plt.scatter(range(y.shape[0]),y/6,color=col)
+
+ 
+    # vertices=[domain['generators'][i] for i in range(n)]
+    # a,Z=calc_coeff(vertices)
+    # n_moments=2*n
+    # tau= [calc_moment(k,a,Z) for k in range(n_moments)]
+    # V=np.zeros((int(n_moments/2),int(n_moments/2)), dtype=np.complex_)
+    # for i in range(int(n_moments/2)):
+    #     for j in range(int(n_moments/2)):
+    #         V[i,j]=Z[j]**i
+    # A=np.diag(a)
+    # H=V@A@V.T  
+    # b=np.array(tau[-int(n_moments/2):])
+    # p=list(np.linalg.solve(H,-b))
+    # p.reverse()
+    # print(np.roots([1]+p))
+if __name__=='__main__':
+    pass
+
+    polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
+    test_domains_path=[polygons_files_names[10] ]
+    train_domains_path=polygons_files_names
+    # domain=torch.load(train_domains_path[0])
+    # print(domain['moments'][3])
+    # # print(domain['interior_points'].shape)
+    # a=domain['a']
+    # b=domain['b']
+    # func=sin_function(1,1,a,b).call
+    # x1=np.array(list(map(func, domain['hot_points'][:,0], domain['hot_points'][:,1])))
+    # domain=torch.load(test_domains_path[0])
+    # print(domain['moments'][3])
+    # a=domain['a']
+    # b=domain['b']
+    # func=sin_function(1,1,a,b).call
+    # x2=np.array(list(map(func, domain['hot_points'][:,0], domain['hot_points'][:,1])))
+
+
+
+    # plt.scatter(domain['hot_points'][:,0], domain['hot_points'][:,1],c=list(map(func, domain['hot_points'][:,0], domain['hot_points'][:,1])))
+    # plt.colorbar()
+    # plt.show()
+    # print(Constants.k-math.pi**2*(2**2/a**2+1**2/b**2))
+
+    for name in train_domains_path:
+        analyze_momnets(name,'r')
+    for name in test_domains_path:
+        analyze_momnets(name,'b')
+
+    plt.show()
     
-# domain=torch.load(Constants.path + "polygons/rect_train_1.pt")
+
+def eval_on_domain(path):
+    from functions.functions import sin_function
+    domain=torch.load(path)
+    f=sin_function(4,4,domain['a'], domain['b']).call
+    x=list(domain['hot_points'][:,0])
+    y=list(domain['hot_points'][:,1])
+    solution=list(map(f,x,y))
+    plt.scatter(x,y,c=solution)
+    plt.show()
+
+# eval_on_domain(Constants.path + "polygons/rect00.pt")        
+
+# print(vertices)
+    # Z.reverse()
+    # p=np.array(Z.copy())
+    
+    
+# With square kernels and equal stride
+# m = torch.nn.Conv2d(16, 33, (3,3), padding_mode='zeros')
+# non-square kernels and unequal stride and with padding
+# m = torch.nn.Conv2d(16, 33, (3, 5), stride=(2, 1), padding=(4, 2))
+# # non-square kernels and unequal stride and with padding and dilation
+# m = torch.nn.Conv1d(50, 50, 3, padding=1)
+# input = torch.randn(20, 50,50)
+# output = m(input)
+# print(output.shape)
+
+
+  
+
+   
+    
+
+
+
+
+
+# domain=torch.load(Constants.path + "polygons/rect00.pt")
 # domain=torch.load(Constants.path + "polygons/lshape.pt")
 # print(len(domain['hot_points']))
 # pass
@@ -264,12 +351,22 @@ class Polygon:
 # print(Constants.h)
 # print(len(domain['hot_points']))
 # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+
 # p=rectangle(1,1)
 # p.create_mesh(Constants.h)
+# x=[]
+# y=[]
+# for m in p.moments:
+#     x.append(m.real)
+#     y.append(m.imag)
+# plt.plot(x[:15])
+# plt.show()    
+
 # p.plot()
 # pass
 # rect=rectangle(1,2)
 # rect.create_mesh(Constants.h)
+# rect.plot()
 # print(rect.generators)
 # rect.save(Constants.path + "polygons/rect_train.pt")
 # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))

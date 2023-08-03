@@ -257,14 +257,10 @@ class SaveBestModel:
     model state.
     """
 
-    def __init__(self, best_valid_loss=float("inf")):
+    def __init__(self, log_path, best_valid_loss=float("inf")):
         self.best_valid_loss = best_valid_loss
-        self.uniq_filename = (
-            str(datetime.datetime.now().date())
-            + "_"
-            + str(datetime.datetime.now().time()).replace(":", ".")
-            + ".pth"
-        )
+        self.path=log_path
+
 
     def __call__(self, current_valid_loss, epoch, model, optimizer, criterion):
         if current_valid_loss < self.best_valid_loss:
@@ -279,11 +275,11 @@ class SaveBestModel:
                     "optimizer_state_dict": optimizer.state_dict(),
                     "loss": criterion,
                 },
-                Constants.path + "best_model/" + self.uniq_filename,
+                self.path+'best_model.pth',
             )
 
 
-def save_plots(train_loss, valid_loss, test_loss, metric_type:str):
+def save_plots(train_loss, valid_loss, test_loss, metric_type:str, dir_path):
 
     # accuracy plots
     fig, ax=plt.subplots(1,2)
@@ -298,9 +294,12 @@ def save_plots(train_loss, valid_loss, test_loss, metric_type:str):
     ax[1].legend(loc="upper right")
 
     fig.suptitle("metric type: "+metric_type)
+    isExist = os.path.exists(dir_path+'figures')
+    if not isExist:
+            os.makedirs(dir_path+'figures')  
    
-    plt.savefig(Constants.path + "figures/"+ metric_type+".png")
-    plt.show()
+    plt.savefig(dir_path + "figures/"+ metric_type+".png")
+    plt.show(block=False)
 
 
   
@@ -424,23 +423,14 @@ def complex_version(v):
         r = np.sqrt(v[0] ** 2 + v[1] ** 2)
         theta = np.arctan2(v[1], v[0])
         return r*cmath.exp(1j*theta)
-# def optimal_radius(n):
-#     end_loop=False
-#     # radius=1
-#     circle_hot_points=circle(R=0.99).hot_points_complex
-#     Z=list(map(christofel(n),circle_hot_points))
-#     Z_x=[z.real for z in Z]
-#     Z_y=[z.imag for z in Z]
-#     R=np.max([abs(z) for z in Z])
-#     a=abs(cmath.exp(1 * 2 * math.pi * 1j / n)-1)
-#     area=(n*a**2/4)*(1/np.tan(math.pi/n))
-#     reg_vertices = [np.sqrt(math.pi/area)*cmath.exp(k * 2 * math.pi * 1J / n) for k in
-#                     range(n)]
-    
-#     x = [reg_vertices[i].real  for i in range(n)]
-#     y = [reg_vertices[i].imag  for i in range(n)]
-#     # print(0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1))))
-#     plt.scatter(Z_x,Z_y,color='green')
-#     plt.scatter(x,y,color='red')
-#     # plt.show()
-#     return R
+
+
+# def print_layers(model):
+#     for name, layer in model.named_modules():
+#         if isinstance(layer, torch.nn.Linear):
+#             pass
+            # print(name)
+            # print(layer._parameters)
+            # print(layer.weight.grad)
+
+

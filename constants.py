@@ -4,8 +4,8 @@ import numpy as np
 import math
 import cmath
 
+
 class Constants:
-       
        device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
        dtype=torch.float32
        
@@ -18,14 +18,14 @@ class Constants:
        var_center=0
        var_angle=0.4
        radius=3
-       h=0.1
+       h=1/40
        gauss_points=5
 
   
        num_control_polygons=1
        batch_size=4
-       num_epochs=100
-       hot_spots_ratio=1
+       num_epochs=300
+       hot_spots_ratio=2
        num_moments=5
 
        pts_per_polygon=10
@@ -36,9 +36,9 @@ class Constants:
                      points_on_circle.append([z.real,z.imag ])
 
        points_on_circle=np.array(points_on_circle)
-       ev_per_polygon=4
+       ev_per_polygon=2
 
-       k=2*math.pi+4
+       k=3.11
        
        dim=2
        # num_ev=4
@@ -53,33 +53,23 @@ class Constants:
        if not isExist:
               os.makedirs(path+'hints_polygons')   
 
-           
-
-       isExist = os.path.exists(path+'best_model')
-       if not isExist:
-              os.makedirs(path+'best_model')   
-
-       isExist = os.path.exists(path+'figures')
-       if not isExist:
-              os.makedirs(path+'figures')  
-
-       isExist = os.path.exists(path+'data_sets')
-
-       if not isExist:
-              os.makedirs(path+'data_sets')         
+       
+      
               
        l=[]
        for i in range(1,5):
               for j in range(1,5):
                      l.append((i,j))
-       
-
-       polygon_train_pathes=[]    
-       main_polygons_pathes=[]   
-       model_dimension=None
-       
 
 
+
+# from torch.utils.tensorboard import SummaryWriter
+# writer = SummaryWriter(Constants.path+'runs')
+# x = range(100)
+# for i in x:
+#     writer.add_scalar('y=5x', i * 10, i)
+# writer.flush()    
+# writer.close()
 
 # class father:
 #        def __init__(self,a):  

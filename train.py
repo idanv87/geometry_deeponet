@@ -30,27 +30,39 @@ from dataset import (
 )
 from model import model
 
+# best_model=torch.load(Constants.path+'best_model/best_model.pth')
+# model.load_state_dict(best_model['model_state_dict'])
 
-experment_dir = Constants.output_path
-experment_name = (
+
+
+experment_dir = (
     str(datetime.datetime.now().date())
     + "_"
-    + str(datetime.datetime.now().time()).replace(":", ".")
+    + str(datetime.datetime.now().time()).replace(":", ".")+'_rect_to_rect/'
 )
-experment_path = experment_dir + experment_name
-# print(experment_path)
+experment_dir='noting/'
+experment_path=Constants.path+'runs/'+experment_dir
+isExist = os.path.exists(experment_path)
+if not isExist:
+    os.makedirs(experment_path)  
+
+
+
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter(experment_path)
+
 
 lr = 0.001
-
 epochs = Constants.num_epochs
 # optimizer
-optimizer = optim.Adam(model.parameters(), lr=lr)
+optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-5)
 # loss function
 criterion = nn.MSELoss()
+# scheduler
 lr_scheduler=LRScheduler(optimizer)
-# lr_schedualer=torch.optim.lr_scheduler.CyclicLR(optimizer,1e-5,1e-2, cycle_momentum=False)
-
-save_best_model = SaveBestModel()
+early_stopping = EarlyStopping()
+save_best_model = SaveBestModel(experment_path)
+# device
 device = Constants.device
 
 # total parameters and trainable parameters
@@ -60,25 +72,8 @@ total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires
 print(f"{total_trainable_params:,} training parameters.")
 
 
-loss_plot_name = "loss"
-acc_plot_name = "accuracy"
-model_name = "model"
 
 
-# if args["lr_scheduler"]:
-print("INFO: Initializing learning rate scheduler")
-lr_scheduler = LRScheduler(optimizer)
-# change the accuracy, loss plot names and model name
-loss_plot_name = "lrs_loss"
-acc_plot_name = "lrs_accuracy"
-model_name = "lrs_model"
-# if args["early_stopping"]:
-print("INFO: Initializing early stopping")
-early_stopping = EarlyStopping()
-# change the accuracy, loss plot names and model name
-loss_plot_name = "es_loss"
-acc_plot_name = "es_accuracy"
-model_name = "es_model"
 
 
 def fit(model, train_dataloader, train_dataset, optimizer, criterion):
@@ -121,6 +116,11 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
 
     train_loss = train_running_loss / counter
     train_acc = train_running_acc / counter
+    try:
+        writer.add_scalar("train/train_loss", train_loss, epoch)
+        writer.add_scalar("accuracy/train_relative_L2", train_acc, epoch)
+    except:
+        pass    
     return train_loss, train_acc
 
 def plot_results(x,y,y_test, y_pred):
@@ -136,8 +136,8 @@ def plot_results(x,y,y_test, y_pred):
     ax[0].set_title('test')
     ax[1].set_title('pred')
     # ax[2].set_title('error')
-   
-    plt.show()
+    # plt.show()
+
 
 
 def predict(model, dataloader, dataset, criterion):
@@ -191,11 +191,28 @@ def predict(model, dataloader, dataset, criterion):
         y_test=torch.cat(y_test,axis=0)
         # print((1/(2*math.pi-Constants.k))*torch.sin(coords[:,0,0]*np.sqrt(math.pi)
         #                                             )*torch.sin(coords[:,1,0]*np.sqrt(math.pi))-y_test)
+        
+        if epoch % 20 ==0:
+             plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+             try:
+                writer.add_figure('relative L2 error/epoch: '+str(epoch), plt.gcf(), epoch)
+             except:
+                 pass   
+            
+            
         if epoch== Constants.num_epochs-2:
-          plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+            plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+            plt.show()
+            
+            # plt.show()
+
         val_loss = val_running_loss / counter
         val_acc = val_running_acc / counter
-
+        try:
+            writer.add_scalar("test/test_loss", val_loss, epoch)
+            writer.add_scalar("accuracy/test_relative_L2", val_acc, epoch)
+        except:
+            pass    
         return val_loss, val_acc
     
 def validate(model, dataloader, dataset, criterion):
@@ -233,8 +250,10 @@ def validate(model, dataloader, dataset, criterion):
 
         val_loss = val_running_loss / counter
         val_acc = val_running_acc / counter
-
-
+        try:
+            writer.add_scalar("train/validation_loss", val_loss, epoch)
+        except:
+            pass    
         return val_loss, val_acc
 
 
@@ -274,15 +293,20 @@ for epoch in range(epochs):
     print("-" * 50)
     print(f"Train Loss: {train_epoch_loss:4e}")
     print(f"Val Loss: {val_epoch_loss:.4e}")
+    print(f"Test Loss: {test_epoch_loss:.4e}")
     print(f"Train Realtive L2  Error: {train_epoch_acc:.4e}")
+    print(f"Val Realtive L2  Error: {val_epoch_acc:.4e}")
     print(f"Test Realtive L2  Error: {test_epoch_acc:.4e}")
 end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
-# save_plots(train_loss, val_loss, test_loss, "Loss")
+save_plots(train_loss, val_loss, test_loss, "Loss", experment_path)
 # save_plots(train_accuracy, val_accuracy, test_accuracy, "Relative L2")
 
 print("TRAINING COMPLETE")
 
-
+try:
+    writer.close()
+except:
+    pass    
 

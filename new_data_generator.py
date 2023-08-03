@@ -9,23 +9,27 @@ import scipy
 import dmsh
 import meshio
 import optimesh
-from pathlib import Path
+
 
 
 from utils import *
 from constants import Constants
-from coords import Map_circle_to_polygon
-from pydec.dec import simplicial_complex
 from geometry import rectangle, circle, Polygon
 from functions.functions import sin_function, Test_function
 
 
-circle_hot_points=circle().hot_points
+# circle_hot_points=circle().hot_points
+
+
+
+
+
 def generate_domains():
       
-
-        for i,a in enumerate(list(np.linspace(0.1,1,5))):
-                for j,b in enumerate(list(np.linspace(0.1,1,5))):
+        x_length=[1]
+        y_length=[1]
+        for i,a in enumerate(x_length):
+                for j,b in enumerate(y_length):
 
                     rect=rectangle(a,b)
                     rect.create_mesh(Constants.h)
@@ -33,7 +37,7 @@ def generate_domains():
         # rect=rectangle(1,1)
         # rect.create_mesh(Constants.h)
         # rect.save(Constants.path + "polygons/rect_train_"+str(0)+".pt")
-        # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 4], [1 / 4, 1 / 4], [1 / 4, 1], [0, 1]]))
+        # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 / 2], [1 / 2, 1 / 2], [1 / 2, 1], [0, 1]]))
         # p.create_mesh(Constants.h/2)
         # p.save(Constants.path + "polygons/lshape.pt")
 
@@ -44,81 +48,95 @@ def generate_domains():
         # p.create_mesh(Constants.h)
         # p.save(Constants.path + "polygons/triangle.pt")
 #
+
+
 # generate_domains()
-
 # for large data
-def create_train_data(train_domains, train_functions, train_modes, dir_path):
+def create_data(domains, Functions, modes, dir_path):
 
-    for domain, funcs in zip(train_domains, train_functions):
+    for domain, funcs in zip(domains, Functions):
+        
             
             # transform = Map_circle_to_polygon(domain['generators']).call
             # xi=np.array(list(map(transform, circle_hot_points[:,0], circle_hot_points[:,1])))
             for i,f in enumerate(funcs):
-                
-                x2=np.array(list(map(f,domain['hot_points'][:,0], domain['hot_points'][:,1])))
+                x2=np.array(list(map(f.call,domain['hot_points'][:,0], domain['hot_points'][:,1])))
 
                 # x1=np.array(list(map(f,xi[:,0], xi[:,1])))
-                x1=np.array([[domain['moments'][l].real,domain['moments'][l].imag] for l in range(Constants.num_moments)])
+                x1=np.array([ [domain['moments'][l].real,domain['moments'][l].imag] for l in range(len(domain['moments']))])
+             
                 if domain['type']=='rectangle':
-                        x3=rectangle.solve_helmholtz_equation(f,domain, train_modes[0][i])
+                        
+                        x3=rectangle.solve_helmholtz_equation(f.call,domain, f.wn)
+                        
                 else:
-                        x3= Polygon.solve_helmholtz_equation(f,domain)
+                        x3= Polygon.solve_helmholtz_equation(f.call,domain)
 
-                for j in range(domain['interior_points'].shape[0]):
+                for j in range(0,domain['interior_points'].shape[0],1):
                   
                     y=np.expand_dims(domain['interior_points'][j],-1)
                     y_ev=np.expand_dims(domain['ev'],-1)
                     f_gs=x1
                     f_domain=np.expand_dims(x2,-1)
-                    output=x3[j]
+                    output_value=x3[j]
                     name = (
                     str(datetime.datetime.now().date())
                     + "_"
                     + str(datetime.datetime.now().time()).replace(":", ".")
                         )
                     save_file([np_to_torch(y),np_to_torch(y_ev),np_to_torch(f_gs),np_to_torch(f_domain)],dir_path+'input/', name)
-                    save_file([np_to_torch(output)],dir_path+'output/', name)
+                    save_file([np_to_torch(output_value)],dir_path+'output/', name)
 
-    return 
+   
 if __name__=="__main__": 
-    # polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
+   
+    polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
+    
+    # polygons_files_names=list(set(polygons_files_names)-set([Constants.path + "polygons/lshape.pt"]))
+    test_domains_path=[polygons_files_names[0] ]
+    train_domains_path=[polygons_files_names[0] ]
+
+    # train_domains_path = list(set(polygons_files_names) ) 
+    # train_domains_path = list(set(polygons_files_names) - set(test_domains_path)) 
+    # train_domains_path = [polygons_files_names[2] ]
+
+
     # test_domains_path = [Constants.path + "polygons/lshape.pt"]
     # train_domains_path = list(set(polygons_files_names) - set(test_domains_path))      
 
     # train_domains_path=[Constants.path + "polygons/rect_train_"+str(0)+".pt"]
     # test_domains_path=[Constants.path + "polygons/rect_train_"+str(0)+".pt"]
-    train_domains_path=[Constants.path + "polygons/lshape.pt"]
-    test_domains_path=[Constants.path + "polygons/lshape.pt"]
+    # train_domains_path=[Constants.path + "polygons/lshape.pt"]
+    # test_domains_path=[Constants.path + "polygons/lshape.pt"]
 
-    train_modes=[(1,1)]
+    # train_modes=[(1,1),(1,2),(1,3),(2,1),(2,2),(2,3),(3,1),(3,2),(3,3)]
     train_modes=[]
-    for i in range(1,2,1):
-            for j in range(1,2,1):
+    for i in range(1,5,1):
+            for j in range(1,5,1):    
                     train_modes.append((i,j))
 
-    test_modes=[(1,1)]                
+    test_modes=[(5,5)]                
 
-    # train_domains=[torch.load(name) for name in train_domains_path]
-    # train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in train_modes] for rect in train_domains ]
-    # train_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in train_modes] for rect in train_domains ]
+    train_domains=[torch.load(name) for name in train_domains_path]
+    train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']) for ind in train_modes] for rect in train_domains ]
 
     # rect version:
-    # test_domains=[torch.load(name) for name in test_domains_path]
-    # test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).call for ind in test_modes] for rect in test_domains ]
-    # test_modes=[[sin_function(ind[0], ind[1], rect['a'], rect['b']).wn for ind in test_modes] for rect in test_domains ]
+
+    test_domains=[torch.load(name) for name in test_domains_path]
+    test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']) for ind in test_modes] for rect in test_domains ]
 
 
     # lshape version:
-    train_domains=[torch.load(name) for name in train_domains_path]
-    train_functions=[[Test_function(domain['generators'], solution=False)] for domain in train_domains ]
-    train_modes=[[sin_function(ind[0], ind[1], 1, 1).wn for ind in test_modes] for rect in train_domains ]
+    # train_domains=[torch.load(name) for name in train_domains_path]
+    # train_functions=[[Test_function(domain['generators'], solution=False)] for domain in train_domains ]
+    # train_modes=[[sin_function(ind[0], ind[1], 1, 1).wn for ind in test_modes] for rect in train_domains ]
     # 
-    test_domains=[torch.load(name) for name in test_domains_path]
-    test_functions=[[Test_function(domain['generators'], solution=False)] for domain in test_domains ]
-    test_modes=[]
+    # test_domains=[torch.load(name) for name in test_domains_path]
+    # test_functions=[[Test_function(domain['generators'], solution=False)] for domain in test_domains ]
+    # test_modes=[]
+    create_data(test_domains, test_functions, test_modes, Constants.path+'test/')
+    create_data(train_domains, train_functions, train_modes, Constants.path+'train/')
 
-    create_train_data(train_domains, train_functions, train_modes, Constants.path+'train/')
-    create_train_data(test_domains, test_functions, test_modes, Constants.path+'test/')
 
 
 

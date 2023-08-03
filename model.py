@@ -10,20 +10,33 @@ import torch.nn.functional as F
 from torch.nn.modules.module import Module
 import torch.optim as optim
 import numpy as np
-from geometry import circle
 
+
+
+from geometry import circle
 from utils import *
 
 
 # initializer=nn.init.zeros_
+class conv(torch.nn.Module):
+    def __init__(self, input_shape, output_shape):
+        super().__init__()
+        self.input_shape=input_shape
+        self.output_shape=output_shape
+        self.layer1= torch.nn.Conv2d(1, 33, (3, 3), stride=1, padding=(1, 1))
+        self.layer2= torch.nn.Conv2d(33, 1, (3, 3), stride=1, padding=(1, 1))
+    def forward(self,x):
+        return self.layer2(self.layer1(x))    
+
 
 class fc(torch.nn.Module):
     def __init__(self, input_shape, output_shape, num_layers):
         super().__init__() 
         self.input_shape=input_shape
         self.output_shape=output_shape
-        n=40
+        n=50
         self.activation=torch.nn.ReLU()
+        # self.activation=torch.nn.LeakyReLU()
         self.layers=torch.nn.ModuleList([torch.nn.Linear(in_features=self.input_shape,out_features=n,bias=True)])
         output_shape=n
 
@@ -69,49 +82,58 @@ class deeponet(nn.Module):
 class geo_deeponet(nn.Module):
     def __init__(self, dim, num_hot_spots, num_moments, ev_per_polygon, p):
         super().__init__()
-        self.branch1=fc(num_hot_spots,p,4)
-        self.branch2=fc(num_moments,p,4)
-        self.branch3=fc(num_moments,p,4)
-        self.trunk1=fc(dim,p,4)
-        self.trunk2=fc(ev_per_polygon,2*p,4)
+        n=3
+        self.branch1=fc(num_hot_spots,p,n)
+        self.branch2=fc(num_moments,p,n)
+        self.branch3=fc(num_moments,p,n)
+        self.trunk1=fc(dim,p,n)
+        self.trunk2=fc(ev_per_polygon,p,n)
 
 
     def forward(self, input):
         y, ly, moments,f_polygon = input
-        s1=self.branch1(f_polygon)
-        s2=self.branch2(moments[:,:,0])
-        s3=self.branch3(moments[:,:,1])
-        s4=self.trunk1(y)
-        s5=self.trunk2(ly)
+        
 
-        s1=torch.cat((s1,s2,s3), dim=-1)
-        s2=torch.cat((s4,s5), dim=-1)
-        # s2=s4
+        s1=self.branch1(f_polygon/100)
+        
+        # s2=self.branch2(6*moments[:,3:(Constants.num_moments+3),0])
+        # s3=self.branch3(6*moments[:,3:(Constants.num_moments+3),1])
+
+        s4=self.trunk1(y)
+        
+        # s5=self.trunk2(ly[:,-Constants.ev_per_polygon:,:])
+
+        # s1=torch.cat((s1,s3), dim=-1)
+        # s2=torch.cat((s4,s5), dim=-1)
+        s1=s1
+        s2=s4
         
         if len(s1.size())==1:
             return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
                           s2.view(1, s2.shape[0], 1)
                            ))]
         else:    
-            return [torch.squeeze(torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
-                          s2.view(s2.shape[0], s2.shape[1], 1)
-                           ))]   
-p = 60
+            return [
+                torch.squeeze(
+                torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
+                          s2.view(s2.shape[0], s2.shape[1], 1)) 
+                           )
+                           ]   
+p = 30
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle=len(circle().hot_points)
 ev_per_polygon = Constants.ev_per_polygon
 
-# print(num_hot_spots)
+
 
 model = geo_deeponet(dim, num_hot_spots, Constants.num_moments, ev_per_polygon, p)
 
-# best_model=torch.load(Constants.path+'best_model/'+'best.pth')
-# model.load_state_dict(best_model['model_state_dict'])
+# # best_model=torch.load(Constants.path+'best_model/'+'best.pth')
+# # model.load_state_dict(best_model['model_state_dict'])
 print("number of model parameters: " + str(count_trainable_params(model)))
 
 if __name__ == "__main__":
-
     pass
 
     # best_model=torch.load(Constants.path+'best_model/'+'2023-07-10_10.00.42.817019.pth')
