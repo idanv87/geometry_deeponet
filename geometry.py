@@ -247,7 +247,7 @@ class Polygon:
 def analyze_momnets(path, col):         
     domain=torch.load(path)
     n=domain['generators'].shape[0]
-    x1=np.array([[domain['moments'][l].real,domain['moments'][l].imag] for l in range(8)])
+    x1=np.array([[domain['moments'][l].real,domain['moments'][l].imag] for l in range(12)])
     x=x1[:,0]
     y=x1[:,1]
     # plt.plot(x,col)

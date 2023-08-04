@@ -19,18 +19,54 @@ class sin_function:
         self.a=a
         self.b=b
         self.wn=math.pi**2*(n**2/a**2+m**2/b**2)
-    def call(self,x,y, solve=False):
-        if True:
+    def call(self,x,y):
             try:
                 return ((self.wn-Constants.k))*torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
             except:
                 return ((self.wn-Constants.k))*np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
+            
+    def solve_helmholtz(self, domain):
+            f=self.call
+            mode=self.wn
+            b=f(domain['interior_points'][:,0], domain['interior_points'][:,1])
 
-        else:    
-            try:
-                return torch.sin(math.pi*self.n*x/self.a)*torch.sin(math.pi*self.m*y/self.b) 
-            except:
-                return np.sin(math.pi*self.n*x/self.a)*np.sin(math.pi*self.m*y/self.b) 
+            assert abs(mode-Constants.k)>1e-6
+            return 1/(mode-Constants.k)*b
+            
+
+
+class sum_sin:
+    def __init__(self,modes,a,b, weights=None):
+        self.modes=modes
+        self.a=a
+        self.b=b
+        self.funcs=[sin_function(mode[0], mode[1], self.a,self.b) for mode in self.modes]
+        self.weights=[1/len(modes)]*len(modes)
+        if weights is not None:
+            self.weights=weights
+
+
+                      
+
+    def call(self,x,y):
+            count=0
+            for weight, f in zip(self.weights, self.funcs):
+                count+=weight*f.call(x,y)
+            return count
+
+    def solve_helmholtz(self, domain):
+        count=0
+        for weight, f in zip(self.weights,self.funcs):
+            mode=f.wn
+            b=f.call(domain['interior_points'][:,0], domain['interior_points'][:,1])
+
+            assert abs(mode-Constants.k)>1e-6
+            count+= weight/(mode-Constants.k)*b
+            
+        return count
+
+        
+        
             
 
 

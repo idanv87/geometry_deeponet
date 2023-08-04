@@ -34,7 +34,7 @@ class fc(torch.nn.Module):
         super().__init__() 
         self.input_shape=input_shape
         self.output_shape=output_shape
-        n=50
+        n=120
         self.activation=torch.nn.ReLU()
         # self.activation=torch.nn.LeakyReLU()
         self.layers=torch.nn.ModuleList([torch.nn.Linear(in_features=self.input_shape,out_features=n,bias=True)])
@@ -82,11 +82,11 @@ class deeponet(nn.Module):
 class geo_deeponet(nn.Module):
     def __init__(self, dim, num_hot_spots, num_moments, ev_per_polygon, p):
         super().__init__()
-        n=3
+        n=2
         self.branch1=fc(num_hot_spots,p,n)
         self.branch2=fc(num_moments,p,n)
         self.branch3=fc(num_moments,p,n)
-        self.trunk1=fc(dim,p,n)
+        self.trunk1=fc(dim,2*p,n)
         self.trunk2=fc(ev_per_polygon,p,n)
 
 
@@ -94,18 +94,18 @@ class geo_deeponet(nn.Module):
         y, ly, moments,f_polygon = input
         
 
-        s1=self.branch1(f_polygon/100)
+        s1=self.branch1(f_polygon)
         
-        # s2=self.branch2(6*moments[:,3:(Constants.num_moments+3),0])
-        # s3=self.branch3(6*moments[:,3:(Constants.num_moments+3),1])
+        s2=self.branch2(6*moments[:,3:(Constants.num_moments+3),0])
+        s3=self.branch3(6*moments[:,3:(Constants.num_moments+3),1])
 
-        s4=self.trunk1(y)
+        s4=self.trunk1(y*5)
         
         # s5=self.trunk2(ly[:,-Constants.ev_per_polygon:,:])
 
-        # s1=torch.cat((s1,s3), dim=-1)
+        s1=torch.cat((s1,s3), dim=-1)
         # s2=torch.cat((s4,s5), dim=-1)
-        s1=s1
+        # s1=s1
         s2=s4
         
         if len(s1.size())==1:
@@ -117,9 +117,11 @@ class geo_deeponet(nn.Module):
                 torch.squeeze(
                 torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
                           s2.view(s2.shape[0], s2.shape[1], 1)) 
-                           )
-                           ]   
-p = 30
+                           )]   
+# 0.5*torch.squeeze(torch.sin(math.pi*y[:,0])*torch.sin(math.pi*y[:,1])
+#                 +torch.sin(math.pi*y[:,0])*torch.sin(math.pi*2*y[:,1])
+#                 ) 
+p = 100
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle=len(circle().hot_points)

@@ -15,7 +15,7 @@ import optimesh
 from utils import *
 from constants import Constants
 from geometry import rectangle, circle, Polygon
-from functions.functions import sin_function, Test_function
+from functions.functions import sin_function, Test_function, sum_sin
 
 
 # circle_hot_points=circle().hot_points
@@ -26,7 +26,7 @@ from functions.functions import sin_function, Test_function
 
 def generate_domains():
       
-        x_length=[1]
+        x_length=list(np.linspace(0.3,1,20))
         y_length=[1]
         for i,a in enumerate(x_length):
                 for j,b in enumerate(y_length):
@@ -41,12 +41,6 @@ def generate_domains():
         # p.create_mesh(Constants.h/2)
         # p.save(Constants.path + "polygons/lshape.pt")
 
-        # p=Polygon(np.array([[0, 0], [1, 0], [1, 1 ], [0, 1 ]]))
-        # p.create_mesh(Constants.h)
-        # p.save(Constants.path + "polygons/rect_1.pt")
-        # p=Polygon(np.array([[0, 0], [0.5, 0], [0.25, 1]]))
-        # p.create_mesh(Constants.h)
-        # p.save(Constants.path + "polygons/triangle.pt")
 #
 
 
@@ -66,11 +60,12 @@ def create_data(domains, Functions, modes, dir_path):
                 x1=np.array([ [domain['moments'][l].real,domain['moments'][l].imag] for l in range(len(domain['moments']))])
              
                 if domain['type']=='rectangle':
-                        
-                        x3=rectangle.solve_helmholtz_equation(f.call,domain, f.wn)
+                            x3=f.solve_helmholtz(domain)  
+                            # rectangle.solve_helmholtz_equation(g.call,domain, g.wn)
+
                         
                 else:
-                        x3= Polygon.solve_helmholtz_equation(f.call,domain)
+                        x3= Polygon.solve_helmholtz_equation(f.call, domain)
 
                 for j in range(0,domain['interior_points'].shape[0],1):
                   
@@ -93,8 +88,8 @@ if __name__=="__main__":
     polygons_files_names = extract_path_from_dir(Constants.path + "polygons/")
     
     # polygons_files_names=list(set(polygons_files_names)-set([Constants.path + "polygons/lshape.pt"]))
-    test_domains_path=[polygons_files_names[0] ]
-    train_domains_path=[polygons_files_names[0] ]
+    test_domains_path=[polygons_files_names[10] ]
+    train_domains_path = list(set(polygons_files_names) - set(test_domains_path)) 
 
     # train_domains_path = list(set(polygons_files_names) ) 
     # train_domains_path = list(set(polygons_files_names) - set(test_domains_path)) 
@@ -110,20 +105,32 @@ if __name__=="__main__":
     # test_domains_path=[Constants.path + "polygons/lshape.pt"]
 
     # train_modes=[(1,1),(1,2),(1,3),(2,1),(2,2),(2,3),(3,1),(3,2),(3,3)]
-    train_modes=[]
-    for i in range(1,5,1):
-            for j in range(1,5,1):    
-                    train_modes.append((i,j))
 
-    test_modes=[(5,5)]                
+    # train_modes_temp=[ (1,1),(2,1)]
+    train_modes_temp=[]
+    for i in range(1,3,1):
+            for j in range(1,2,1):    
+                    train_modes_temp.append((i,j))
+    num_samples=20
+   
+    a=np.random.rand(num_samples,len(train_modes_temp))
+    train_weights=[list(a[i]/np.sum(a[i])) for i in range(num_samples)]
+    train_modes=[train_modes_temp]*num_samples
+    
+    test_modes_temp=train_modes_temp
+    b=np.random.rand(1,len(test_modes_temp))
+    # test_weights=[train_weights[0]]
+    test_weights=[list(b[0]/np.sum(b[0])) ]
+    test_modes=[test_modes_temp]          
 
     train_domains=[torch.load(name) for name in train_domains_path]
-    train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']) for ind in train_modes] for rect in train_domains ]
+    # train_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']) for ind in train_modes] for rect in train_domains ]
+    train_functions=[[sum_sin(ind, rect['a'], rect['b'],weights) for weights,ind in zip(train_weights,train_modes)] for rect in train_domains ]
 
     # rect version:
 
     test_domains=[torch.load(name) for name in test_domains_path]
-    test_functions=[[sin_function(ind[0], ind[1], rect['a'], rect['b']) for ind in test_modes] for rect in test_domains ]
+    test_functions=[[sum_sin(ind, rect['a'], rect['b'], weights) for weights,ind in zip(test_weights,test_modes)] for rect in test_domains ]
 
 
     # lshape version:
@@ -136,6 +143,8 @@ if __name__=="__main__":
     # test_modes=[]
     create_data(test_domains, test_functions, test_modes, Constants.path+'test/')
     create_data(train_domains, train_functions, train_modes, Constants.path+'train/')
+
+
 
 
 

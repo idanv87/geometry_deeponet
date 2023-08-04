@@ -35,12 +35,13 @@ from model import model
 
 
 
+
 experment_dir = (
     str(datetime.datetime.now().date())
     + "_"
     + str(datetime.datetime.now().time()).replace(":", ".")+'_rect_to_rect/'
 )
-experment_dir='noting/'
+experment_dir='rect_to rect/'
 experment_path=Constants.path+'runs/'+experment_dir
 isExist = os.path.exists(experment_path)
 if not isExist:
@@ -55,7 +56,7 @@ writer = SummaryWriter(experment_path)
 lr = 0.001
 epochs = Constants.num_epochs
 # optimizer
-optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-4)
 # loss function
 criterion = nn.MSELoss()
 # scheduler
@@ -266,6 +267,7 @@ val_loss, val_accuracy = [], []
 test_loss, test_accuracy = [], []
 
 start = time.time()
+
 
 for epoch in range(epochs):
     

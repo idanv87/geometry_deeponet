@@ -424,6 +424,11 @@ def complex_version(v):
         theta = np.arctan2(v[1], v[0])
         return r*cmath.exp(1j*theta)
 
+def stochastic_matrix(m,n):
+    a=np.random.rand(m,n)
+    return [a[i]/np.sum(a[i]) for i in range(m)]
+       
+    
 
 # def print_layers(model):
 #     for name, layer in model.named_modules():

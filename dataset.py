@@ -26,7 +26,7 @@ def extract_path_from_dir(dir):
 class SonarDataset(Dataset):
     def __init__(self, X, Y):
         self.data_len=len(X)
-        self.load_type = True
+        self.load_type = False
 
         #  X is list of length num-inputs. each item in the list is a list of file names.
         if self.load_type:
@@ -74,6 +74,7 @@ train_dataset, val_dataset = torch.utils.data.random_split(
 
 val_dataloader = DataLoader(val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
 train_dataloader = DataLoader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+
 
 
 

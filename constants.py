@@ -23,8 +23,8 @@ class Constants:
 
   
        num_control_polygons=1
-       batch_size=4
-       num_epochs=300
+       batch_size=16
+       num_epochs=200
        hot_spots_ratio=2
        num_moments=5
 
