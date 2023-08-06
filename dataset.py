@@ -9,9 +9,10 @@ from torch.utils.data import Dataset, Subset
 
 from constants import Constants
 
+
 def extract_path_from_dir(dir):
     raw_names = next(os.walk(dir), (None, None, []))[2]
-    
+
     return [dir + n for n in raw_names if n.endswith(".pt")]
 
 # def load_data_names(dirs):
@@ -25,7 +26,7 @@ def extract_path_from_dir(dir):
 
 class SonarDataset(Dataset):
     def __init__(self, X, Y):
-        self.data_len=len(X)
+        self.data_len = len(X)
         self.load_type = False
 
         #  X is list of length num-inputs. each item in the list is a list of file names.
@@ -47,12 +48,13 @@ class SonarDataset(Dataset):
 
         if self.load_type:
             return self.x[idx], self.y[idx]
-            
+
         else:
             return torch.load(self.x[idx]), torch.load(self.y[idx])
 
 
-my_dataset = SonarDataset(extract_path_from_dir(Constants.path+'train/input/'),extract_path_from_dir(Constants.path+'train/output/'))
+my_dataset = SonarDataset(extract_path_from_dir(
+    Constants.path+'train/input/'), extract_path_from_dir(Constants.path+'train/output/'))
 # print(my_dataset.__getitem__(0)[0][2][4])
 train_size = int(0.8 * len(my_dataset))
 val_size = len(my_dataset) - train_size
@@ -68,17 +70,18 @@ train_dataset, val_dataset = torch.utils.data.random_split(
 # for x in l:
 #     if x==g[2]:
 #         count+=1
-# print(count) 
-# print(len(train_dataset))       
+# print(count)
+# print(len(train_dataset))
 
 
-val_dataloader = DataLoader(val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
-train_dataloader = DataLoader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+val_dataloader = DataLoader(
+    val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+train_dataloader = DataLoader(
+    train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
 
 
-
-
-test_dataset = SonarDataset(extract_path_from_dir(Constants.path+'test/input/'),extract_path_from_dir(Constants.path+'test/output/'))
+test_dataset = SonarDataset(extract_path_from_dir(
+    Constants.path+'test/input/'), extract_path_from_dir(Constants.path+'test/output/'))
 test_dataloader = DataLoader(
     test_dataset, batch_size=64, shuffle=False, drop_last=True
 )
@@ -88,14 +91,13 @@ test_dataloader = DataLoader(
 
 
 def data_analysis():
-    alloutputs=[]
-    coords=[]
-    u=[]
-    for input,output in train_dataloader:
+    alloutputs = []
+    coords = []
+    u = []
+    for input, output in train_dataloader:
         alloutputs.append(output[0])
     print(f"max {torch.max(torch.cat(alloutputs))}")
     print(f"min {torch.min(torch.cat(alloutputs))}")
-
 
     # alloutputs=[]
     # for input,output in test_dataloader:
@@ -103,18 +105,17 @@ def data_analysis():
     # print(f"max {torch.max(torch.cat(alloutputs))}")
     # print(f"min {torch.min(torch.cat(alloutputs))}")
 
-    # x=[]    
+    # x=[]
     # y=[]
     # u=[]
     # f=[]
     # for input,output in train_dataloader:
-        # print(input[0])
-        
-        # u.append(output[0])
-        # f.append((1/(2*math.pi-Constants.k))*torch.sin(math.sqrt(math.pi)*input[0][0,0])*torch.sin(math.sqrt(math.pi)*input[0][1,0]))
-    # print(x)
-# data_analysis()        
+    # print(input[0])
 
+    # u.append(output[0])
+    # f.append((1/(2*math.pi-Constants.k))*torch.sin(math.sqrt(math.pi)*input[0][0,0])*torch.sin(math.sqrt(math.pi)*input[0][1,0]))
+    # print(x)
+# data_analysis()
 
 
 # data_analysis()
@@ -130,8 +131,6 @@ def data_analysis():
 # print([inp[0].shape for inp in input])
 # print('\n single output data-point dimensions:')
 # print([out[0].shape for out in output])
-
-
 
 
 # model_constants.dim=[input[k].shape[1] for k in range(len(input))]

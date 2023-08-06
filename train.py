@@ -268,13 +268,13 @@ test_loss, test_accuracy = [], []
 
 start = time.time()
 
-
+model.to(Constants.device)
 for epoch in range(epochs):
     
     print(f"Epoch {epoch+1} of {epochs}")
     print(f"number of trainable parameters: {count_trainable_params(model)}")
-    train_epoch_loss, train_epoch_acc = fit(model, train_dataloader, train_dataset, optimizer, criterion)
     test_epoch_loss, test_epoch_acc  = predict(model, test_dataloader, test_dataset, criterion)
+    train_epoch_loss, train_epoch_acc = fit(model, train_dataloader, train_dataset, optimizer, criterion)
     val_epoch_loss, val_epoch_acc  = validate(model, val_dataloader, val_dataset, criterion)
     lr_scheduler(val_epoch_loss)
     

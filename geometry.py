@@ -53,13 +53,6 @@ class circle:
         plt.show()    
 
 
-
-    # while radius==0:
-
-    #     print(type(circle_hot_points))
-    #     optimal_radius(3)
-
-
 def calc_coeff(vertices):
     n=len(vertices)   
     a=[]
@@ -295,12 +288,12 @@ if __name__=='__main__':
     # plt.show()
     # print(Constants.k-math.pi**2*(2**2/a**2+1**2/b**2))
 
-    for name in train_domains_path:
-        analyze_momnets(name,'r')
-    for name in test_domains_path:
-        analyze_momnets(name,'b')
+    # for name in train_domains_path:
+    #     analyze_momnets(name,'r')
+    # for name in test_domains_path:
+    #     analyze_momnets(name,'b')
 
-    plt.show()
+    # plt.show()
     
 
 def eval_on_domain(path):
@@ -398,20 +391,35 @@ def eval_on_domain(path):
 
 
 
+def print_mommets(domain,col):
+    x1=np.array([[domain.moments[l].real,domain.moments[l].imag] for l in range(5)])
+    x=x1[:,0]
+    y=x1[:,1]
+    # plt.plot(x,col)
+    # plt.scatter(range(y.shape[0]),y,color=col)
+    plt.scatter(range(x.shape[0]),x,color=col)
+    
+# p1=Polygon(0.5*np.array([[2, 0], [3, 1], [3, 2], [1, 2], [1 , 3], [0, 2], [1,1],[2,1]]))
+# p2=Polygon(0.5*np.array([[2, 0], [2, 1], [3, 1], [2, 2], [1 , 2], [1, 3],[0,3] ,[0,2]]))
+# p1.create_mesh(0.05)
+# p2.create_mesh(0.05)
+# print(p1.ev)
+# print(p2.ev)
+# print_mommets(p1, 'r')
+# print_mommets(p2, 'b')
+# plt.show()
+
+# p=Polygon(np.array([[0, 0], [1, 0], [0.8, 1 ], [0.5,1]]))
+# p.create_mesh(Constants.h)
+# p.save(Constants.path + "hints_polygons/trapz.pt")
 
 
+# domain=torch.load(Constants.path + "hints_polygons/trapz.pt")
+# # domain=torch.load(Constants.path + "polygons/rect00.pt")
+# print(domain['hot_points'].shape)
 
 
-
-
-
-
-# rect=rectangle(1,2)
-# # print(torch.tensor(rect.apply_function_on_rectangle(np.sin)))
-# # rect.save(Constants.path + "polygons/rect3.pt")
-# rect.create_mesh(1/20)
-# print(rect.hot_points.shape)
-# print(rect.interior_points.shape)
-
-# rect.plot()
-# rect.plot()
+# # f=Test_function(domain)
+# # # print(f"{f.v[0]}  {f.v[1]}")
+# plt.scatter(domain['hot_points'][:, 0], domain['hot_points'][:, 1])
+# plt.show()

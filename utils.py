@@ -1,7 +1,11 @@
+from sklearn.metrics import pairwise_distances
+import random
 from tqdm import tqdm
 import datetime
 import pickle
-import math, random, cmath
+import math
+import random
+import cmath
 import os
 
 import matplotlib.pyplot as plt
@@ -16,7 +20,6 @@ from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 from constants import Constants
-
 
 
 def clip(value, lower, upper):
@@ -119,7 +122,6 @@ def count_trainable_params(model):
     return params
 
 
-
 def polygon_centre_area(vertices):
     x = vertices[:, 0]
     y = vertices[:, 1]
@@ -197,11 +199,7 @@ def create_batches(n, batch_size):
     k = math.floor(n / batch_size)
     x = list(range(n))
     random.shuffle(x)
-    return [list(x[i * batch_size : (i + 1) * batch_size]) for i in range(k)]
-
-
-import random
-from sklearn.metrics import pairwise_distances
+    return [list(x[i * batch_size: (i + 1) * batch_size]) for i in range(k)]
 
 
 def spread_points(n, data):
@@ -236,7 +234,6 @@ def plot_polygon(path):
     plt.show()
 
 
-
 def np_to_torch(x):
     return torch.tensor(x, dtype=Constants.dtype)
 
@@ -259,8 +256,7 @@ class SaveBestModel:
 
     def __init__(self, log_path, best_valid_loss=float("inf")):
         self.best_valid_loss = best_valid_loss
-        self.path=log_path
-
+        self.path = log_path
 
     def __call__(self, current_valid_loss, epoch, model, optimizer, criterion):
         if current_valid_loss < self.best_valid_loss:
@@ -279,10 +275,10 @@ class SaveBestModel:
             )
 
 
-def save_plots(train_loss, valid_loss, test_loss, metric_type:str, dir_path):
+def save_plots(train_loss, valid_loss, test_loss, metric_type: str, dir_path):
 
     # accuracy plots
-    fig, ax=plt.subplots(1,2)
+    fig, ax = plt.subplots(1, 2)
     # plt.figure(figsize=(10, 7))
     ax[0].plot(train_loss[1:], color="orange", linestyle="-", label="train")
     ax[0].plot(valid_loss[1:], color="red", linestyle="-", label="validataion")
@@ -296,13 +292,10 @@ def save_plots(train_loss, valid_loss, test_loss, metric_type:str, dir_path):
     fig.suptitle("metric type: "+metric_type)
     isExist = os.path.exists(dir_path+'figures')
     if not isExist:
-            os.makedirs(dir_path+'figures')  
-   
-    plt.savefig(dir_path + "figures/"+ metric_type+".png")
+        os.makedirs(dir_path+'figures')
+
+    plt.savefig(dir_path + "figures/" + metric_type+".png")
     plt.show(block=False)
-
-
-  
 
 
 # def plot_polygon(coord):
@@ -316,7 +309,6 @@ class Gaussian:
 
     def call(self, x, y):
         return gaussian(x, y, self.mu)
-
 
 
 def calc_min_angle(geo):
@@ -346,7 +338,7 @@ def Gauss_zeidel(A, b, x):
         # print(f"Iteration {it_count}: {x}")
         for i in range(A.shape[0]):
             s1 = np.dot(A[i, :i], x_new[:i])
-            s2 = np.dot(A[i, i + 1 :], x[i + 1 :])
+            s2 = np.dot(A[i, i + 1:], x[i + 1:])
 
             x_new[i] = (b[i] - s1 - s2) / A[i, i]
         # if np.allclose(x, x_new, rtol=1e-10):
@@ -394,10 +386,6 @@ def plot3d(x, y, z, color="black"):
     ax = fig.add_subplot(projection="3d")
     ax.scatter(x, y, z, color=color)
 
-
-
-
-
     def is_inside(self, x, y):
         #   point = Point(0.5, 0.5)
         point = Point(x, y)
@@ -410,32 +398,30 @@ def plot3d(x, y, z, color="black"):
             return 0
 
 
-
-          
 class chi_function:
     def __init__(self, vertices) -> None:
         self.polygon = Polygon(
-            [(vertices[i, 0], vertices[i, 1]) for i in range(vertices.shape[0])]
-        ) 
+            [(vertices[i, 0], vertices[i, 1])
+             for i in range(vertices.shape[0])]
+        )
+
 
 def complex_version(v):
-        assert v.size==2
-        r = np.sqrt(v[0] ** 2 + v[1] ** 2)
-        theta = np.arctan2(v[1], v[0])
-        return r*cmath.exp(1j*theta)
+    assert v.size == 2
+    r = np.sqrt(v[0] ** 2 + v[1] ** 2)
+    theta = np.arctan2(v[1], v[0])
+    return r*cmath.exp(1j*theta)
 
-def stochastic_matrix(m,n):
-    a=np.random.rand(m,n)
+
+def stochastic_matrix(m, n):
+    a = np.random.rand(m, n)
     return [a[i]/np.sum(a[i]) for i in range(m)]
-       
-    
+
 
 # def print_layers(model):
 #     for name, layer in model.named_modules():
 #         if isinstance(layer, torch.nn.Linear):
 #             pass
-            # print(name)
-            # print(layer._parameters)
-            # print(layer.weight.grad)
-
-
+    # print(name)
+    # print(layer._parameters)
+    # print(layer.weight.grad)
