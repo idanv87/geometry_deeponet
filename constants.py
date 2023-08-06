@@ -20,7 +20,7 @@ class Constants:
     var_center = 0
     var_angle = 0.4
     radius = 3
-    h = 1/40
+    h = 1/20
     gauss_points = 5
 
     num_control_polygons = 1
