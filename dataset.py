@@ -27,7 +27,7 @@ def extract_path_from_dir(dir):
 class SonarDataset(Dataset):
     def __init__(self, X, Y):
         self.data_len = len(X)
-        self.load_type = False
+        self.load_type = True
 
         #  X is list of length num-inputs. each item in the list is a list of file names.
         if self.load_type:
@@ -83,7 +83,7 @@ train_dataloader = DataLoader(
 test_dataset = SonarDataset(extract_path_from_dir(
     Constants.path+'test/input/'), extract_path_from_dir(Constants.path+'test/output/'))
 test_dataloader = DataLoader(
-    test_dataset, batch_size=64, shuffle=False, drop_last=True
+    test_dataset, batch_size=Constants.batch_size, shuffle=False, drop_last=True
 )
 
 # for input, output in train_dataloader:

@@ -68,7 +68,8 @@ class sum_sin:
 
 
 class Test_function:
-    def __init__(self, domain):
+    def __init__(self, domain, index):
+        self.index=index
         self.domain=domain
         self.v = [domain['generators'][i] for i in range(len(domain['generators']))]
         self.n=len(self.v)
@@ -76,14 +77,17 @@ class Test_function:
         self.y = symbols('y')
 
         self.edges=[]
+        self.length=[]
         for i in range(self.n):
             E=self.v[(i+1)%self.n]-self.v[i]
+            self.length.append(np.linalg.norm(E))
             N=[-E[1],E[0]]
             term=(self.x-self.v[i][0])*N[0]+(self.y-self.v[i][1])*N[1]
             self.edges.append(term)
         self.expr=1
-        for e in self.edges:
-            self.expr*=math.pi*sin(e)    
+        for e,l in zip(self.edges, self.length):
+            self.expr*=sin(math.pi*self.index*e/l)
+            # self.expr*=self.index*e
         self.d_expr=self.diff(self.expr)    
   
 
@@ -99,6 +103,39 @@ class Test_function:
          x, y in zip(domain['interior_points'][:, 0], domain['interior_points'][:, 1])
          ])
 
+class Poly_function:
+    def __init__(self, domain):
+        self.domain=domain
+        self.v = [domain['generators'][i] for i in range(len(domain['generators']))]
+        self.n=len(self.v)
+        self.x = symbols('x')
+        self.y = symbols('y')
+
+        self.edges=[]
+        self.length=[]
+        for i in range(self.n):
+            E=self.v[(i+1)%self.n]-self.v[i]
+            self.length.append(np.linalg.norm(E))
+            N=[-E[1],E[0]]
+            term=(self.x-self.v[i][0])*N[0]+(self.y-self.v[i][1])*N[1]
+            self.edges.append(term)
+        self.expr=1
+        for e,l in zip(self.edges, self.length):
+            self.expr*=e/l
+        self.d_expr=self.diff(self.expr)    
+  
+
+    def diff(self, expr):
+        return -diff(expr, 'x', 2)-diff(expr, 'y', 2)-Constants.k*expr
+
+    def __call__(self,X):
+
+        return float(((self.d_expr).subs([('x', X[0]), ('y', X[1])])).evalf())
+
+    def solve_helmholtz(self, domain):
+        return np.array([float(((self.expr).subs([('x', x), ('y', y)])).evalf()) for 
+         x, y in zip(domain['interior_points'][:, 0], domain['interior_points'][:, 1])
+         ])
 
 
 class christofel:

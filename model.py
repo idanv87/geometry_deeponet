@@ -11,27 +11,15 @@ from geometry import circle
 from utils import *
 
 
-# initializer=nn.init.zeros_
-class conv(torch.nn.Module):
-    def __init__(self, input_shape, output_shape):
-        super().__init__()
-        self.input_shape = input_shape
-        self.output_shape = output_shape
-        self.layer1 = torch.nn.Conv2d(1, 33, (3, 3), stride=1, padding=(1, 1))
-        self.layer2 = torch.nn.Conv2d(33, 1, (3, 3), stride=1, padding=(1, 1))
-
-    def forward(self, x):
-        return self.layer2(self.layer1(x))
-
-
 class fc(torch.nn.Module):
     def __init__(self, input_shape, output_shape, num_layers):
         super().__init__()
+
         self.input_shape = input_shape
         self.output_shape = output_shape
         n = 120
-        self.activation = torch.nn.ReLU()
-        # self.activation=torch.nn.LeakyReLU()
+        # self.activation = torch.nn.ReLU()
+        self.activation = torch.nn.LeakyReLU()
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(in_features=self.input_shape, out_features=n, bias=True)])
         output_shape = n
@@ -51,73 +39,78 @@ class fc(torch.nn.Module):
         for layer in self.layers:
             s = layer(self.activation(s))
 
-        return s
+        return self.activation(s)
 
 
 class deeponet(nn.Module):
-    def __init__(self, dim, num_hot_spots, pts_per_circle, ev_per_polygon, p):
+    def __init__(self, dim, num_hot_spots, p):
         super().__init__()
-        self.branch = fc(num_hot_spots, p, 4)
-        self.trunk = fc(dim, p, 4)
+        n_layers = 8
+        self.n = 5*p
 
-    def forward(self, input):
-        y, ly, f_circle, f_polygon = input
-        s1 = self.branch(f_polygon)
-        s2 = self.trunk(y)
-        if len(s1.size()) == 1:
-            return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
-                                            s2.view(1, s2.shape[0], 1)
-                                            ))]
-        else:
-            return [torch.squeeze(torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
-                                            s2.view(
-                                                s2.shape[0], s2.shape[1], 1)
-                                            ))]
+        self.branch1 = fc(num_hot_spots, self.n, n_layers)
+        self.trunk1 = fc(dim, p, 0)
+        self.c_layer = torch.nn.Linear(
+            in_features=self.n, out_features=p, bias=False)
+
+    def forward(self, y, f):
+        output_branch = self.c_layer(self.branch1(f))
+        output_trunk = self.trunk1(y)
+        return (output_branch, output_trunk)
+        # if len(s1.size()) == 1:
+        #     return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
+        #                                     s2.view(1, s2.shape[0], 1)
+        #                                     ))]
+        # else:
+        #     return [
+        #         torch.squeeze(
+        #             torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
+        #                       s2.view(s2.shape[0], s2.shape[1], 1))
+        #         )]
 
 
 class geo_deeponet(nn.Module):
     def __init__(self, dim, num_hot_spots, num_moments, ev_per_polygon, p):
         super().__init__()
-        n = 2
-        self.branch1 = fc(num_hot_spots, p, n)
-        self.branch2 = fc(num_moments, p, n)
-        self.branch3 = fc(num_moments, p, n)
-        self.trunk1 = fc(dim, 2*p, n)
-        self.trunk2 = fc(ev_per_polygon, p, n)
+        self.deeponet_layer = deeponet(dim, num_hot_spots, p)
+        n_layers = 8
+        self.branch_moment_x = fc(num_moments, self.deeponet_layer.n, n_layers)
+        self.branch_moment_y = fc(num_moments, self.deeponet_layer.n, n_layers)
+        self.c_layer = torch.nn.Linear(
+            in_features=self.deeponet_layer.n, out_features=p, bias=False)
+        # self.trunk2 = fc(ev_per_polygon, p, n)
 
     def forward(self, input):
         y, ly, moments, f_polygon = input
 
-        s1 = self.branch1(f_polygon)
+        input_f, input_y = self.deeponet_layer(y, f_polygon)
 
-        s2 = self.branch2(6*moments[:, 3:(Constants.num_moments+3), 0])
-        s3 = self.branch3(6*moments[:, 3:(Constants.num_moments+3), 1])
+        s1 = input_f
+        s2 = input_y
 
-        s4 = self.trunk1(y*5)
+        s3 = self.c_layer(self.branch_moment_x(moments[:, :Constants.num_moments, 0]))
+        s4 = self.c_layer(self.branch_moment_y(moments[:, :Constants.num_moments, 1]))
 
-        # s5=self.trunk2(ly[:,-Constants.ev_per_polygon:,:])
+        branch=torch.cat((s1,s3,s4), dim=-1)
+        trunk=torch.cat((s2,s2,s2), dim=-1)
 
-        s1 = torch.cat((s1, s3), dim=-1)
-        # s2=torch.cat((s4,s5), dim=-1)
-        # s1=s1
-        s2 = s4
 
         if len(s1.size()) == 1:
-            return [torch.squeeze(torch.bmm(s1.view(1, 1, s1.shape[0]),
-                                            s2.view(1, s2.shape[0], 1)
+            return [torch.squeeze(torch.bmm(branch.view(1, 1, branch.shape[0]),
+                                            trunk.view(1, trunk.shape[0], 1)
                                             ))]
         else:
             return [
                 torch.squeeze(
-                    torch.bmm(s1.view(s1.shape[0], 1, s1.shape[1]),
-                              s2.view(s2.shape[0], s2.shape[1], 1))
+                    torch.bmm(branch.view(branch.shape[0], 1, branch.shape[1]),
+                              trunk.view(trunk.shape[0], trunk.shape[1], 1))
                 )]
 
 
 # 0.5*torch.squeeze(torch.sin(math.pi*y[:,0])*torch.sin(math.pi*y[:,1])
 #                 +torch.sin(math.pi*y[:,0])*torch.sin(math.pi*2*y[:,1])
 #                 )
-p = 100
+p = 50
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle = len(circle().hot_points)

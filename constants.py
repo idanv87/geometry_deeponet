@@ -11,8 +11,8 @@ class Constants:
     device = torch.device('cpu')
     dtype = torch.float32
 
-    path = '/Users/idanversano/Documents/clones/deeponet_data/'
-    # path = '/Users/idanversano/Documents/clones/exp_data/'
+    # path = '/Users/idanversano/Documents/clones/deeponet_data/'
+    path = '/Users/idanversano/Documents/clones/exp_data/'
     output_path = '/Users/idanversano/Documents/clones/deeponet_output/'
 
     num_samples = 5
@@ -24,10 +24,10 @@ class Constants:
     gauss_points = 5
 
     num_control_polygons = 1
-    batch_size = 32
-    num_epochs = 1
+    batch_size = 2
+    num_epochs = 300
     hot_spots_ratio = 2
-    num_moments = 5
+    num_moments = 8
 
     pts_per_polygon = 10
     points_on_circle = []
@@ -40,7 +40,7 @@ class Constants:
     points_on_circle = np.array(points_on_circle)
 
 
-    k = 3.11
+    k = 0
 
     dim = 2
     # num_ev=4

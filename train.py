@@ -41,7 +41,7 @@ experment_dir = (
     + "_"
     + str(datetime.datetime.now().time()).replace(":", ".")+'_rect_to_rect/'
 )
-experment_dir='rect_to rect/'
+experment_dir='geo_deeponet'
 experment_path=Constants.path+'runs/'+experment_dir
 isExist = os.path.exists(experment_path)
 if not isExist:
@@ -55,8 +55,8 @@ writer = SummaryWriter(experment_path)
 
 lr = 0.001
 epochs = Constants.num_epochs
-# optimizer
-optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-4)
+# optimizers
+optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-5)
 # loss function
 criterion = nn.MSELoss()
 # scheduler
@@ -125,7 +125,7 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     return train_loss, train_acc
 
 def plot_results(x,y,y_test, y_pred):
-    error=np.linalg.norm(y_test-y_pred)/np.linalg.norm(y_test)
+    error=torch.linalg.norm(y_test-y_pred)/torch.linalg.norm(y_test)
     fig, ax=plt.subplots(1,2)
     fig.suptitle(f'relative L2 Error: {error:.3e}')
     im0=ax[0].scatter(x,y,c=y_test)
@@ -163,6 +163,7 @@ def predict(model, dataloader, dataset, criterion):
             output = [output[k].to(Constants.device) for k in range(len(output))]
             total += output[0].size(0)
             y_pred = model(input)
+           
             loss = torch.mean(
                 torch.stack(
                     [criterion(y_pred[k], output[k]) for k in range(len(output))]
@@ -178,6 +179,7 @@ def predict(model, dataloader, dataset, criterion):
             val_running_acc+=relative_loss.item()
 
             coords.append(input[0])
+           
             try:
                 assert y_pred[0].shape[0]>1
                 prediction.append(y_pred[0])
@@ -187,14 +189,17 @@ def predict(model, dataloader, dataset, criterion):
             
             y_test.append(output[0])
 
+        
         coords=torch.cat(coords,axis=0)
         prediction=torch.cat(prediction,axis=0)
         y_test=torch.cat(y_test,axis=0)
+        pass
         # print((1/(2*math.pi-Constants.k))*torch.sin(coords[:,0,0]*np.sqrt(math.pi)
         #                                             )*torch.sin(coords[:,1,0]*np.sqrt(math.pi))-y_test)
         
         if epoch % 20 ==0:
              plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+
              try:
                 writer.add_figure('relative L2 error/epoch: '+str(epoch), plt.gcf(), epoch)
              except:
@@ -273,9 +278,10 @@ for epoch in range(epochs):
     
     print(f"Epoch {epoch+1} of {epochs}")
     print(f"number of trainable parameters: {count_trainable_params(model)}")
-    test_epoch_loss, test_epoch_acc  = predict(model, test_dataloader, test_dataset, criterion)
     train_epoch_loss, train_epoch_acc = fit(model, train_dataloader, train_dataset, optimizer, criterion)
     val_epoch_loss, val_epoch_acc  = validate(model, val_dataloader, val_dataset, criterion)
+    test_epoch_loss, test_epoch_acc  = predict(model, test_dataloader, test_dataset, criterion)
+
     lr_scheduler(val_epoch_loss)
     
 
