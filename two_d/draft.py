@@ -33,6 +33,23 @@ def loss(a,*args):
         return np.linalg.norm(np.sum(np.array([a[i]*func(np.array([x, y]).T) for i,func in enumerate(basis)]),axis=0)-f)**2/len(basis)
 
 
+def generate_domains():
+    num_domains=2
+    for j in range(num_domains):
+        theta1=np.random.uniform(low=0.0, high=math.pi/2)
+        theta2=np.random.uniform(low=math.pi/2, high=math.pi)
+        theta3=np.random.uniform(low=math.pi, high=3*math.pi/2)
+        theta4=np.random.uniform(low=3*math.pi/2, high=2*math.pi)
+        theta=[theta1, theta2, theta3, theta4]
+        # X=np.array([[1+np.cos(theta[i]), 1+np.sin(theta[i])] for i in range(len(theta))])
+        # plt.scatter(X[:,0],X[:,1])
+        # plt.show()
+    
+        p=Polygon(np.array([[np.cos(theta[i]), np.sin(theta[i])] for i in range(len(theta))]))
+        p.create_mesh(0.1)
+        p.save(current_path.split('deeponet')[0]+'data_deeponet/polygons/'+str(j)+'.pt')
+if __name__=='__main__':        
+    generate_domains()
 # rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
 # rect.create_mesh(0.2)
 # rect.save(current_path.split('deeponet')[0]+'data_deeponet/polygons/rect.pt')
@@ -47,8 +64,8 @@ def loss(a,*args):
 def create_data(domain):
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
-    x_hot=domain['interior_points'][:,0]
-    y_hot=domain['interior_points'][:,1]
+    x_hot=domain['hot_points'][:,0]
+    y_hot=domain['hot_points'][:,1]
     M=domain['M']
     A = (-M - Constants.k* scipy.sparse.identity(M.shape[0]))
     test_functions=domain['radial_basis']

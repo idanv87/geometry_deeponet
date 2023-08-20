@@ -96,8 +96,7 @@ class Polygon:
         )
         self.interior_points = self.vertices[self.interior_indices]
 
-        self.hot_points = spread_points(int(
-            (int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2)), self.interior_points)
+        self.hot_points = spread_points(30, self.interior_points)
         self.ev = self.laplacian().real
         self.radial_functions=self.radial_basis()
 

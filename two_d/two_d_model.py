@@ -18,6 +18,7 @@ class fc(torch.nn.Module):
         self.activation_last=activation_last
         self.input_shape = input_shape
         self.output_shape = output_shape
+        
         n = max(input_shape,20)
         self.activation = torch.nn.ELU()
         # self.activation = torch.nn.LeakyReLU()

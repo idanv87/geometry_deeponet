@@ -98,9 +98,11 @@ val_dataloader=create_loader(val_dataset, batch_size=Constants.batch_size, shuff
 train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
 test_dataloader=create_loader(test_dataset, batch_size=4, shuffle=False, drop_last=True)
 
+inp, out=next(iter(train_dataset))
+print(inp[1].shape)
 
 
-model=deeponet( 2, xi.shape[0], 100)
+model=deeponet( 2, inp[1].shape[0], 100)
 print(f" num of model parameters: {count_trainable_params(model)}")
 # model([X[0].to(Constants.device),X[1].to(Constants.device)])
 
