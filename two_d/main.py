@@ -11,7 +11,7 @@ import sys
 import torch
 from two_d_data_set import *
 from two_d_model import deeponet
-from draft import create_data
+from draft import create_data, expand_function
 
 current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
@@ -44,17 +44,22 @@ X=[]
 Y=[]
 
 for name in names:
-    xi,yi,F,psi, moments_x, moments_y=create_data(torch.load(name))
-    number_samples=10
+    
+    domain=torch.load(name)
+    xi,yi,F,psi, moments_x, moments_y=create_data(domain)
+    
+    number_samples=50
     sampler = qmc.Halton(d=len(F), scramble=False)
     sample = 20*sampler.random(n=number_samples)-10
     for i in range(number_samples):
+        print(i)
         s0,s1=generate_sample(sample[i], F, psi)
+        a=expand_function(s0, domain)
         #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
         for j in range(len(xi)):
             X.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(s0, dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])
@@ -71,11 +76,12 @@ sampler = qmc.Halton(d=len(F), scramble=False)
 sample = 20*sampler.random(n=number_samples)-10
 for i in range(number_samples):
     s0,s1=generate_sample(sample[i], F, psi)
+    a=expand_function(s0, domain)
     #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
     for j in range(len(xi)):
             X_test.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(s0, dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])        
