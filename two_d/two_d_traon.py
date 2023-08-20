@@ -1,4 +1,5 @@
 import os
+import sys
 import pickle
 import math
 from random import sample
@@ -7,7 +8,7 @@ import argparse
 import time
 import datetime
 
-from constants import Constants
+
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -17,11 +18,11 @@ import numpy as np
 import torch.optim.lr_scheduler as Lambd
  
 
-from special_functions import norms
-from utils import SaveBestModel, save_plots, count_trainable_params
-from schedulers.schedulers import LRScheduler, EarlyStopping, cyclical_lr
-from dataset import create_loader
-from dataset import (
+
+
+
+from two_d_data_set import create_loader
+from main import (
     train_dataloader,
     train_dataset,
     val_dataset,
@@ -29,37 +30,39 @@ from dataset import (
     test_dataloader,
     test_dataset,
 )
-from model import model
+
+from main import model
+
+current_path=os.path.abspath(__file__)
+sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
+from utils import SaveBestModel, save_plots, count_trainable_params
+from constants import Constants
+from schedulers.schedulers import LRScheduler, EarlyStopping, cyclical_lr
+from special_functions import norms
 
 
 
 
-
-
-experment_dir = (
-    str(datetime.datetime.now().date())
-    + "_"
-    + str(datetime.datetime.now().time()).replace(":", ".")+'_rect_to_rect/'
-)
 experment_dir='geo_deeponet/'
 experment_path=Constants.path+'runs/'+experment_dir
 isExist = os.path.exists(experment_path)
 if not isExist:
     os.makedirs(experment_path)  
 
-# best_model=torch.load(experment_path+'best_model.pth')
-# model.load_state_dict(best_model['model_state_dict'])
+
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter(experment_path)
 
 
-lr = 0.01
+lr = 0.0001
 epochs = Constants.num_epochs
 # optimizers
 optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-5)
 # loss function
-criterion = nn.MSELoss()
+criterion = nn.L1Loss()
+criterion = norms.relative_L2
+
 # scheduler
 lr_scheduler=LRScheduler(optimizer)
 early_stopping = EarlyStopping()
@@ -94,21 +97,15 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
             counter += 1
             input, output = data
             input = [input[k].to(Constants.device) for k in range(len(input))]
-            output = [output[k].to(Constants.device) for k in range(len(output))]
-            total += output[0].size(0)
+            output = output.to(Constants.device) 
+            total += output.size(0)
             optimizer.zero_grad()
             y_pred = model(input)
         
-            loss = torch.mean(
-                torch.stack(
-                    [criterion(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
-            relative_loss = torch.mean(
-                torch.stack(
-                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
+            loss = criterion(y_pred, output) 
+
+            relative_loss =norms.relative_L2(y_pred, output) 
+
 
             train_running_loss += loss.item()
             train_running_acc+=relative_loss.item()
@@ -125,13 +122,13 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
         pass    
     return train_loss, train_acc
 
-def plot_results(x,y,y_test, y_pred):
+def plot_results(x, y_pred, y_test):
     error=torch.linalg.norm(y_test-y_pred)/torch.linalg.norm(y_test)
     fig, ax=plt.subplots(1,2)
     fig.suptitle(f'relative L2 Error: {error:.3e}')
-    im0=ax[0].scatter(x,y,c=y_test)
+    im0=ax[0].scatter(x[:,0],x[:,1],c=y_test)
     fig.colorbar(im0, ax=ax[0])
-    im1=ax[1].scatter(x,y,c=y_pred)
+    im1=ax[1].scatter(x[:,0],x[:,1],c=y_pred)
     fig.colorbar(im1, ax=ax[1])
     # im2=ax[2].scatter(x,y,c=abs(y_pred-y_test))
     # fig.colorbar(im2, ax=ax[2])
@@ -160,65 +157,43 @@ def predict(model, dataloader, dataset, criterion):
             counter += 1
             input, output = data
             input = [input[k].to(Constants.device) for k in range(len(input))]
-            output = [output[k].to(Constants.device) for k in range(len(output))]
-            total += output[0].size(0)
+            output = output.to(Constants.device)
+            total += output.size(0)
             y_pred = model(input)
            
-            loss = torch.mean(
-                torch.stack(
-                    [criterion(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
-            relative_loss = torch.mean(
-                torch.stack(
-                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
+            loss = criterion(y_pred, output) 
+ 
+            relative_loss =  norms.relative_L2(y_pred, output)
 
             pred_running_loss += loss.item()
             pred_running_acc+=relative_loss.item()
 
             coords.append(input[0])
            
-            try:
-                assert y_pred[0].shape[0]>1
-                prediction.append(y_pred[0])
-            except:    
-                prediction.append(torch.unsqueeze(y_pred[0],-1))
+            prediction.append(y_pred)
+
                 
             
-            y_test.append(output[0])
+            y_test.append(output)
 
         
-        coords=torch.cat(coords,axis=0)
-        prediction=torch.cat(prediction,axis=0)
-        y_test=torch.cat(y_test,axis=0)
-        pass
-        # print((1/(2*math.pi-Constants.k))*torch.sin(coords[:,0,0]*np.sqrt(math.pi)
-        #                                             )*torch.sin(coords[:,1,0]*np.sqrt(math.pi))-y_test)
-        
+
         if epoch % 20 ==0:
-             plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
+            plot_results(torch.cat(coords, axis=0),torch.cat(prediction, axis=0),torch.cat(y_test, axis=0))
+            # plt.plot(torch.cat(coords, axis=0), torch.cat(prediction, axis=0))
+            # plt.plot(torch.cat(coords, axis=0), torch.cat(y_test, axis=0),'r')
+            writer.add_figure('relative L2 error/epoch: '+str(epoch), plt.gcf(), epoch)
 
-             try:
-                writer.add_figure('relative L2 error/epoch: '+str(epoch), plt.gcf(), epoch)
-             except:
-                 pass   
+            pass
             
             
         if epoch== Constants.num_epochs-1:
-            plot_results(coords[:,0,0],coords[:,1,0],y_test, prediction)
-            plt.show()
-            
-            # plt.show()
+            pass
 
-        pred_loss = pred_running_loss / counter
-        pred_acc = pred_running_acc / counter
-        try:
-            writer.add_scalar("test/test_loss", pred_loss, epoch)
-            writer.add_scalar("accuracy/test_relative_L2", pred_acc, epoch)
-        except:
-            pass    
+
+        pred_loss = pred_running_loss/counter
+        pred_acc = pred_running_acc/counter
+
         return pred_loss, pred_acc
     
 def validate(model, dataloader, dataset, criterion):
@@ -237,20 +212,15 @@ def validate(model, dataloader, dataset, criterion):
             counter += 1
             input, output = data
             input = [input[k].to(Constants.device) for k in range(len(input))]
-            output = [output[k].to(Constants.device) for k in range(len(output))]
-            total += output[0].size(0)
+            output = output.to(Constants.device) 
+            total += output.size(0)
             y_pred = model(input)
             
-            loss = torch.mean(
-                torch.stack(
-                    [criterion(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
-            relative_loss = torch.mean(
-                torch.stack(
-                    [norms.relative_L2(y_pred[k], output[k]) for k in range(len(output))]
-                )
-            )
+            loss = criterion(y_pred, output)
+
+
+            relative_loss = norms.relative_L2(y_pred, output)
+
             val_running_loss += loss.item()
             val_running_acc += relative_loss.item()
 
@@ -273,7 +243,7 @@ test_loss, test_accuracy = [], []
 
 start = time.time()
 
-# model.to(Constants.device)
+model.to(Constants.device)
 for epoch in range(epochs):
     
     print(f"Epoch {epoch+1} of {epochs}")
@@ -308,7 +278,7 @@ for epoch in range(epochs):
 end = time.time()
 print(f"Training time: {(end-start)/60:.3f} minutes")
 
-save_plots(train_loss, val_loss, test_loss, "Loss", experment_path)
+# save_plots(train_loss, val_loss, test_loss, "Loss", experment_path)
 # save_plots(train_accuracy, val_accuracy, test_accuracy, "Relative L2")
 
 print("TRAINING COMPLETE")

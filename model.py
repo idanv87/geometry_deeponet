@@ -18,8 +18,8 @@ class fc(torch.nn.Module):
         self.input_shape = input_shape
         self.output_shape = output_shape
         n = 120
-        # self.activation = torch.nn.ReLU()
-        self.activation = torch.nn.LeakyReLU()
+        self.activation = torch.nn.ReLU()
+        # self.activation = torch.nn.LeakyReLU()
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(in_features=self.input_shape, out_features=n, bias=True)])
         output_shape = n
@@ -43,10 +43,12 @@ class fc(torch.nn.Module):
 
 
 class deeponet(nn.Module):
+    # good parameters: n_layers in deeponet=4,n_layers in geo_deeponet=10, infcn=100, ,n=5*p, p=100
+
     def __init__(self, dim, num_hot_spots, p):
         super().__init__()
-        n_layers = 8
-        self.n = 5*p
+        n_layers = 3
+        self.n = p
 
         self.branch1 = fc(num_hot_spots, self.n, n_layers)
         self.trunk1 = fc(dim, p, 0)
@@ -73,44 +75,49 @@ class geo_deeponet(nn.Module):
     def __init__(self, dim, num_hot_spots, num_moments, ev_per_polygon, p):
         super().__init__()
         self.deeponet_layer = deeponet(dim, num_hot_spots, p)
-        n_layers = 8
+        n_layers = 4
         self.branch_moment_x = fc(num_moments, self.deeponet_layer.n, n_layers)
         self.branch_moment_y = fc(num_moments, self.deeponet_layer.n, n_layers)
-        self.c_layer = torch.nn.Linear(
+        self.c_layer = torch.nn.Linear( 
             in_features=self.deeponet_layer.n, out_features=p, bias=False)
+        self.alpha = nn.Parameter(torch.tensor(0.))
         # self.trunk2 = fc(ev_per_polygon, p, n)
 
     def forward(self, input):
         y, ly, moments, f_polygon = input
 
-        input_f, input_y = self.deeponet_layer(y, f_polygon)
+        input_f, input_y = self.deeponet_layer(y+1, f_polygon)
 
         s1 = input_f
         s2 = input_y
 
-        s3 = self.c_layer(self.branch_moment_x(moments[:, :Constants.num_moments, 0]))
-        s4 = self.c_layer(self.branch_moment_y(moments[:, :Constants.num_moments, 1]))
+        # s3 = self.c_layer(self.branch_moment_x(moments[:, :Constants.num_moments, 0]/8))
+        # s4 = self.c_layer(self.branch_moment_y(moments[:, :Constants.num_moments, 1]/8))
+        #  calssical_deeponet:
+        branch=s1
+        trunk=s2
 
-        branch=torch.cat((s1,s3,s4), dim=-1)
-        trunk=torch.cat((s2,s2,s2), dim=-1)
+        # geo_deeponet
+        # branch=torch.cat((s1,s3,s3), dim=-1)
+        # trunk=torch.cat((s2,s2,s2), dim=-1)
 
 
         if len(s1.size()) == 1:
             return [torch.squeeze(torch.bmm(branch.view(1, 1, branch.shape[0]),
                                             trunk.view(1, trunk.shape[0], 1)
-                                            ))]
+                                            ))+self.alpha]
         else:
             return [
                 torch.squeeze(
                     torch.bmm(branch.view(branch.shape[0], 1, branch.shape[1]),
                               trunk.view(trunk.shape[0], trunk.shape[1], 1))
-                )]
+                )+self.alpha]
 
 
 # 0.5*torch.squeeze(torch.sin(math.pi*y[:,0])*torch.sin(math.pi*y[:,1])
 #                 +torch.sin(math.pi*y[:,0])*torch.sin(math.pi*2*y[:,1])
 #                 )
-p = 50
+p = 100
 dim = Constants.dim
 num_hot_spots = int((int(1/Constants.h)-2)**2/(Constants.hot_spots_ratio**2))
 pts_per_circle = len(circle().hot_points)

@@ -15,7 +15,7 @@ from utils import *
 from constants import Constants
 # from coords import Map_circle_to_polygon
 from pydec.dec import simplicial_complex
-from functions.functions import Test_function, christofel, sin_function
+from functions.functions import Test_function
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
@@ -137,6 +137,7 @@ class rectangle:
 class Polygon:
     def __init__(self, generators):
         self.generators = generators
+        self.n=self.generators.shape[0]
         # self.generators= (np.sqrt(math.pi) / np.sqrt(polygon_centre_area(generators))) * generators
         # self.diameter=np.max(np.linalg.norm(self.generators))
         # v[:, 0] -= np.mean(v[:, 0])
@@ -185,8 +186,10 @@ class Polygon:
             -self.M[self.interior_indices][:, self.interior_indices],
             k=5,
             return_eigenvectors=False,
-            which="SM",
+            which="SR",
         )
+
+
 
     def is_legit(self):
         if np.min(abs(self.sc[1].star.diagonal())) > 0:
@@ -198,9 +201,10 @@ class Polygon:
         assert self.is_legit()
         data = {
             "ev": self.ev,
-            "principal_ev": self.ev[-1],
-            "interior_points": self.interior_points[np.lexsort(np.fliplr(self.interior_points).T)],
-            "hot_points": self.hot_points[np.lexsort(np.fliplr(self.hot_points).T)],
+            "principal_ev": self.ev[-1], "interior_points": self.interior_points,
+            # "interior_points": self.interior_points[np.lexsort(np.fliplr(self.interior_points).T)],
+            "hot_points": self.hot_points,
+            # "hot_points": self.hot_points[np.lexsort(np.fliplr(self.hot_points).T)],
             "generators": self.generators,
             "M": self.M[self.interior_indices][:, self.interior_indices],
             'moments': self.moments,

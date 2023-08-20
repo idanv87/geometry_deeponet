@@ -15,14 +15,6 @@ def extract_path_from_dir(dir):
 
     return [dir + n for n in raw_names if n.endswith(".pt")]
 
-# def load_data_names(dirs):
-#     # dirs = ["/input/", "/output/"]
-#     # out_path = Constants.path + train_or_test
-#     data = []
-#     for dir in dirs:
-#         data.append(extract_path_from_dir(out_path + dir))
-#     return data[:-1], data[-1]
-
 
 class SonarDataset(Dataset):
     def __init__(self, X, Y):
@@ -53,42 +45,45 @@ class SonarDataset(Dataset):
             return torch.load(self.x[idx]), torch.load(self.y[idx])
 
 
-my_dataset = SonarDataset(extract_path_from_dir(
+
+
+
+
+def create_loader(data_set,batch_size, shuffle, drop_last):
+    return DataLoader(data_set, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
+
+if False:
+    my_dataset = SonarDataset(extract_path_from_dir(
     Constants.path+'train/input/'), extract_path_from_dir(Constants.path+'train/output/'))
-# print(my_dataset.__getitem__(0)[0][2][4])
-train_size = int(0.8 * len(my_dataset))
-val_size = len(my_dataset) - train_size
+    # print(my_dataset.__getitem__(0)[0][2][4])
+    train_size = int(0.8 * len(my_dataset))
+    val_size = len(my_dataset) - train_size
+
+    l1=extract_path_from_dir( Constants.path+'test/input/')
+    l2=extract_path_from_dir(Constants.path+'test/output/')
+    l1.sort()
+    l2.sort()
+
+    test_dataset = SonarDataset(l1, l2)
 
 
-train_dataset, val_dataset = torch.utils.data.random_split(
-    my_dataset, [train_size, val_size]
-)
-
-# l=[str((train_dataset.__getitem__(k)[0][2][4][0]).numpy()) for k in range(len(train_dataset))]
-# g=list(set(l))
-# count=0
-# for x in l:
-#     if x==g[2]:
-#         count+=1
-# print(count)
-# print(len(train_dataset))
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        my_dataset, [train_size, val_size]
+    )
+    val_dataloader=create_loader(val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+    train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+    test_dataloader=create_loader(test_dataset, batch_size=100, shuffle=False, drop_last=True)
 
 
-val_dataloader = DataLoader(
-    val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
-train_dataloader = DataLoader(
-    train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+# max_val=[]
+# for input, output in train_dataset:
+#     max_val.append(torch.max(abs(input[3])))
+# for input, output in test_dataset:
+#     max_val.append(torch.max(abs(input[3])))    
 
 
-test_dataset = SonarDataset(extract_path_from_dir(
-    Constants.path+'test/input/'), extract_path_from_dir(Constants.path+'test/output/'))
-test_dataloader = DataLoader(
-    test_dataset, batch_size=Constants.batch_size, shuffle=False, drop_last=True
-)
-
-# for input, output in train_dataloader:
-#     print(input[2].shape)
-
+# max_val=float(torch.mean(max_val))
+# print(f"nornmlize with {max_val}")
 
 def data_analysis():
     alloutputs = []

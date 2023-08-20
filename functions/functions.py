@@ -1,4 +1,4 @@
-from constants import Constants
+
 import math
 from typing import Any
 import numpy as np
@@ -7,10 +7,12 @@ import sys
 import os
 import scipy
 from sympy import *
-from sympy import sin, cos
+from sympy import sin, cos, exp
+import matplotlib.pyplot as plt
 
 sys.path.append(os.getcwd())
-
+from utils import spread_points
+from constants import Constants
 
 class sin_function:
     def __init__(self, n, m, a, b):
@@ -94,93 +96,93 @@ class Test_function:
     def diff(self, expr):
         return -diff(expr, 'x', 2)-diff(expr, 'y', 2)-Constants.k*expr
 
-    def __call__(self,X):
+    def __call__(self,x,y):
 
-        return float(((self.d_expr).subs([('x', X[0]), ('y', X[1])])).evalf())
+        return float(((self.d_expr).subs([('x', x), ('y', y)])).evalf())
 
     def solve_helmholtz(self, domain):
         return np.array([float(((self.expr).subs([('x', x), ('y', y)])).evalf()) for 
          x, y in zip(domain['interior_points'][:, 0], domain['interior_points'][:, 1])
          ])
+    
 
-class Poly_function:
-    def __init__(self, domain):
+
+class fourier_bessel:
+    def __init__(self, domain, n):
+        self.n=n
         self.domain=domain
-        self.v = [domain['generators'][i] for i in range(len(domain['generators']))]
-        self.n=len(self.v)
-        self.x = symbols('x')
-        self.y = symbols('y')
+        self.ev=[np.sqrt(l) for l in domain['ev']]
+        self.vertices=list(domain['generators'])
+        # self.vertices=[v-self.temp_vertices[0] for v in self.temp_vertices]
+        # self.radi=[np.sqrt(v[0] ** 2 + v[1] ** 2) for v in self.vertices]
+        self.theta = [np.arctan2(v[1], v[0]) for v in self.vertices]
+        self.delta_phi=[theta-self.theta[0] for theta in self.theta[1:]]
+        self.m=[math.pi*self.n/d_phi for d_phi in self.delta_phi]
+    def __call__(self,x,y):
+        # v=[x-self.temp_vertices[0][0],y-self.temp_vertices[0][1]]
+        v=[x,y]
+        r=np.sqrt(v[0] ** 2 + v[1] ** 2)
+        theta=np.arctan2(v[1], v[0])
+        k=np.sqrt(self.ev[-1])
+        value=1
+        
+        for i in range(len(self.delta_phi)):
+            value*=scipy.special.jv(self.m[i],k*r)*np.sin(self.m[i]*(theta-self.theta[0]))
+        return scipy.special.jv(self.m[0],k*r)*np.sin(self.m[0]*(theta-self.theta[0]))    
 
-        self.edges=[]
-        self.length=[]
-        for i in range(self.n):
-            E=self.v[(i+1)%self.n]-self.v[i]
-            self.length.append(np.linalg.norm(E))
-            N=[-E[1],E[0]]
-            term=(self.x-self.v[i][0])*N[0]+(self.y-self.v[i][1])*N[1]
-            self.edges.append(term)
-        self.expr=1
-        for e,l in zip(self.edges, self.length):
-            self.expr*=e/l
-        self.d_expr=self.diff(self.expr)    
-  
+       
+        
+        return value*np.sin(self.m*(theta-self.theta[0]))
 
-    def diff(self, expr):
-        return -diff(expr, 'x', 2)-diff(expr, 'y', 2)-Constants.k*expr
 
-    def __call__(self,X):
 
-        return float(((self.d_expr).subs([('x', X[0]), ('y', X[1])])).evalf())
 
+        
+class gaussian:
+    def __init__(self, point):
+        self.point=point
+        self.r=Constants.h*4
+    def __call__(self, x,y): 
+        return np.exp(-((x-self.point[0])**2+(y-self.point[1])**2)/self.r**2)    
+    
     def solve_helmholtz(self, domain):
-        return np.array([float(((self.expr).subs([('x', x), ('y', y)])).evalf()) for 
-         x, y in zip(domain['interior_points'][:, 0], domain['interior_points'][:, 1])
-         ])
+        return solve_helmholtz(domain, self.__call__)
 
 
-class christofel:
-    def __init__(self, n):
-        self.n = n
 
-    def __call__(self, z):
-        n = self.n
-        try:
-            assert abs(z) < 1
-
-            value1 = scipy.special.hyp2f1(1 / n, 2 / n, 1 + 1 / n, z ** n,
-                                          out=None)
-            value = z * (1 - z ** n) ** (2 / n) * \
-                (z ** n - 1) ** (-2 / n) * value1
-            return value
-        except:
-            print('z has modulus greater than 1')
-            assert abs(z) < 1
+def solve_helmholtz(domain, f):
+        b=f(domain['interior_points'][:,0], domain['interior_points'][:,1])
+        M=domain['M']
+        A = -M - Constants.k * scipy.sparse.identity(M.shape[0])
+        return scipy.sparse.linalg.spsolve(A, b)*100
+    
 
 
-def Gauss_zeidel(A, b, x):
-    ITERATION_LIMIT = 2
-    # x = b*0
-    for it_count in range(1, ITERATION_LIMIT):
-        x_new = np.zeros_like(x, dtype=np.float_)
-        # print(f"Iteration {it_count}: {x}")
-        for i in range(A.shape[0]):
-            s1 = np.dot(A[i, :i], x_new[:i])
-            s2 = np.dot(A[i, i + 1:], x[i + 1:])
+# domain=torch.load(Constants.path + "polygons/1.pt")
+# # print(domain['hot_points'][::10,:].shape)
 
-            x_new[i] = (b[i] - s1 - s2) / A[i, i]
-        # if np.allclose(x, x_new, rtol=1e-10):
-        #     break
-        x = x_new
+# x=domain['hot_points'][:,0]
+# y=domain['hot_points'][:,1]
+# n=20
 
-    # print(f"Solution: {x}")
-    # error = np.linalg.norm(abs(np.dot(A, x) - b))
-    # print(error)
-    #  it_count, np.max(abs(np.dot(A, x) - b))
-    return x
+# all_ind=set(list(range(y.shape[0])))
+# ind1=set(y.argsort()[n:-n])
+# ind2=set(x.argsort()[n:-n])
+# good_ind=list(ind1.intersection(ind2))
+# sources=spread_points(15,domain['hot_points'][good_ind])
+# x=M[:,0]
+# y=M[:,1]
 
 
-# domain=torch.load(Constants.path + "polygons/lshape.pt")
-# f=Test_function(domain['generators'],False)
-# # print(np.array(list((map(f,domain['hot_points'][:,0], domain['hot_points'][:,1])))))
 
-# print(dtype(f(3,2)))
+# plt.scatter(x[1:],y[1:])
+# plt.scatter(x[0],y[0],c='r')
+# plt.show()
+# func=gaussian(domain['hot_points'][521])
+# g=func.solve_helmholtz(domain)
+# u=np.array(list(map(func,x,y)))
+# plt.scatter(x, y,c=u)
+# plt.colorbar()
+# plt.show()
+
+
