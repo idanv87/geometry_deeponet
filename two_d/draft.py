@@ -47,18 +47,22 @@ def loss(a,*args):
 def create_data(domain):
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
+    x_hot=domain['interior_points'][:,0]
+    y_hot=domain['interior_points'][:,1]
     M=domain['M']
     A = (-M - Constants.k* scipy.sparse.identity(M.shape[0]))
     test_functions=domain['radial_basis']
     V=[func(np.array([x, y]).T) for func in test_functions]
     F=[v for v in V]
+    V_hot=[func(np.array([x_hot, y_hot]).T) for func in test_functions]
+    F_hot=[v for v in V_hot]
     psi=[scipy.sparse.linalg.spsolve(A,b) for b in F]
     moments=domain['moments'][:2*len(domain['generators'])]
     moments_x=[m.real/len(domain['generators']) for m in moments]
     moments_y=[m.imag/len(domain['generators']) for m in moments]
 
 
-    return x,y,F, psi, moments_x, moments_y
+    return x,y,F_hot, psi, moments_x, moments_y
 
 # create_data(rect)
 # xi=rect['interior_points'][:,0]

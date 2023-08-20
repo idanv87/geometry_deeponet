@@ -45,7 +45,7 @@ Y=[]
 
 for name in names:
     xi,yi,F,psi, moments_x, moments_y=create_data(torch.load(name))
-    number_samples=2
+    number_samples=10
     sampler = qmc.Halton(d=len(F), scramble=False)
     sample = 20*sampler.random(n=number_samples)-10
     for i in range(number_samples):
