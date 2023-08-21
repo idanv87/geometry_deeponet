@@ -97,15 +97,15 @@ def expand_function(f,domain):
     
     
 
-# rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+# rect=Polygon(np.array([[-1,-1],[1,-1],[1,1],[-1,1]]))
 # rect.create_mesh(0.2)
 # rect.save(current_path.split('deeponet')[0]+'data_deeponet/polygons/rect.pt')
 
 
 
 
-if __name__=='__main__':        
-    generate_domains()
+# if __name__=='__main__':        
+#     generate_domains()
 
 
         
