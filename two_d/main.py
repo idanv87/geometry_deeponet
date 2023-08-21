@@ -22,7 +22,7 @@ names=list(set(extract_path_from_dir(current_path.split('deeponet')[0]+'data_dee
   '/Users/idanversano/Documents/clones/data_deeponet/polygons/rect.pt'   
 )
 )
-names=[names[0]] 
+names=['/Users/idanversano/Documents/clones/data_deeponet/polygons/3.pt' ] 
       
 def plot_surface(xi,yi,Z):
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -78,6 +78,7 @@ number_samples=1
 sampler = qmc.Halton(d=len(F), scramble=False)
 sample = 20*sampler.random(n=number_samples)-10
 for i in range(number_samples):
+
     s0,s1, s_hot=generate_sample(sample[i], F, F_hot, psi)
     try:
         # a=expand_function(s0, domain)

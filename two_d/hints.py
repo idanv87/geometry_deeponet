@@ -98,15 +98,17 @@ def network(model, with_net, polyg):
     # ev,V=scipy.sparse.linalg.eigs(A,k=15,return_eigenvectors=True,which="SR")
     # print(ev)
 
-
-    func=interpolation_2D(domain[0],domain[1], np.sin(4*math.pi*domain[0])*np.sin(4*math.pi*domain[1]))
+    xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
+    func=interpolation_2D(domain[0],domain[1], generate_sample(sample[0],F, F_hot, psi)[0])
     # func=interpolation_2D(domain[0],domain[1], F[0]*100)
 
-    # func=scipy.special.legendre(4)
-    b=func(domain[0],domain[1])
+    b=generate_sample(sample[0],F, F_hot, psi)[0]# func=scipy.special.legendre(4)    
+    # plt.scatter(domain[0],domain[1],c=b)
+    # print(names[0])
+    # plt.show()
     solution=scipy.sparse.linalg.spsolve(A, b)
     predicted=deeponet(model, func, domain, domain_hot, moments_x, moments_y)
-    print(np.mean(abs(solution-predicted)))
+    print(np.linalg.norm(solution-predicted)/np.linalg.norm(solution))
     
     # plot_surface(domain[0].reshape(18,18),domain[1].reshape(18,18),b.reshape(18,18))
     # plot_surface(domain[0].reshape(18,18),domain[1].reshape(18,18),predicted.reshape(18,18))
@@ -139,7 +141,8 @@ def network(model, with_net, polyg):
         # if False:
         if ((k_it%20) ==0) and with_net:  
             # print(np.max(abs(generate_sample(sample[4])[0])))
-            factor=np.max(abs(b))/np.max(abs(A@x_0-b))*np.max(abs(generate_sample(sample[4])[0]))
+            xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
+            factor=np.max(abs(b))/np.max(abs(A@x_0-b))*np.max(abs(generate_sample(sample[0],F, F_hot, psi)[0]))
             # factor=b/(b-A@x_0)
             # mod1=[np.dot((b-A@x_0)*factor,V[:,i]) for i in range(14)]
             # mod2=[np.dot(b,V[:,i]) for i in range(14)]
@@ -205,7 +208,7 @@ def main():
     # print(fourier_error1)
     # print(fourier_error2)
 
-# main1()
+main1()
 main2()
 main()  
 # from multiprocessing import Process
