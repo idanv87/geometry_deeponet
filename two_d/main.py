@@ -18,10 +18,11 @@ sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 
 from utils import count_trainable_params, extract_path_from_dir
 from constants import Constants
-names=extract_path_from_dir(current_path.split('deeponet')[0]+'data_deeponet/polygons/')
-
-
-      
+names=list(set(extract_path_from_dir(current_path.split('deeponet')[0]+'data_deeponet/polygons/'))-set(
+  '/Users/idanversano/Documents/clones/data_deeponet/polygons/rect.pt'   
+)
+)
+names=[names[0]] 
       
 def plot_surface(xi,yi,Z):
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -31,11 +32,12 @@ def plot_surface(xi,yi,Z):
     plt.show()
 
 
-def generate_sample(M, F, psi):
+def generate_sample(M, F, F_hot, psi):
     #  np.random.uniform(-10,10,len(F))
      x1=np.array([M[i]*F[i] for i  in range(len(F))])
      x2=np.array([M[i]*psi[i] for i  in range(len(F))])
-     return np.sum(x1, axis=0), np.sum(x2, axis=0)
+     x3=np.array([M[i]*F_hot[i] for i  in range(len(F_hot))])
+     return np.sum(x1, axis=0), np.sum(x2, axis=0), np.sum(x3, axis=0)
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # create train data
@@ -44,50 +46,55 @@ X=[]
 Y=[]
 
 for name in names:
-    
+
     domain=torch.load(name)
-    xi,yi,F,psi, moments_x, moments_y=create_data(domain)
+    xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
     
-    number_samples=50
+    number_samples=100
     sampler = qmc.Halton(d=len(F), scramble=False)
     sample = 20*sampler.random(n=number_samples)-10
     for i in range(number_samples):
-        print(i)
-        s0,s1=generate_sample(sample[i], F, psi)
-        a=expand_function(s0, domain)
+        s0,s1, s_hot=generate_sample(sample[i], F, F_hot,psi)
+
+        # a=expand_function(s0, domain)
         #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
         for j in range(len(xi)):
             X.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(a, dtype=torch.float32),
+                torch.tensor(s_hot, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])
             Y.append(torch.tensor(s1[j], dtype=torch.float32))
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+# torch.save(X,Constants.path+'X.pt')
+# torch.save(Y,Constants.path+'Y.pt')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # create test data
 X_test=[]
 Y_test=[]
-xi,yi,F,psi,moments_x, moments_y=create_data(torch.load(names[0]))
+xi,yi,F, F_hot, psi,moments_x, moments_y=create_data(torch.load(names[0]))
 number_samples=1
 sampler = qmc.Halton(d=len(F), scramble=False)
 sample = 20*sampler.random(n=number_samples)-10
 for i in range(number_samples):
-    s0,s1=generate_sample(sample[i], F, psi)
-    a=expand_function(s0, domain)
-    #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
-    for j in range(len(xi)):
-            X_test.append([
-                torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(a, dtype=torch.float32),
-                torch.tensor(moments_x, dtype=torch.float32),
-                torch.tensor(moments_y, dtype=torch.float32),
-                ])        
-            Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
+    s0,s1, s_hot=generate_sample(sample[i], F, F_hot, psi)
+    try:
+        # a=expand_function(s0, domain)
+        #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
+        for j in range(len(xi)):
+                X_test.append([
+                    torch.tensor([xi[j],yi[j]], dtype=torch.float32),
+                    torch.tensor(s_hot, dtype=torch.float32),
+                    torch.tensor(moments_x, dtype=torch.float32),
+                    torch.tensor(moments_y, dtype=torch.float32),
+                    ])        
+                Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
+    except:
+         pass            
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+# torch.save(X_test,Constants.path+'X_test.pt')
+# torch.save(Y_test,Constants.path+'Y_test.pt')
 my_dataset = SonarDataset(X, Y)
 train_size = int(0.8 * len(my_dataset))
 val_size = len(my_dataset) - train_size
@@ -105,7 +112,7 @@ train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size,
 test_dataloader=create_loader(test_dataset, batch_size=4, shuffle=False, drop_last=True)
 
 inp, out=next(iter(train_dataset))
-print(inp[1].shape)
+print(inp[1].shape[0])
 
 
 model=deeponet( 2, inp[1].shape[0], 100)

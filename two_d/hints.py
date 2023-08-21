@@ -18,8 +18,9 @@ sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 from utils import np_to_torch
 from constants import Constants
 from functions.functions import gaussian
-from two_d.main import test_dataset, Y_test, L, SonarDataset, F, domain, generate_sample, plot_surface, sample
+from two_d.main import names, SonarDataset, generate_sample, plot_surface, sample
 from two_d.two_d_data_set import create_loader
+from draft import create_data
 
 
 
@@ -56,13 +57,18 @@ def Gauss_zeidel(A, b, x, theta):
 
 
 
-def deeponet(model, func):
+def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
     X_test_i=[]
     Y_test_i=[]
-    s0=func(domain[0], domain[1])
+    s0=func(domain_hot[0], domain_hot[1])
 
     for j in range(len(domain[0])):
-        X_test_i.append([torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32),torch.tensor(s0, dtype=torch.float32)])
+        X_test_i.append([
+                        torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
+                         torch.tensor(s0, dtype=torch.float32),
+                         torch.tensor(moments_x, dtype=torch.float32),
+                         torch.tensor(moments_y, dtype=torch.float32)
+                         ])
         Y_test_i.append(torch.tensor(s0, dtype=torch.float32))
 
     
@@ -81,8 +87,13 @@ def deeponet(model, func):
 
     return prediction
 
-def network(model, with_net):
-
+def network(model, with_net, polyg):
+    domain=[polyg['interior_points'][:,0],polyg['interior_points'][:,1]]
+    domain_hot=[polyg['hot_points'][:,0],polyg['hot_points'][:,1]]
+    moments=polyg['moments'][:2*len(polyg['generators'])]
+    moments_x=[m.real/len(polyg['generators']) for m in moments]
+    moments_y=[m.imag/len(polyg['generators']) for m in moments]
+    L=polyg['M']
     A = (-L - Constants.k* scipy.sparse.identity(L.shape[0]))
     # ev,V=scipy.sparse.linalg.eigs(A,k=15,return_eigenvectors=True,which="SR")
     # print(ev)
@@ -94,7 +105,7 @@ def network(model, with_net):
     # func=scipy.special.legendre(4)
     b=func(domain[0],domain[1])
     solution=scipy.sparse.linalg.spsolve(A, b)
-    predicted=deeponet(model, func)
+    predicted=deeponet(model, func, domain, domain_hot, moments_x, moments_y)
     print(np.mean(abs(solution-predicted)))
     
     # plot_surface(domain[0].reshape(18,18),domain[1].reshape(18,18),b.reshape(18,18))
@@ -111,9 +122,9 @@ def network(model, with_net):
 
 
     if with_net:
-        x=deeponet(model, func)
+        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)
     else:
-        x=deeponet(model, func)*0
+        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)*0
     # x=torch.load(Constants.path+'pred.pt')
     tol=[]
     res_err=[]
@@ -146,7 +157,7 @@ def network(model, with_net):
             # plt.plot((b-A@x_0)*factor)
             # plt.show()
             x_temp = x_0*factor + \
-            deeponet(model, interpolation_2D(domain[0],domain[1],(b-A@x_0)*factor )) 
+            deeponet(model, interpolation_2D(domain[0],domain[1],(b-A@x_0)*factor ),domain, domain_hot, moments_x, moments_y) 
             x=x_temp/factor
             
             # x = x_0 + deeponet(model, scipy.interpolate.interp1d(domain[1:-1],(A@x_0-b)*factor ))/factor
@@ -171,12 +182,12 @@ experment_path=Constants.path+'runs/'+experment_dir
 best_model=torch.load(experment_path+'best_model.pth')
 model.load_state_dict(best_model['model_state_dict'])
 # err_net, res_err_net, iter=network(model,with_net=True)
-
+polyg=torch.load(names[0])
 def main1():
-    err_net, res_err_net, iter=network(model,with_net=True)
+    err_net, res_err_net, iter=network(model,True, polyg)
     torch.save([ err_net, res_err_net], Constants.path+'hints_fig.pt')
 def main2(): 
-    err_gs, res_err_gs, iter=network(model,with_net=False)
+    err_gs, res_err_gs, iter=network(model,False, polyg)
     torch.save([ err_gs, res_err_gs], Constants.path+'gs_fig.pt')
 def main():
     l1=torch.load(Constants.path+'hints_fig.pt')[1]

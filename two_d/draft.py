@@ -31,7 +31,7 @@ from two_d.two_d_data_set import create_loader
 def loss(a,*args):
         basis,f, x,y=args
         assert len(a)==len(basis)
-        return np.linalg.norm(np.sum(np.array([a[i]*func(np.array([x, y]).T) for i,func in enumerate(basis)]),axis=0)-f)**2/len(basis)
+        return np.linalg.norm(np.sum(np.array([a[i]*func(np.array([x, y]).T) for i,func in enumerate(basis)]),axis=0)-f)**2
 
 
 
@@ -59,8 +59,8 @@ def create_data(domain):
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
 
-    # x_hot=domain['hot_points'][:,0]
-    # y_hot=domain['hot_points'][:,1]
+    x_hot=domain['hot_points'][:,0]
+    y_hot=domain['hot_points'][:,1]
 
 
     M=domain['M']
@@ -70,8 +70,8 @@ def create_data(domain):
     F=[v for v in V]
     psi=[scipy.sparse.linalg.spsolve(A,b) for b in F]
 
-    # V_hot=[func(np.array([x_hot, y_hot]).T) for func in test_functions]
-    # F_hot=[v for v in V_hot]
+    V_hot=[func(np.array([x_hot, y_hot]).T) for func in test_functions]
+    F_hot=[v for v in V_hot]
 
     
     moments=domain['moments'][:2*len(domain['generators'])]
@@ -79,7 +79,7 @@ def create_data(domain):
     moments_y=[m.imag/len(domain['generators']) for m in moments]
 
 
-    return x,y,F, psi, moments_x, moments_y
+    return x,y,F,F_hot, psi, moments_x, moments_y
 
 def expand_function(f,domain):
     
@@ -88,7 +88,7 @@ def expand_function(f,domain):
     y=domain['interior_points'][:,1]
     basis=rect['radial_basis']
     x0=np.random.rand(len(basis),1)
-    res = minimize(loss, x0, method='nelder-mead',args=(basis,f,x,y), options={'xatol': 1e-4, 'disp': True})
+    res = minimize(loss, x0, method='BFGS',args=(basis,f,x,y), options={'xatol': 1e-4, 'disp': True})
     return res.x
 
     
