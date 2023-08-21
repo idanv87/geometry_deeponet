@@ -20,7 +20,7 @@ from constants import Constants
 from functions.functions import gaussian
 from two_d.main import names, SonarDataset, generate_sample, plot_surface, sample
 from two_d.two_d_data_set import create_loader
-from draft import create_data
+from draft import create_data, expand_function
 
 
 
@@ -61,11 +61,12 @@ def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
     X_test_i=[]
     Y_test_i=[]
     s0=func(domain_hot[0], domain_hot[1])
+    a=expand_function(func(domain[0], domain[1]), polyg)
 
     for j in range(len(domain[0])):
         X_test_i.append([
                         torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
-                         torch.tensor(s0, dtype=torch.float32),
+                         torch.tensor(a, dtype=torch.float32),
                          torch.tensor(moments_x, dtype=torch.float32),
                          torch.tensor(moments_y, dtype=torch.float32)
                          ])
@@ -209,7 +210,7 @@ def main():
     # print(fourier_error2)
 
 main1()
-main2()
+# main2()
 main()  
 # from multiprocessing import Process
 # if __name__ == "__main__":

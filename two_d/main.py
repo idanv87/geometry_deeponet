@@ -22,7 +22,7 @@ names=list(set(extract_path_from_dir(current_path.split('deeponet')[0]+'data_dee
   '/Users/idanversano/Documents/clones/data_deeponet/polygons/rect.pt'   
 )
 )
-names=['/Users/idanversano/Documents/clones/data_deeponet/polygons/3.pt' ] 
+# names=['/Users/idanversano/Documents/clones/data_deeponet/polygons/3.pt' ] 
       
 def plot_surface(xi,yi,Z):
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -46,7 +46,6 @@ X=[]
 Y=[]
 
 for name in names:
-
     domain=torch.load(name)
     xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
     
@@ -56,12 +55,12 @@ for name in names:
     for i in range(number_samples):
         s0,s1, s_hot=generate_sample(sample[i], F, F_hot,psi)
 
-        # a=expand_function(s0, domain)
+        a=expand_function(s0, domain)
         #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
         for j in range(len(xi)):
             X.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(s_hot, dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])
@@ -71,6 +70,8 @@ for name in names:
 # torch.save(Y,Constants.path+'Y.pt')
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # create test data
+domain=torch.load(names[0])
+xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
 X_test=[]
 Y_test=[]
 xi,yi,F, F_hot, psi,moments_x, moments_y=create_data(torch.load(names[0]))
@@ -80,19 +81,19 @@ sample = 20*sampler.random(n=number_samples)-10
 for i in range(number_samples):
 
     s0,s1, s_hot=generate_sample(sample[i], F, F_hot, psi)
-    try:
-        # a=expand_function(s0, domain)
-        #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
-        for j in range(len(xi)):
-                X_test.append([
-                    torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                    torch.tensor(s_hot, dtype=torch.float32),
-                    torch.tensor(moments_x, dtype=torch.float32),
-                    torch.tensor(moments_y, dtype=torch.float32),
-                    ])        
-                Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
-    except:
-         pass            
+
+    a=expand_function(s0, domain)
+    #  plot_surface(xi.reshape(18,18),yi.reshape(18,18),F[12].reshape(18,18))
+    for j in range(len(xi)):
+            X_test.append([
+                torch.tensor([xi[j],yi[j]], dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
+                torch.tensor(moments_x, dtype=torch.float32),
+                torch.tensor(moments_y, dtype=torch.float32),
+                ])        
+            Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
+
+                 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # torch.save(X_test,Constants.path+'X_test.pt')
 # torch.save(Y_test,Constants.path+'Y_test.pt')
@@ -112,7 +113,7 @@ val_dataloader=create_loader(val_dataset, batch_size=Constants.batch_size, shuff
 train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
 test_dataloader=create_loader(test_dataset, batch_size=4, shuffle=False, drop_last=True)
 
-inp, out=next(iter(train_dataset))
+inp, out=next(iter(test_dataset))
 print(inp[1].shape[0])
 
 

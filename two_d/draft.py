@@ -88,7 +88,10 @@ def expand_function(f,domain):
     y=domain['interior_points'][:,1]
     basis=rect['radial_basis']
     x0=np.random.rand(len(basis),1)
-    res = minimize(loss, x0, method='BFGS',args=(basis,f,x,y), options={'xatol': 1e-4, 'disp': True})
+    phi=np.array([func(np.array([x, y]).T) for func in basis]).T
+    return np.linalg.solve(phi.T@phi,phi.T@f)
+
+    # res = minimize(loss, x0, method='BFGS',args=(basis,f,x,y), options={'xatol': 1e-4, 'disp': True})
     return res.x
 
     

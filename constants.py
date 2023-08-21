@@ -28,7 +28,7 @@ class Constants:
     gauss_points = 5
 
     num_control_polygons = 1
-    batch_size =16
+    batch_size =64
     num_epochs = 400
     hot_spots_ratio = 1
     num_moments = 8
