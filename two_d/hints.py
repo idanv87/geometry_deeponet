@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+from matplotlib.ticker import ScalarFormatter
 
 
 
@@ -129,7 +130,7 @@ def network(model, with_net, polyg):
     if with_net:
         x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)
     else:
-        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)*0
+        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)
     # x=torch.load(Constants.path+'pred.pt')
     tol=[]
     res_err=[]
@@ -142,7 +143,7 @@ def network(model, with_net, polyg):
         theta=2/3
         
         # if False:
-        if ((k_it%7) ==0) and with_net:  
+        if ( k_it%2==0) and with_net:  
             # print(np.max(abs(generate_sample(sample[4])[0])))
             xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
             factor=np.max(abs(b))/np.max(abs(A@x_0-b))
@@ -192,54 +193,42 @@ model.load_state_dict(best_model['model_state_dict'])
 polyg=torch.load(names[0])
 def main1():
     err_net, res_err_net, iter=network(model,True, polyg)
-    torch.save([ err_net, res_err_net], Constants.path+'hints_fig.pt')
+    torch.save([ err_net, res_err_net], Constants.fig_path+'hints_fig.pt')
 def main2(): 
     err_gs, res_err_gs, iter=network(model,False, polyg)
-    torch.save([ err_gs, res_err_gs], Constants.path+'gs_fig.pt')
+    torch.save([ err_gs, res_err_gs], Constants.fig_path+'gs_fig.pt')
 def main():
-    l1=torch.load(Constants.path+'hints_fig.pt')[1]
+    err, res_err=torch.load(Constants.fig_path+'hints_fig.pt')
+    # l2=torch.load(Constants.fig_path+'gs_fig.pt')[1]
 
-    l2=torch.load(Constants.path+'gs_fig.pt')[1]
+    fig, ax = plt.subplots()
+    ax.plot(err, 'b',  label='relative error')
+    ax.plot(res_err,'r', label='residual error')
+    ax.set_title('Hints with J=2')
+    ax.set_xlabel("iteration")
+    ax.set_xlabel("error")
+    ax.annotate('',
+             xy = (400, 0),
+             xytext = (370, 0.3),
+             arrowprops = dict(facecolor = 'black', width = 0.2, headwidth = 8),
+             horizontalalignment = 'center')
+    ax.text(350, 0.5, f'rel.err={err[-1]:.3e}', fontsize = 6, c='b')
+    ax.text(350, 0.4, f'res.err={res_err[-1]:.3e}', fontsize = 6,c='r')
+    ax.legend()
+    plt.savefig(Constants.fig_path  + "hints.eps",format='eps',bbox_inches='tight')
 
+    plt.show(block=True)
 
-    plt.plot(l1, 'b',  label='hints')
-    # plt.plot(l2,'r', label='GS')
-    # print(l1[-1])
-    print(l2[-1])
-
-    plt.legend()
+    
     # plt.show()
     # print(fourier_error1)
     # print(fourier_error2)
 
-main1()
+# main1()
 # main2()
-# main()  
-# from multiprocessing import Process
-# if __name__ == "__main__":
-#     p1 = Process(target=main1)
-#     p1.start()
-#     p2 = Process(target=main2)
-#     p2.start()
-#     p1.join()
-#     p2.join()    
-
-
-  
-    # solution=scipy.sparse.linalg.spsolve(A, b)
+main()  
 
 
 
 
-# def plot_results(x,y,y_test, y_pred):
-#     error=torch.linalg.norm(y_test-y_pred)/torch.linalg.norm(y_test)
-#     fig, ax=plt.subplots(1,2)
-#     fig.suptitle(f'relative L2 Error: {error:.3e}')
-#     im0=ax[0].scatter(x,y,c=y_test)
-#     fig.colorbar(im0, ax=ax[0])
-#     im1=ax[1].scatter(x,y,c=y_pred)
-#     fig.colorbar(im1, ax=ax[1])
-#     # im2=ax[2].scatter(x,y,c=abs(y_pred-y_test))
-#     # fig.colorbar(im2, ax=ax[2])
-#     ax[0].set_title('test')
-#     ax[1].set_title('pred')
+
