@@ -62,10 +62,11 @@ def create_data(domain):
 
 def expand_function(f,domain):
     
-    rect=torch.load(current_path.split('deeponet')[0]+'data_deeponet/polygons/rect.pt')
+    base_rect=torch.load(Constants.path+'/polygons/rect.pt')
+    # base_rect=torch.load(Constants.path+'/base_polygon/base_rect.pt')
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
-    basis=rect['radial_basis']
+    basis=base_rect['hot_radial_basis']
     x0=np.random.rand(len(basis),1)
     phi=np.array([func(np.array([x, y]).T) for func in basis]).T
     return np.linalg.solve(phi.T@phi,phi.T@f)
@@ -79,6 +80,10 @@ def expand_function(f,domain):
 # rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
 # rect.create_mesh(0.1)
 # rect.save(Constants.path+'polygons/rect.pt')
+
+# rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+# rect.create_mesh(1/40)
+# rect.save(Constants.path+'base_polygon/base_rect.pt')
 
 # figures:
 if __name__=='__main__':

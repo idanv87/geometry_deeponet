@@ -67,7 +67,7 @@ def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
     for j in range(len(domain[0])):
         X_test_i.append([
                         torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
-                         torch.tensor(s0, dtype=torch.float32),
+                         torch.tensor(a, dtype=torch.float32),
                          torch.tensor(moments_x, dtype=torch.float32),
                          torch.tensor(moments_y, dtype=torch.float32)
                          ])
@@ -107,9 +107,6 @@ def network(model, with_net, polyg):
     # func=interpolation_2D(domain[0],domain[1], F[0]*100)
 
     b=generate_sample(sample[0],F, F_hot, psi)[0]# func=scipy.special.legendre(4)    
-    # plt.scatter(domain[0],domain[1],c=b)
-    # print(names[0])
-    # plt.show()
     solution=scipy.sparse.linalg.spsolve(A, b)
     predicted=deeponet(model, func, domain, domain_hot, moments_x, moments_y)
     print(np.linalg.norm(solution-predicted)/np.linalg.norm(solution))
@@ -224,9 +221,9 @@ def main():
     # print(fourier_error1)
     # print(fourier_error2)
 
-# main1()
+main1()
 # main2()
-main()  
+# main()  
 
 
 

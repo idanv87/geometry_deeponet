@@ -15,7 +15,7 @@ class Constants:
 
     # path = '/Users/idanversano/Documents/clones/deeponet_data/'
 
-    path = '/Users/idanversano/Documents/clones/data_exp1/'
+    path = '/Users/idanversano/Documents/clones/data_exp2/'
     fig_path=path+'figures/'
     k=25
 
@@ -56,6 +56,9 @@ class Constants:
     isExist = os.path.exists(path+'polygons')
     if not isExist:
         os.makedirs(path+'polygons')
+    isExist = os.path.exists(path+'base_polygon')
+    if not isExist:
+        os.makedirs(path+'base_polygon')    
 
     isExist = os.path.exists(path+'hints_polygons')
     if not isExist:

@@ -56,7 +56,7 @@ for name in names:
         for j in range(len(xi)):
             X.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(s_hot, dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])
@@ -83,7 +83,7 @@ for i in range(number_samples):
     for j in range(len(xi)):
             X_test.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(s_hot, dtype=torch.float32),
+                torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])        

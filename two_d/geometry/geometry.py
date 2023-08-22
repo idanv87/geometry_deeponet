@@ -95,10 +95,18 @@ class Polygon:
             set(range(self.vertices.shape[0])) - set(self.boundary_indices)
         )
         self.interior_points = self.vertices[self.interior_indices]
-
         self.hot_points = spread_points(30, self.interior_points)
+        self.hot_indices=[]
+        for i in range(self.vertices.shape[0]):
+            for j in range(self.hot_points.shape[0]):
+                if (self.vertices[i]== self.hot_points[j]).all()==True:
+                     self.hot_indices.append(i)
+        self.hot_indices=list(set(self.hot_indices))
+        
+
         self.ev = self.laplacian().real
         self.radial_functions=self.radial_basis()
+        self.hot_radial_functions=self.hot_radial_basis()
 
     def calc_boundary_indices(self):
         for i in range(self.generators.shape[0], (self.vertices).shape[0]):
@@ -135,6 +143,7 @@ class Polygon:
             "M": self.M[self.interior_indices][:, self.interior_indices],
             'moments': self.moments,
             'radial_basis':self.radial_functions,
+            'hot_radial_basis':self.hot_radial_functions,
             "legit": True,
             'type': 'polygon'
         }
@@ -150,9 +159,9 @@ class Polygon:
         m=mesh([self.vertices[i] for i in range(self.vertices.shape[0])])
         return [m.p[i] for i in self.interior_indices]
     
-    # def hot_radial_basis(self):
-    #     m=mesh([self.hot_points[i] for i in range(self.hot.shape[0])])
-    #     return [m.p[i] for i in self.ho]
+    def hot_radial_basis(self):
+        m=mesh([self.vertices[i] for i in range(self.vertices.shape[0])])
+        return [m.p[i] for i in self.hot_indices]
 
 
 
