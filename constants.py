@@ -15,7 +15,7 @@ class Constants:
 
     # path = '/Users/idanversano/Documents/clones/deeponet_data/'
 
-    path = '/Users/idanversano/Documents/clones/data_deeponet/'
+    path = '/Users/idanversano/Documents/clones/data_exp/'
     output_path = '/Users/idanversano/Documents/clones/deeponet_output/'
     k=12.1
 
