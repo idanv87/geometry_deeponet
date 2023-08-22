@@ -34,27 +34,6 @@ def loss(a,*args):
         return np.linalg.norm(np.sum(np.array([a[i]*func(np.array([x, y]).T) for i,func in enumerate(basis)]),axis=0)-f)**2
 
 
-
-     
-def generate_domains():
-    num_domains=15
-    for j in range(num_domains):
-        theta1=np.random.uniform(low=0.0, high=math.pi/2)
-        theta2=np.random.uniform(low=math.pi/2, high=math.pi)
-        theta3=np.random.uniform(low=math.pi, high=3*math.pi/2)
-        theta4=np.random.uniform(low=3*math.pi/2, high=2*math.pi)
-        theta=[theta1, theta2, theta3, theta4]
-
-        p=Polygon(np.array([[np.cos(theta[i]), np.sin(theta[i])] for i in range(len(theta))]))
-        try:
-            p.create_mesh(0.1)
-            p.save(current_path.split('deeponet')[0]+'data_deeponet/polygons/'+str(j)+'.pt')
-        except:
-             pass
-
-        
-
-
 def create_data(domain):
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
@@ -100,10 +79,16 @@ def expand_function(f,domain):
 # rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
 # rect.create_mesh(0.1)
 # rect.save(Constants.path+'polygons/rect.pt')
-p=torch.load(Constants.path+'polygons/rect.pt')
-plt.scatter(p['interior_points'][:,0], p['interior_points'][:,1])
-plt.scatter(p['hot_points'][:,0], p['hot_points'][:,1],c='r')
-plt.show()
+
+# figures:
+if __name__=='__main__':
+####################################################################################################################################################################
+    p=torch.load(Constants.path+'polygons/rect.pt')
+    plt.scatter(p['interior_points'][:,0], p['interior_points'][:,1],c='b')
+    plt.scatter(p['hot_points'][:,0], p['hot_points'][:,1],c='r')
+    plt.title('interior points and hot points')
+    plt.show()
+####################################################################################################################################################################
 
 
 

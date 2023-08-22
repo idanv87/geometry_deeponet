@@ -149,6 +149,10 @@ class Polygon:
     def radial_basis(self):
         m=mesh([self.vertices[i] for i in range(self.vertices.shape[0])])
         return [m.p[i] for i in self.interior_indices]
+    
+    # def hot_radial_basis(self):
+    #     m=mesh([self.hot_points[i] for i in range(self.hot.shape[0])])
+    #     return [m.p[i] for i in self.ho]
 
 
 

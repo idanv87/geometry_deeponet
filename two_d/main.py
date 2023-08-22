@@ -18,11 +18,7 @@ sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 
 from utils import count_trainable_params, extract_path_from_dir
 from constants import Constants
-names=list(set(extract_path_from_dir(current_path.split('deeponet')[0]+'data_deeponet/polygons/'))-set(
-  '/Users/idanversano/Documents/clones/data_deeponet/polygons/rect.pt'   
-)
-)
-# names=['/Users/idanversano/Documents/clones/data_deeponet/polygons/3.pt' ] 
+names=extract_path_from_dir(Constants.path+'polygons/')
       
 def plot_surface(xi,yi,Z):
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -49,7 +45,7 @@ for name in names:
     domain=torch.load(name)
     xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
     
-    number_samples=100
+    number_samples=250
     sampler = qmc.Halton(d=len(F), scramble=False)
     sample = 20*sampler.random(n=number_samples)-10
     for i in range(number_samples):
@@ -60,7 +56,7 @@ for name in names:
         for j in range(len(xi)):
             X.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(a, dtype=torch.float32),
+                torch.tensor(s_hot, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])
@@ -87,7 +83,7 @@ for i in range(number_samples):
     for j in range(len(xi)):
             X_test.append([
                 torch.tensor([xi[j],yi[j]], dtype=torch.float32),
-                torch.tensor(a, dtype=torch.float32),
+                torch.tensor(s_hot, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
                 ])        

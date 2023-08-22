@@ -66,7 +66,7 @@ def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
     for j in range(len(domain[0])):
         X_test_i.append([
                         torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
-                         torch.tensor(a, dtype=torch.float32),
+                         torch.tensor(s0, dtype=torch.float32),
                          torch.tensor(moments_x, dtype=torch.float32),
                          torch.tensor(moments_y, dtype=torch.float32)
                          ])
@@ -100,7 +100,9 @@ def network(model, with_net, polyg):
     # print(ev)
 
     xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
-    func=interpolation_2D(domain[0],domain[1], generate_sample(sample[0],F, F_hot, psi)[0])
+    func=interpolation_2D(domain[0],domain[1], np.sin(4*math.pi*domain[0])*np.sin(2*math.pi*domain[1]))
+
+    # func=interpolation_2D(domain[0],domain[1], generate_sample(sample[0],F, F_hot, psi)[0])
     # func=interpolation_2D(domain[0],domain[1], F[0]*100)
 
     b=generate_sample(sample[0],F, F_hot, psi)[0]# func=scipy.special.legendre(4)    
@@ -137,13 +139,14 @@ def network(model, with_net, polyg):
     for i in range(400):
         x_0 = x
         k_it += 1
-        theta=1
+        theta=2/3
         
         # if False:
-        if ((k_it%20) ==0) and with_net:  
+        if ((k_it%7) ==0) and with_net:  
             # print(np.max(abs(generate_sample(sample[4])[0])))
             xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
-            factor=np.max(abs(b))/np.max(abs(A@x_0-b))*np.max(abs(generate_sample(sample[0],F, F_hot, psi)[0]))
+            factor=np.max(abs(b))/np.max(abs(A@x_0-b))
+            # *np.max(abs(generate_sample(sample[0],F, F_hot, psi)[0]))
             # factor=b/(b-A@x_0)
             # mod1=[np.dot((b-A@x_0)*factor,V[:,i]) for i in range(14)]
             # mod2=[np.dot(b,V[:,i]) for i in range(14)]
@@ -181,8 +184,8 @@ def network(model, with_net, polyg):
     return err, res_err, k_it    
 
 from two_d.main import model
-experment_dir='geo_deeponet/'
-experment_path=Constants.path+'runs/'+experment_dir
+
+experment_path=Constants.path+'runs/'
 best_model=torch.load(experment_path+'best_model.pth')
 model.load_state_dict(best_model['model_state_dict'])
 # err_net, res_err_net, iter=network(model,with_net=True)
@@ -211,7 +214,7 @@ def main():
 
 main1()
 # main2()
-main()  
+# main()  
 # from multiprocessing import Process
 # if __name__ == "__main__":
 #     p1 = Process(target=main1)

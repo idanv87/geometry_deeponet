@@ -17,7 +17,7 @@ class Constants:
 
     path = '/Users/idanversano/Documents/clones/data_exp1/'
     fig_path=path+'figures/'
-    k=12.1
+    k=25
 
     num_samples = 5
     num_edges = 7
@@ -28,7 +28,7 @@ class Constants:
     gauss_points = 5
 
     num_control_polygons = 1
-    batch_size =64
+    batch_size =8
     num_epochs = 400
     hot_spots_ratio = 1
     num_moments = 8

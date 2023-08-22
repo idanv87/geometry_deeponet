@@ -418,10 +418,13 @@ def stochastic_matrix(m, n):
     return [a[i]/np.sum(a[i]) for i in range(m)]
 
 
-# def print_layers(model):
-#     for name, layer in model.named_modules():
-#         if isinstance(layer, torch.nn.Linear):
-#             pass
-    # print(name)
-    # print(layer._parameters)
-    # print(layer.weight.grad)
+def save_figure(X, Y, titles, names, colors):
+
+    # accuracy plots
+    fig, ax = plt.subplots(1, len(X))
+    for j in range(len(X)):
+        ax[j].scatter(X[j],Y[j])
+
+    plt.savefig(Constants.fig_path + "figures/" + ".eps",format='eps',bbox_inches='tight')
+    plt.show(block=False)
+
