@@ -97,9 +97,14 @@ def expand_function(f,domain):
     
     
 
-# rect=Polygon(np.array([[-1,-1],[1,-1],[1,1],[-1,1]]))
-# rect.create_mesh(0.2)
-# rect.save(current_path.split('deeponet')[0]+'data_deeponet/polygons/rect.pt')
+# rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+# rect.create_mesh(0.1)
+# rect.save(Constants.path+'polygons/rect.pt')
+p=torch.load(Constants.path+'polygons/rect.pt')
+plt.scatter(p['interior_points'][:,0], p['interior_points'][:,1])
+plt.scatter(p['hot_points'][:,0], p['hot_points'][:,1],c='r')
+plt.show()
+
 
 
 
@@ -108,16 +113,3 @@ def expand_function(f,domain):
 #     generate_domains()
 
 
-        
-
-
- 
-
-
-
-# x,y=np.meshgrid(np.linspace(0,1,5),np.linspace(0,1,5))
-# values=x.ravel()*0
-# values[12]=1
-# p=scipy.interpolate.RBFInterpolator(np.array([x.ravel(), y.ravel()]).T,values)
-# x,y=np.meshgrid(np.linspace(0,1,20),np.linspace(0,1,20))
-# plot_surface(x,y,p(np.array([x.ravel(), y.ravel()]).T).reshape(20,20))

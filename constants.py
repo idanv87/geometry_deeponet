@@ -15,8 +15,8 @@ class Constants:
 
     # path = '/Users/idanversano/Documents/clones/deeponet_data/'
 
-    path = '/Users/idanversano/Documents/clones/data_exp/'
-    output_path = '/Users/idanversano/Documents/clones/deeponet_output/'
+    path = '/Users/idanversano/Documents/clones/data_exp1/'
+    fig_path=path+'figures/'
     k=12.1
 
     num_samples = 5
@@ -48,6 +48,10 @@ class Constants:
 
     dim = 2
     # num_ev=4
+
+    isExist = os.path.exists(fig_path)
+    if not isExist:
+        os.makedirs(fig_path)
 
     isExist = os.path.exists(path+'polygons')
     if not isExist:
