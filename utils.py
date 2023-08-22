@@ -7,7 +7,9 @@ import math
 import random
 import cmath
 import os
-
+from matplotlib.path import Path
+from matplotlib.patches import PathPatch
+from matplotlib.collections import PatchCollection
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
@@ -428,3 +430,30 @@ def save_figure(X, Y, titles, names, colors):
     plt.savefig(Constants.fig_path + "figures/" + ".eps",format='eps',bbox_inches='tight')
     plt.show(block=False)
 
+def calc_angle_function(vertices):
+    Z=[]
+    for v in vertices:
+        Z.append(complex_version(v))
+    angles=[Z[i]/Z[i+1]]    
+
+def plot_polygon(ax, poly, **kwargs):
+    path = Path.make_compound_path(
+        Path(np.asarray(poly.exterior.coords)[:, :2]),
+        *[Path(np.asarray(ring.coords)[:, :2]) for ring in poly.interiors])
+
+    patch = PathPatch(path, **kwargs)
+    collection = PatchCollection([patch], **kwargs)
+    
+    ax.add_collection(collection, autolim=True)
+    ax.autoscale_view()
+    return collection    
+
+def step_fourier(L,Theta):
+    N=30
+    x=[0]+[np.sum(L[:k+1]) for k in range(len(L))]
+    a0=np.sum([l*theta for l,theta in zip(L,Theta)])
+    a1=[2*np.sum([L[i]*Theta[i]*(-np.sin(2*math.pi*n*x[i+1])+np.sin(2*math.pi*n*x[i]))/(2*math.pi*n) 
+                  for i in range(len(L))]) for n in range(1,N)]
+    a2=[2*np.sum([L[i]*Theta[i]*(np.cos(2*math.pi*n*x[i+1])-np.cos(2*math.pi*n*x[i]))/(2*math.pi*n)
+                   for i in range(len(L))]) for n in range(1,N)]
+    return a0,a1,a2

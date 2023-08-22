@@ -2,11 +2,12 @@ import os
 import sys
 import math
 
-
+# from shapely.geometry import Polygon as Pol2
 import dmsh
 import meshio
 import optimesh
 import matplotlib.pyplot as plt
+from matplotlib import pyplot
 import numpy as np
 import scipy
 import torch
@@ -21,7 +22,7 @@ current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 from two_d.geometry.geometry import Polygon
 from pydec.dec import simplicial_complex
-from utils import np_to_torch
+from utils import np_to_torch, plot_polygon, step_fourier
 from constants import Constants
 from functions.functions import gaussian
 # from two_d.main import test_dataset, Y_test, L, SonarDataset, F, domain, generate_sample, plot_surface, sample
@@ -61,18 +62,20 @@ def create_data(domain):
     return x,y,F,F_hot, psi, moments_x, moments_y
 
 def expand_function(f,domain):
+    # f is a vector of f evaluated on the domain points
     
     base_rect=torch.load(Constants.path+'/polygons/rect.pt')
     # base_rect=torch.load(Constants.path+'/base_polygon/base_rect.pt')
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
     basis=base_rect['hot_radial_basis']
-    x0=np.random.rand(len(basis),1)
+  
     phi=np.array([func(np.array([x, y]).T) for func in basis]).T
     return np.linalg.solve(phi.T@phi,phi.T@f)
 
+    #   x0=np.random.rand(len(basis),1)
     # res = minimize(loss, x0, method='BFGS',args=(basis,f,x,y), options={'xatol': 1e-4, 'disp': True})
-    return res.x
+    # return res.x
 
     
     
@@ -86,20 +89,58 @@ def expand_function(f,domain):
 # rect.save(Constants.path+'base_polygon/base_rect.pt')
 
 # figures:
-if __name__=='__main__':
+# import urllib
+# selig_url = 'http://airfoiltools.com/airfoil/seligdatfile?airfoil=n0012-il'
+# selig_path = 'naca0012-selig.dat'
+# urllib.request.urlretrieve(selig_url, selig_path)
+# Load coordinates from file.
+def generate_domains():
+    for i,name in enumerate(os.listdir(Constants.path+'naca/')):
+            
+            with open(Constants.path+'naca/'+name, 'r') as infile:
+                x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
+                # domain=Polygon(np.vstack((x1,y1*100)).T)
+                print(np.max(abs(y1)))
+                # domain.plot()
+                # domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+                # domain.plot()
+                # 
+                # try:
+                #   domain.create_mesh(0.1)
+                #   domain.save(Constants.path+'polygons/'+'str(i).pt')
+                #   print(i)
+                # except:
+                #      pass  
+                
+                # 
+
+            
+            # plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
+            # ax.scatter(x1[20],y1[20])
+
+if __name__=='__main__':        
+    generate_domains()
+
+
+
+
+# if __name__=='__main__':
+#     polygon = Pol2(shell=((0,0),(1,0),(1,1),(0,1)),
+# holes=None
+# fig, ax = plt.subplots()
+#     plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
+# plt.show()
 ####################################################################################################################################################################
-    p=torch.load(Constants.path+'polygons/rect.pt')
-    plt.scatter(p['interior_points'][:,0], p['interior_points'][:,1],c='b')
-    plt.scatter(p['hot_points'][:,0], p['hot_points'][:,1],c='r')
-    plt.title('interior points and hot points')
-    plt.show()
+    # p=torch.load(Constants.path+'polygons/rect.pt')
+    # plt.scatter(p['interior_points'][:,0], p['interior_points'][:,1],c='b')
+    # plt.scatter(p['hot_points'][:,0], p['hot_points'][:,1],c='r')
+    # plt.title('interior points and hot points')
+    # plt.show()
 ####################################################################################################################################################################
 
 
 
 
 
-# if __name__=='__main__':        
-#     generate_domains()
 
 

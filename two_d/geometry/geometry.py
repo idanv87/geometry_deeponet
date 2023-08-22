@@ -2,6 +2,7 @@ import datetime
 import os
 import sys
 
+from shapely.geometry import Polygon as Pol2
 from pylab import figure
 import numpy as np
 import matplotlib.pyplot as plt
@@ -70,6 +71,8 @@ class Polygon:
         self.geo = dmsh.Polygon(self.generators)
         self.moments = [calc_moment(k, calc_coeff(self.generators)[
                                     0], calc_coeff(self.generators)[1]) for k in range(30)]
+        self.a0, self.a1, self.a2 = self.fourier()
+        
 
     def create_mesh(self, h):
         if np.min(calc_min_angle(self.geo)) > (math.pi / 8):
@@ -149,7 +152,7 @@ class Polygon:
         }
         torch.save(data, path)
 
-    def plot(self):
+    def plot2(self):
         plt.scatter(self.interior_points[:, 0],
                     self.interior_points[:, 1], color='black')
         plt.scatter(self.hot_points[:, 0], self.hot_points[:, 1], color='red')
@@ -162,6 +165,27 @@ class Polygon:
     def hot_radial_basis(self):
         m=mesh([self.vertices[i] for i in range(self.vertices.shape[0])])
         return [m.p[i] for i in self.hot_indices]
+    
+    def fourier(self):
+        x1=self.generators[:,0]
+        y1=self.generators[:,1]
+        dx=[np.linalg.norm(np.array([y1[(k+1)%y1.shape[0]]-y1[k],x1[(k+1)%x1.shape[0]]-x1[k]])) for k in range(x1.shape[0])]
+
+        theta=[np.arctan2(y1[(k+1)%y1.shape[0]]-y1[k],x1[(k+1)%x1.shape[0]]-x1[k]) for k in range(x1.shape[0])]
+
+        l=[h/np.sum(dx) for h in dx]
+        a0,a1,a2=step_fourier(l,theta)
+        return a0,a1,a2
+    
+    def plot(self):
+        x1=self.generators[:,0]
+        y1=self.generators[:,1]
+        polygon = Pol2(shell=[[x1[k],y1[k]] for k in range(x1.shape[0])],holes=None)
+        fig, ax = plt.subplots()
+        plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
+        plt.show()
+
+
 
 
 
