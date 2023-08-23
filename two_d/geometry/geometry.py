@@ -84,7 +84,7 @@ class Polygon:
                                     0], calc_coeff(self.generators)[1]) for k in range(300)]
         for i in range(2*self.n, len(self.moments)):
             self.moments[i]=0
-        self.a0, self.a1, self.a2 = self.fourier()
+        self.fourier_coeff = self.fourier()
         
         
 
@@ -167,6 +167,7 @@ class Polygon:
             'moments': self.moments,
             'radial_basis':self.radial_functions,
             'hot_radial_basis':self.hot_radial_functions,
+             'angle_fourier':self.fourier_coeff,
             "legit": True,
             'type': 'polygon'
         }
@@ -194,8 +195,8 @@ class Polygon:
         theta=[np.arctan2(y1[(k+1)%y1.shape[0]]-y1[k],x1[(k+1)%x1.shape[0]]-x1[k]) for k in range(x1.shape[0])]
 
         l=[h/np.sum(dx) for h in dx]
-        a0,a1,a2=step_fourier(l,theta)
-        return a0,a1,a2
+        coeff=step_fourier(l,theta)
+        return coeff
     
     def plot(self):
         x1=self.generators[:,0]

@@ -43,7 +43,7 @@ Y=[]
 
 for name in names:
     domain=torch.load(name)
-    xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
+    xi,yi,F, F_hot,psi, moments_x, moments_y, angle_fourier=create_data(domain)
     
     number_samples=250
     sampler = qmc.Halton(d=len(F), scramble=False)
@@ -59,6 +59,7 @@ for name in names:
                 torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
+                torch.tensor(angle_fourier, dtype=torch.float32)
                 ])
             Y.append(torch.tensor(s1[j], dtype=torch.float32))
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -67,10 +68,10 @@ for name in names:
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # create test data
 domain=torch.load(names[0])
-xi,yi,F, F_hot,psi, moments_x, moments_y=create_data(domain)
+xi,yi,F, F_hot,psi, moments_x, moments_y, angle_fourier=create_data(domain)
 X_test=[]
 Y_test=[]
-xi,yi,F, F_hot, psi,moments_x, moments_y=create_data(torch.load(names[0]))
+
 number_samples=1
 sampler = qmc.Halton(d=len(F), scramble=False)
 sample = 20*sampler.random(n=number_samples)-10
@@ -86,6 +87,7 @@ for i in range(number_samples):
                 torch.tensor(a, dtype=torch.float32),
                 torch.tensor(moments_x, dtype=torch.float32),
                 torch.tensor(moments_y, dtype=torch.float32),
+                torch.tensor(angle_fourier, dtype=torch.float32)
                 ])        
             Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
 

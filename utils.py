@@ -431,23 +431,9 @@ def save_figure(X, Y, titles, names, colors):
     plt.savefig(Constants.fig_path + "figures/" + ".eps",format='eps',bbox_inches='tight')
     plt.show(block=False)
 
-def calc_angle_function(vertices):
-    Z=[]
-    for v in vertices:
-        Z.append(complex_version(v))
-    angles=[Z[i]/Z[i+1]]    
+ 
 
-def plot_polygon(ax, poly, **kwargs):
-    path = Path.make_compound_path(
-        Path(np.asarray(poly.exterior.coords)[:, :2]),
-        *[Path(np.asarray(ring.coords)[:, :2]) for ring in poly.interiors])
 
-    patch = PathPatch(path, **kwargs)
-    collection = PatchCollection([patch], **kwargs)
-    
-    ax.add_collection(collection, autolim=True)
-    ax.autoscale_view()
-    return collection    
 
 def step_fourier(L,Theta):
     N=30
@@ -457,4 +443,9 @@ def step_fourier(L,Theta):
                   for i in range(len(L))]) for n in range(1,N)]
     a2=[2*np.sum([L[i]*Theta[i]*(np.cos(2*math.pi*n*x[i+1])-np.cos(2*math.pi*n*x[i]))/(2*math.pi*n)
                    for i in range(len(L))]) for n in range(1,N)]
-    return a0,a1,a2
+    coeff=[a0]
+    for i in range(N-1):
+        coeff.append(a1[i])
+        coeff.append(a2[i])
+
+    return np.array(coeff)

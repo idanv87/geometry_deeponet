@@ -55,10 +55,10 @@ def Gauss_zeidel(A, b, x, theta):
     return [x, it_count, np.linalg.norm(A@x-b)/np.linalg.norm(b)]
 
 
+#
 
 
-
-def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
+def deeponet(model, func, domain, domain_hot, moments_x, moments_y, angle_fourier):
     X_test_i=[]
     Y_test_i=[]
     s0=func(domain_hot[0], domain_hot[1])
@@ -69,7 +69,8 @@ def deeponet(model, func, domain, domain_hot, moments_x, moments_y):
                         torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
                          torch.tensor(a, dtype=torch.float32),
                          torch.tensor(moments_x, dtype=torch.float32),
-                         torch.tensor(moments_y, dtype=torch.float32)
+                         torch.tensor(moments_y, dtype=torch.float32),
+                         torch.tensor(angle_fourier, dtype=torch.float32)
                          ])
         Y_test_i.append(torch.tensor(s0, dtype=torch.float32))
 
@@ -95,12 +96,13 @@ def network(model, with_net, polyg):
     moments=polyg['moments'][:2*len(polyg['generators'])]
     moments_x=[m.real/len(polyg['generators']) for m in moments]
     moments_y=[m.imag/len(polyg['generators']) for m in moments]
+    angle_fourier=polyg['angle_fourier']
     L=polyg['M']
     A = (-L - Constants.k* scipy.sparse.identity(L.shape[0]))
     # ev,V=scipy.sparse.linalg.eigs(A,k=15,return_eigenvectors=True,which="SR")
     # print(ev)
 
-    xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
+    xi,yi,F, F_hot,psi, temp1, temp2, temp3=create_data(polyg)
     func=interpolation_2D(domain[0],domain[1], np.sin(4*math.pi*domain[0])*np.sin(2*math.pi*domain[1]))
 
     # func=interpolation_2D(domain[0],domain[1], generate_sample(sample[0],F, F_hot, psi)[0])
@@ -108,7 +110,7 @@ def network(model, with_net, polyg):
 
     b=generate_sample(sample[0],F, F_hot, psi)[0]# func=scipy.special.legendre(4)    
     solution=scipy.sparse.linalg.spsolve(A, b)
-    predicted=deeponet(model, func, domain, domain_hot, moments_x, moments_y)
+    predicted=deeponet(model, func, domain, domain_hot, moments_x, moments_y, angle_fourier)
     print(np.linalg.norm(solution-predicted)/np.linalg.norm(solution))
     
     # plot_surface(domain[0].reshape(18,18),domain[1].reshape(18,18),b.reshape(18,18))
@@ -125,9 +127,9 @@ def network(model, with_net, polyg):
 
 
     if with_net:
-        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)
+        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y, angle_fourier)
     else:
-        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y)
+        x=deeponet(model, func,domain, domain_hot, moments_x, moments_y, angle_fourier)
     # x=torch.load(Constants.path+'pred.pt')
     tol=[]
     res_err=[]
@@ -142,7 +144,7 @@ def network(model, with_net, polyg):
         # if False:
         if ( k_it%2==0) and with_net:  
             # print(np.max(abs(generate_sample(sample[4])[0])))
-            xi,yi,F, F_hot,psi, temp1, temp2=create_data(polyg)
+            xi,yi,F, F_hot,psi, temp1, temp2, temp3=create_data(polyg)
             factor=np.max(abs(b))/np.max(abs(A@x_0-b))
             # *np.max(abs(generate_sample(sample[0],F, F_hot, psi)[0]))
             # factor=b/(b-A@x_0)
@@ -162,7 +164,7 @@ def network(model, with_net, polyg):
             # plt.plot((b-A@x_0)*factor)
             # plt.show()
             x_temp = x_0*factor + \
-            deeponet(model, interpolation_2D(domain[0],domain[1],(b-A@x_0)*factor ),domain, domain_hot, moments_x, moments_y) 
+            deeponet(model, interpolation_2D(domain[0],domain[1],(b-A@x_0)*factor ),domain, domain_hot, moments_x, moments_y, angle_fourier) 
             x=x_temp/factor
             
             # x = x_0 + deeponet(model, scipy.interpolate.interp1d(domain[1:-1],(A@x_0-b)*factor ))/factor

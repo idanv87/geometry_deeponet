@@ -18,7 +18,7 @@ class fc(torch.nn.Module):
         self.activation_last=activation_last
         self.input_shape = input_shape
         self.output_shape = output_shape
-        
+
         n = max(input_shape,20)
         self.activation = torch.nn.ELU()
         # self.activation = torch.nn.LeakyReLU()
@@ -63,7 +63,7 @@ class deeponet(nn.Module):
 
 
     def forward(self, X):
-        y,f,m_x,m_y=X
+        y,f,m_x,m_y, angle=X
         branch = self.c_layer(self.branch1(f))
         trunk = self.trunk1(y)
         # alpha = torch.squeeze(self.c2_layer(torch.cat((f,y),dim=1)))

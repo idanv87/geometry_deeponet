@@ -59,14 +59,15 @@ def create_data(domain):
     moments=domain['moments'][:2*len(domain['generators'])]
     moments_x=[m.real/len(domain['generators']) for m in moments]
     moments_y=[m.imag/len(domain['generators']) for m in moments]
+    angle_fourier=domain['angle_fourier']
 
 
-    return x,y,F,F_hot, psi, moments_x, moments_y
+    return x,y,F,F_hot, psi, moments_x, moments_y, angle_fourier
 
 def expand_function(f,domain):
     # f is a vector of f evaluated on the domain points
     
-    base_rect=torch.load(Constants.path+'/polygons/rect.pt')
+    base_rect=torch.load(Constants.path+'base_polygon/base_rect.pt')
     # base_rect=torch.load(Constants.path+'/base_polygon/base_rect.pt')
     x=domain['interior_points'][:,0]
     y=domain['interior_points'][:,1]
@@ -100,7 +101,7 @@ def generate_domains():
     count=0
     for i,name in enumerate(os.listdir(Constants.path+'naca/')):
       
-      if i<3:  
+      if i==1:  
         
        
         
@@ -118,16 +119,15 @@ def generate_domains():
                 domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
                 domain.create_mesh(0.1)
                 domain.save(Constants.path+'polygons/'+str(i)+'.pt')
-              
-              
-
-               
             except:
                 pass    
 
 
 
 if __name__=='__main__':
+    base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+    base_domain.create_mesh(0.1)
+    base_domain.save(Constants.path+'base_polygon/base_rect.pt')
     generate_domains()
 
 
