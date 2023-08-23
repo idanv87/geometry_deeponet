@@ -1,3 +1,4 @@
+import pandas as pd
 from sklearn.metrics import pairwise_distances
 import random
 from tqdm import tqdm
@@ -5,6 +6,7 @@ import datetime
 import pickle
 import math
 import random
+from scipy.stats import gaussian_kde
 import cmath
 import os
 from matplotlib.path import Path
@@ -204,27 +206,25 @@ def create_batches(n, batch_size):
     return [list(x[i * batch_size: (i + 1) * batch_size]) for i in range(k)]
 
 
-def spread_points(n, data):
-    assert data.shape[1] == 2
-    r = data[:, 0] ** 2 + data[:, 1] ** 2
-    starting_point_ind = np.argmin(r)
-    points_from_data = np.array([data[starting_point_ind]])
+def spread_points(subset_num,X):
+    
+    x=X[:,0]
+    y=X[:,1]
+    total_num = x.shape[0]
+    xy = np.vstack([x, y])
+    dens = gaussian_kde(xy)(xy)
 
-    for i in range(1, n):
-        pairwise_distances_to_data = pairwise_distances(
-            data, Y=points_from_data, metric="euclidean", n_jobs=-1
-        )
-        pairwise_distances_to_data = np.array(pairwise_distances_to_data)
+    # Try playing around with this weight. Compare 1/dens,  1-dens, and (1-dens)**2
+    weight = 1 / dens
+    weight /= weight.sum()
 
-        min_distances_to_data = np.amin(pairwise_distances_to_data, axis=1)
-
-        k = min_distances_to_data.argmax()
-
-        points_from_data = np.append(points_from_data, [data[k]], axis=0)
-
-    return points_from_data
-
-
+    # Draw a sample using np.random.choice with the specified probabilities.
+    # We'll need to view things as an object array because np.random.choice
+    # expects a 1D array.
+    dat = xy.T.ravel().view([('x', float), ('y', float)])
+    subset = np.random.choice(dat, subset_num, p=weight)
+    return np.vstack((subset['x'], subset['y'])).T
+    
 def plot_polygon(path):
     df = extract_pickle(path)
     v = df["generator"]
@@ -329,6 +329,7 @@ def calc_min_angle(geo):
             np.dot(p2 - p1, p3 - p1)
             / (np.linalg.norm(p2 - p1) * np.linalg.norm(p3 - p1))
         )
+ 
     return np.arccos(angle)
 
 

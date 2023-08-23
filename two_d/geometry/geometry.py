@@ -12,8 +12,9 @@ import meshio
 import optimesh
 from pathlib import Path
 import torch
+from sklearn.cluster import KMeans
 from scipy.interpolate import Rbf
-
+from scipy.spatial.distance import euclidean, cityblock
 import cmath
 current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
@@ -24,6 +25,16 @@ from pydec.dec import simplicial_complex
 from functions.functions import Test_function
 
 
+
+
+
+
+
+
+
+    
+
+    
 class mesh:
     ''''
         points=np.random.rand(5,2)
@@ -70,17 +81,25 @@ class Polygon:
         self.n=self.generators.shape[0]
         self.geo = dmsh.Polygon(self.generators)
         self.moments = [calc_moment(k, calc_coeff(self.generators)[
-                                    0], calc_coeff(self.generators)[1]) for k in range(30)]
+                                    0], calc_coeff(self.generators)[1]) for k in range(300)]
+        for i in range(2*self.n, len(self.moments)):
+            self.moments[i]=0
         self.a0, self.a1, self.a2 = self.fourier()
+        
         
 
     def create_mesh(self, h):
-        if np.min(calc_min_angle(self.geo)) > (math.pi / 8):
-            X, cells = dmsh.generate(self.geo, h)
+        # if np.min(calc_min_angle(self.geo)) > (math.pi / 20):
+            
+        X, cells = dmsh.generate(self.geo, h)
 
-            X, cells = optimesh.optimize_points_cells(
-                X, cells, "CVT (full)", 1.0e-6, 120
-            )
+        X, cells = optimesh.optimize_points_cells(
+            X, cells, "CVT (full)", 1.0e-6, 120
+        )
+        self.X=X
+        self.cells=cells
+    # else:
+    #     self.plot()    
         # dmsh.show(X, cells, self.geo)
 
         self.vertices = X
@@ -98,6 +117,7 @@ class Polygon:
             set(range(self.vertices.shape[0])) - set(self.boundary_indices)
         )
         self.interior_points = self.vertices[self.interior_indices]
+
         self.hot_points = spread_points(30, self.interior_points)
         self.hot_indices=[]
         for i in range(self.vertices.shape[0]):
@@ -184,6 +204,19 @@ class Polygon:
         fig, ax = plt.subplots()
         plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
         plt.show()
+
+    def plot_moments(self):
+        X=[self.moments[i].real for i in range(len(self.moments))]
+        Y=[self.moments[i].imag for i in range(len(self.moments))]
+        fig,ax=plt.subplots(1)
+        ax.plot(range(len(self.moments)), X, 'r', label='real part')
+        ax.plot(range(len(self.moments)), Y, 'b', label='imaginary part')
+        plt.legend()
+        plt.show()
+    
+    def plot_geo(self):
+        dmsh.show(self.X, self.cells, self.geo)
+
 
 
 

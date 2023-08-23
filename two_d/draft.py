@@ -13,9 +13,11 @@ import scipy
 import torch
 from torch.utils.data import Dataset, DataLoader
 import sys
+from sklearn.cluster import KMeans
 from scipy.interpolate import Rbf
 from scipy.optimize import minimize
 from scipy.stats import qmc
+import pandas as pd
 
 
 current_path=os.path.abspath(__file__)
@@ -95,31 +97,41 @@ def expand_function(f,domain):
 # urllib.request.urlretrieve(selig_url, selig_path)
 # Load coordinates from file.
 def generate_domains():
+    count=0
     for i,name in enumerate(os.listdir(Constants.path+'naca/')):
+      
+      if i<3:  
+        
+       
+        
             
-            with open(Constants.path+'naca/'+name, 'r') as infile:
-                x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
-                # domain=Polygon(np.vstack((x1,y1*100)).T)
-                print(np.max(abs(y1)))
-                # domain.plot()
-                # domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
-                # domain.plot()
-                # 
-                # try:
-                #   domain.create_mesh(0.1)
-                #   domain.save(Constants.path+'polygons/'+'str(i).pt')
-                #   print(i)
-                # except:
-                #      pass  
-                
-                # 
+        with open(Constants.path+'naca/'+name, 'r') as infile:
+            x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
+            lengeths=[np.sqrt((x1[(k+1)%x1.shape[0]]-x1[k])**2+ (y1[(k+1)%x1.shape[0]]-y1[k])**2) for k in range(x1.shape[0])]
+            X=[]
+            Y=[]
+            for j in range(len(lengeths)):
+                    if lengeths[j]>1e-4:
+                        X.append(x1[j])
+                        Y.append(y1[j])
+            try:                   
+                domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
+                domain.create_mesh(0.1)
+                domain.save(Constants.path+'polygons/'+str(i)+'.pt')
+              
+              
 
-            
-            # plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
-            # ax.scatter(x1[20],y1[20])
+               
+            except:
+                pass    
 
-if __name__=='__main__':        
+
+
+if __name__=='__main__':
     generate_domains()
+
+
+
 
 
 
