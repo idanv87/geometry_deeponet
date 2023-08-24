@@ -41,12 +41,17 @@ def generate_sample(M, F, F_hot, psi):
 
 
 def generate_data(names,  save_path, number_samples=10):
+    answer = input('Did you erase previous data? (y/n)')
+    if answer !='y':
+        print('please erase')
+        sys.exit()
+        
     X=[]
     Y=[]
     for name in names:
         domain=torch.load(name)
         xi,yi,F, F_hot,psi, moments_x, moments_y, angle_fourier=create_data(domain)
-       
+     
         sampler = qmc.Halton(d=len(F), scramble=False)
         sample = 20*sampler.random(n=number_samples)-10
         for i in range(number_samples):
@@ -68,7 +73,7 @@ def generate_data(names,  save_path, number_samples=10):
                 Y.append(Y1)
     return X,Y        
 
-# X,Y=generate_data(train_names, Constants.train_path, 20)
+# X,Y=generate_data(train_names, Constants.train_path, 150)
 # X_test, Y_test=generate_data(test_names,Constants.test_path,1)
 
 train_data=extract_path_from_dir(Constants.train_path)

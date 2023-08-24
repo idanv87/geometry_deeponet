@@ -81,8 +81,7 @@ class Polygon:
         self.geo = dmsh.Polygon(self.generators)
         self.moments = [calc_moment(k, calc_coeff(self.generators)[
                                     0], calc_coeff(self.generators)[1]) for k in range(300)]
-        for i in range(2*self.n, len(self.moments)):
-            self.moments[i]=0
+
         self.fourier_coeff = self.fourier()
         
         

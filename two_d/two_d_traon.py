@@ -95,12 +95,12 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
   
     for i, data in prog_bar:
             counter += 1
-            input, output = data
-            input = [input[k].to(Constants.device) for k in range(len(input))]
+            inp, output = data
+            inp = [inp[k].to(Constants.device) for k in range(len(inp))]
             output = output.to(Constants.device) 
             total += output.size(0)
             optimizer.zero_grad()
-            y_pred = model(input)
+            y_pred = model(inp)
         
             loss = criterion(y_pred, output) 
 
@@ -155,11 +155,11 @@ def predict(model, dataloader, dataset, criterion):
     with torch.no_grad():
         for i, data in prog_bar:
             counter += 1
-            input, output = data
-            input = [input[k].to(Constants.device) for k in range(len(input))]
+            inp, output = data
+            inp = [inp[k].to(Constants.device) for k in range(len(inp))]
             output = output.to(Constants.device)
             total += output.size(0)
-            y_pred = model(input)
+            y_pred = model(inp)
            
             loss = criterion(y_pred, output) 
  
@@ -168,7 +168,7 @@ def predict(model, dataloader, dataset, criterion):
             pred_running_loss += loss.item()
             pred_running_acc+=relative_loss.item()
 
-            coords.append(input[0])
+            coords.append(inp[0])
            
             prediction.append(y_pred)
 
@@ -210,11 +210,11 @@ def validate(model, dataloader, dataset, criterion):
     with torch.no_grad():
         for i, data in prog_bar:
             counter += 1
-            input, output = data
-            input = [input[k].to(Constants.device) for k in range(len(input))]
+            inp, output = data
+            inp = [inp[k].to(Constants.device) for k in range(len(inp))]
             output = output.to(Constants.device) 
             total += output.size(0)
-            y_pred = model(input)
+            y_pred = model(inp)
             
             loss = criterion(y_pred, output)
 

@@ -125,21 +125,20 @@ def generate_domains():
 
 def analyze_data():
     names=extract_path_from_dir(Constants.path+'polygons/')
-    
-
     angles=[]
     Mx=[]
     My=[]
     for i,name in enumerate(names):
 
         domain=torch.load(name)
+       
         Mx.append( [ s.real for s in domain['moments'] ])
         My.append( [s.imag for s in domain['moments'] ])
         angles.append(domain['angle_fourier'])
     fig, axs = plt.subplots(3,3, figsize=(5, 5), facecolor='w', edgecolor='k')
     fig.subplots_adjust(hspace = .5, wspace=.001)
     axs = axs.ravel()
-    my_data=My
+    my_data=angles
     for i in range(9):
             axs[i].tick_params(left = False, right = False , labelleft = False ,
                 labelbottom = True, bottom = True)
