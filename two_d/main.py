@@ -46,6 +46,7 @@ def generate_data(names,  save_path, number_samples=10):
     for name in names:
         domain=torch.load(name)
         xi,yi,F, F_hot,psi, moments_x, moments_y, angle_fourier=create_data(domain)
+       
         sampler = qmc.Halton(d=len(F), scramble=False)
         sample = 20*sampler.random(n=number_samples)-10
         for i in range(number_samples):
@@ -57,8 +58,8 @@ def generate_data(names,  save_path, number_samples=10):
                 X1=[
                     torch.tensor([xi[j],yi[j]], dtype=torch.float32),
                     torch.tensor(a, dtype=torch.float32),
-                    torch.tensor(0, dtype=torch.float32),
-                    torch.tensor(0, dtype=torch.float32),
+                    torch.tensor(moments_x, dtype=torch.float32),
+                    torch.tensor(moments_y, dtype=torch.float32),
                     torch.tensor(angle_fourier, dtype=torch.float32)
                     ]
                 Y1=torch.tensor(s1[j], dtype=torch.float32)
@@ -67,15 +68,18 @@ def generate_data(names,  save_path, number_samples=10):
                 Y.append(Y1)
     return X,Y        
 
-X,Y=generate_data(train_names, Constants.train_path, 20)
-X_test, Y_test=generate_data(test_names,Constants.test_path,1)
+# X,Y=generate_data(train_names, Constants.train_path, 20)
+# X_test, Y_test=generate_data(test_names,Constants.test_path,1)
 
 train_data=extract_path_from_dir(Constants.train_path)
 test_data=extract_path_from_dir(Constants.test_path)
-X_train=[torch.load(f)[0] for f in train_data]
-Y_train=[torch.load(f)[1] for f in train_data]
-X_test=[torch.load(f)[0] for f in test_data]
-Y_test=[torch.load(f)[1] for f in test_data]
+s_train=[torch.load(f) for f in train_data]
+s_test=[torch.load(f) for f in test_data]
+
+X_train=[s[0] for s in s_train]
+Y_train=[s[1] for s in s_train]
+X_test=[s[0] for s in s_test]
+Y_test=[s[1] for s in s_test]
 
 train_dataset = SonarDataset(X_train, Y_train)
 train_size = int(0.8 * len(train_dataset))
@@ -85,8 +89,8 @@ train_dataset, val_dataset = torch.utils.data.random_split(
     train_dataset, [train_size, val_size]
 )
 test_dataset = SonarDataset(X_test, Y_test)
-val_dataloader=create_loader(val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
-train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=True)
+val_dataloader=create_loader(val_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=False)
+train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size, shuffle=True, drop_last=False)
 test_dataloader=create_loader(test_dataset, batch_size=4, shuffle=False, drop_last=True)
 
 inp, out=next(iter(test_dataset))

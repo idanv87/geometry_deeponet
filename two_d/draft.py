@@ -55,9 +55,9 @@ def create_data(domain):
     F_hot=[v for v in V_hot]
 
     
-    moments=domain['moments'][:2*len(domain['generators'])]
-    moments_x=[m.real/len(domain['generators']) for m in moments]
-    moments_y=[m.imag/len(domain['generators']) for m in moments]
+    moments=domain['moments']
+    moments_x=np.array([m.real/len(domain['generators']) for m in moments])
+    moments_y=np.array([m.imag/len(domain['generators']) for m in moments])
     angle_fourier=domain['angle_fourier']
 
 
@@ -100,22 +100,22 @@ def generate_domains():
 
     fourier_coeff=[]
     for i,name in enumerate(os.listdir(Constants.path+'naca/')):
-      
-
-        
-       
-        
-            
+       if i<100: 
         with open(Constants.path+'naca/'+name, 'r') as infile:
             x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
             lengeths=[np.sqrt((x1[(k+1)%x1.shape[0]]-x1[k])**2+ (y1[(k+1)%x1.shape[0]]-y1[k])**2) for k in range(x1.shape[0])]
+            
             X=[]
             Y=[]
             for j in range(len(lengeths)):
-                    if lengeths[j]>1e-4:
+                    if lengeths[j]>1e-6:
                         X.append(x1[j])
                         Y.append(y1[j])
-            try:                   
+            try:    
+              
+            #    Polygon.plot(np.vstack((x1,y1)).T, title='original')
+            #    Polygon.plot(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T,str(i))             
+              
                 domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
                 domain.create_mesh(0.1)
                 domain.save(Constants.path+'polygons/'+str(i)+'.pt')
@@ -125,18 +125,42 @@ def generate_domains():
 
 def analyze_data():
     names=extract_path_from_dir(Constants.path+'polygons/')
-    C=[]
+    
+
+    angles=[]
+    Mx=[]
+    My=[]
     for i,name in enumerate(names):
+
         domain=torch.load(name)
-        C.append(domain['angle_fourier'])
+        Mx.append( [ s.real for s in domain['moments'] ])
+        My.append( [s.imag for s in domain['moments'] ])
+        angles.append(domain['angle_fourier'])
+    fig, axs = plt.subplots(3,3, figsize=(5, 5), facecolor='w', edgecolor='k')
+    fig.subplots_adjust(hspace = .5, wspace=.001)
+    axs = axs.ravel()
+    my_data=My
+    for i in range(9):
+            axs[i].tick_params(left = False, right = False , labelleft = False ,
+                labelbottom = True, bottom = True)
+            axs[i].scatter(np.array([s[i] for s in my_data]),np.zeros((len(my_data))))
+            axs[i].set_title(f'mode number {i}')
+    plt.savefig(Constants.fig_path+'fourier_modes_domains_dist', format='eps',bbox_inches='tight')    
+    plt.show()      
+
+        
+        
+
         # Polygon.plot(domain['generators'], str(i))
-    return C
+    return 1
     
 
 
 
 if __name__=='__main__':
+     
      domain_coeff=analyze_data()
+    #  plt.show()
     # base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
     # base_domain.create_mesh(0.1)
     # base_ domain.save(Constants.path+'base_polygon/base_rect.pt')

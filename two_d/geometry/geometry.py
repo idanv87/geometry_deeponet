@@ -198,6 +198,7 @@ class Polygon:
         return coeff
     @classmethod
     def plot(cls,generators, title='no title was given'):
+        assert generators.shape[1]==2
         x1=generators[:,0]
         y1=generators[:,1]
         polygon = Pol2(shell=[[x1[k],y1[k]] for k in range(x1.shape[0])],holes=None)
