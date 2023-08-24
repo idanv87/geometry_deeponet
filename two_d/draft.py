@@ -23,11 +23,10 @@ import pandas as pd
 current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 from two_d.geometry.geometry import Polygon
-from pydec.dec import simplicial_complex
-from utils import np_to_torch, plot_polygon, step_fourier
+from utils import extract_path_from_dir
+
 from constants import Constants
-from functions.functions import gaussian
-# from two_d.main import test_dataset, Y_test, L, SonarDataset, F, domain, generate_sample, plot_surface, sample
+
 from two_d.two_d_data_set import create_loader 
 
 
@@ -98,10 +97,11 @@ def expand_function(f,domain):
 # urllib.request.urlretrieve(selig_url, selig_path)
 # Load coordinates from file.
 def generate_domains():
-    count=0
+
+    fourier_coeff=[]
     for i,name in enumerate(os.listdir(Constants.path+'naca/')):
       
-      if i==1:  
+
         
        
         
@@ -123,12 +123,24 @@ def generate_domains():
                 pass    
 
 
+def analyze_data():
+    names=extract_path_from_dir(Constants.path+'polygons/')
+    C=[]
+    for i,name in enumerate(names):
+        domain=torch.load(name)
+        C.append(domain['angle_fourier'])
+        # Polygon.plot(domain['generators'], str(i))
+    return C
+    
+
+
 
 if __name__=='__main__':
-    base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
-    base_domain.create_mesh(0.1)
-    base_domain.save(Constants.path+'base_polygon/base_rect.pt')
-    generate_domains()
+     domain_coeff=analyze_data()
+    # base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
+    # base_domain.create_mesh(0.1)
+    # base_ domain.save(Constants.path+'base_polygon/base_rect.pt')
+    # generate_domains()
 
 
 

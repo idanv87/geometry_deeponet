@@ -16,6 +16,9 @@ class Constants:
     # path = '/Users/idanversano/Documents/clones/deeponet_data/'
 
     path = '/Users/idanversano/Documents/clones/data_exp3/'
+    train_path= '/Users/idanversano/Documents/clones/data_exp3/train_set/'
+    test_path= '/Users/idanversano/Documents/clones/data_exp3/test_set/'
+
     fig_path=path+'figures/'
     k=25
 
@@ -28,7 +31,7 @@ class Constants:
     gauss_points = 5
 
     num_control_polygons = 1
-    batch_size =8
+    batch_size =16
     num_epochs = 400
     hot_spots_ratio = 1
     num_moments = 8
@@ -48,6 +51,14 @@ class Constants:
 
     dim = 2
     # num_ev=4
+
+    isExist = os.path.exists(train_path)
+    if not isExist:
+        os.makedirs(train_path)
+
+    isExist = os.path.exists(test_path)
+    if not isExist:
+        os.makedirs(test_path)
 
     isExist = os.path.exists(fig_path)
     if not isExist:

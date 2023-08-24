@@ -70,6 +70,28 @@ class deeponet(nn.Module):
         return torch.sum(branch*trunk, dim=-1, keepdim=False)+self.alpha
         
 
+class geo_deeponet(nn.Module):
+    # good parameters: n_layers in deeponet=4,n_layers in geo_deeponet=10, infcn=100, ,n=5*p, p=100
+
+    def __init__(self, dim, num_hot_spots,num_fourier_domain, p):
+        super().__init__()
+        n_layers = 4
+        self.n = p
+        self.alpha = nn.Parameter(torch.tensor(0.))
+        self.branch1 = fc(num_hot_spots, self.n, n_layers,activation_last=False)
+        self.branch2= fc(num_fourier_domain, self.n, n_layers,activation_last=False)
+        self.trunk1 = fc(dim, p,  n_layers, activation_last=True)
+        self.c_layer = fc( 2*self.n, p, n_layers, activation_last=False)
+        self.c2_layer =fc( num_hot_spots+dim, 1, n_layers, False) 
+
+
+    def forward(self, X):
+        y,f,m_x,m_y, angle=X
+        branch = self.c_layer(  torch.cat((self.branch1(f), self.branch2(angle)), dim=1))
+        trunk = self.trunk1(y)
+        # alpha = torch.squeeze(self.c2_layer(torch.cat((f,y),dim=1)))
+        return torch.sum(branch*trunk, dim=-1, keepdim=False)+self.alpha
+        
 
 
 

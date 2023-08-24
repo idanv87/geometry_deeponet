@@ -4,22 +4,22 @@ import math
 from matplotlib.ticker import ScalarFormatter
 
 
-
+from scipy.stats import qmc
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 import torch
-from torch.utils.data import Dataset, DataLoader
+
 import sys
 from scipy.interpolate import Rbf
 
 
 current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
-from utils import np_to_torch
+
 from constants import Constants
-from functions.functions import gaussian
-from two_d.main import names, SonarDataset, generate_sample, plot_surface, sample
+
+from two_d.main import hint_names, SonarDataset, generate_sample
 from two_d.two_d_data_set import create_loader
 from draft import create_data, expand_function
 
@@ -103,6 +103,8 @@ def network(model, with_net, polyg):
     # print(ev)
 
     xi,yi,F, F_hot,psi, temp1, temp2, temp3=create_data(polyg)
+    sampler = qmc.Halton(d=len(F), scramble=False)
+    sample = 20*sampler.random(n=1)-10
     func=interpolation_2D(domain[0],domain[1], np.sin(4*math.pi*domain[0])*np.sin(2*math.pi*domain[1]))
 
     # func=interpolation_2D(domain[0],domain[1], generate_sample(sample[0],F, F_hot, psi)[0])
@@ -189,7 +191,7 @@ experment_path=Constants.path+'runs/'
 best_model=torch.load(experment_path+'best_model.pth')
 model.load_state_dict(best_model['model_state_dict'])
 # err_net, res_err_net, iter=network(model,with_net=True)
-polyg=torch.load(names[0])
+polyg=torch.load(hint_names[0])
 def main1():
     err_net, res_err_net, iter=network(model,True, polyg)
     torch.save([ err_net, res_err_net], Constants.fig_path+'hints_fig.pt')

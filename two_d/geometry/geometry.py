@@ -70,7 +70,6 @@ def calc_coeff(vertices):
 
 
 def calc_moment(k, a, z):
-    # print([abs(z[i]**k)  for i in range(len(z))])
     return np.sum([a[i]*(z[i]**k) for i in range(len(a))])
 
 
@@ -197,12 +196,13 @@ class Polygon:
         l=[h/np.sum(dx) for h in dx]
         coeff=step_fourier(l,theta)
         return coeff
-    
-    def plot(self):
-        x1=self.generators[:,0]
-        y1=self.generators[:,1]
+    @classmethod
+    def plot(cls,generators, title='no title was given'):
+        x1=generators[:,0]
+        y1=generators[:,1]
         polygon = Pol2(shell=[[x1[k],y1[k]] for k in range(x1.shape[0])],holes=None)
         fig, ax = plt.subplots()
+        ax.set_title(title)
         plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
         plt.show()
 

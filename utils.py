@@ -16,15 +16,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from typing import List, Tuple
-import sklearn
-import argparse
+
 import torch
-import dmsh
-from shapely.geometry import Point
-from shapely.geometry.polygon import Polygon
+
 
 from constants import Constants
 
+
+
+def plot_polygon(ax, poly, **kwargs):
+    path = Path.make_compound_path(
+        Path(np.asarray(poly.exterior.coords)[:, :2]),
+        *[Path(np.asarray(ring.coords)[:, :2]) for ring in poly.interiors])
+
+    patch = PathPatch(path, **kwargs)
+    collection = PatchCollection([patch], **kwargs)
+    
+    ax.add_collection(collection, autolim=True)
+    ax.autoscale_view()
+    return collection
 
 def clip(value, lower, upper):
     """
@@ -33,91 +43,6 @@ def clip(value, lower, upper):
     """
     return min(upper, max(value, lower))
 
-
-def random_angle_steps(steps: int, irregularity: float) -> List[float]:
-    """Generates the division of a circumference in random angles.
-
-    Args:
-        steps (int):
-            the number of angles to generate.
-        irregularity (float):
-            variance of the spacing of the angles between consecutive vertices.
-    Returns:
-        List[float]: the list of the random angles.
-    """
-    # generate n angle steps
-    angles = []
-    lower = (2 * math.pi / steps) - irregularity
-    upper = (2 * math.pi / steps) + irregularity
-    cumsum = 0
-    for i in range(steps):
-        angle = random.uniform(lower, upper)
-        angles.append(angle)
-        cumsum += angle
-
-    # normalize the steps so that point 0 and point n+1 are the same
-    cumsum /= 2 * math.pi
-    for i in range(steps):
-        angles[i] /= cumsum
-    return angles
-
-
-def generate_polygon(
-    center: Tuple[float, float],
-    avg_radius: float,
-    irregularity: float,
-    spikiness: float,
-    num_vertices: int,
-) -> List[Tuple[float, float]]:
-    """
-    Start with the center of the polygon at center, then creates the
-    polygon by sampling points on a circle around the center.
-    Random noise is added by varying the angular spacing between
-    sequential points, and by varying the radial distance of each
-    point from the centre.
-
-    Args:
-        center (Tuple[float, float]):
-            a pair representing the center of the circumference used
-            to generate the polygon.
-        avg_radius (float):
-            the average radius (distance of each generated vertex to
-            the center of the circumference) used to generate points
-            with a normal distribution.
-        irregularity (float):
-            variance of the spacing of the angles between consecutive
-            vertices.
-        spikiness (float):
-            variance of the distance of each vertex to the center of
-            the circumference.
-        num_vertices (int):
-            the number of vertices of the polygon.
-    Returns:
-        List[Tuple[float, float]]: list of vertices, in CCW order.
-    """
-    # Parameter check
-    if irregularity < 0 or irregularity > 1:
-        raise ValueError("Irregularity must be between 0 and 1.")
-    if spikiness < 0 or spikiness > 1:
-        raise ValueError("Spikiness must be between 0 and 1.")
-
-    irregularity *= 2 * math.pi / num_vertices
-    spikiness *= avg_radius
-    angle_steps = random_angle_steps(num_vertices, irregularity)
-
-    # now generate the points
-    points = []
-    angle = random.uniform(0, 2 * math.pi)
-    for i in range(num_vertices):
-        radius = clip(random.gauss(avg_radius, spikiness), 0, 2 * avg_radius)
-        point = (
-            center[0] + radius * math.cos(angle),
-            center[1] + radius * math.sin(angle),
-        )
-        points.append(point)
-        angle += angle_steps[i]
-
-    return points
 
 
 def count_trainable_params(model):
@@ -181,29 +106,7 @@ def on_boundary(point, geo):
     return False
 
 
-def create_mu():
-    x = np.linspace(-1, 1, Constants.gauss_points)
-    y = np.linspace(-1, 1, Constants.gauss_points)
-    x, y = np.meshgrid(x, y)
-    # A=np.zeros((x.shape[0], x.shape[1]),dtype=tuple)
-    mu = []
-    for i in range(x.shape[0]):
-        for j in range(x.shape[1]):
-            mu.append((x[i, j], y[i, j]))
-    return mu
 
-
-def extract_pickle(file_path):
-    with open(file_path, "rb") as f:
-        data = pickle.load(f)
-    return data
-
-
-def create_batches(n, batch_size):
-    k = math.floor(n / batch_size)
-    x = list(range(n))
-    random.shuffle(x)
-    return [list(x[i * batch_size: (i + 1) * batch_size]) for i in range(k)]
 
 
 def spread_points(subset_num,X):
@@ -225,15 +128,7 @@ def spread_points(subset_num,X):
     subset = np.random.choice(dat, subset_num, p=weight)
     return np.vstack((subset['x'], subset['y'])).T
     
-def plot_polygon(path):
-    df = extract_pickle(path)
-    v = df["generator"]
-    coord = [v[i] for i in range(v.shape[0])]
-    coord.append(coord[0])  # repeat the first point to create a 'closed loop'
-    xs, ys = zip(*coord)  # create lists of x and y values
-    plt.figure()
-    plt.plot(xs, ys)
-    plt.show()
+
 
 
 def np_to_torch(x):
@@ -300,17 +195,9 @@ def save_plots(train_loss, valid_loss, test_loss, metric_type: str, dir_path):
     plt.show(block=False)
 
 
-# def plot_polygon(coord):
-def gaussian(x, y, mu):
-    return math.exp(-((x - mu[0]) ** 2 + (y - mu[1]) ** 2) / np.sqrt(Constants.h))
 
 
-class Gaussian:
-    def __init__(self, mu):
-        self.mu = mu
 
-    def call(self, x, y):
-        return gaussian(x, y, self.mu)
 
 
 def calc_min_angle(geo):
@@ -333,40 +220,8 @@ def calc_min_angle(geo):
     return np.arccos(angle)
 
 
-def Gauss_zeidel(A, b, x):
-    ITERATION_LIMIT = 2
-    # x = b*0
-    for it_count in range(1, ITERATION_LIMIT):
-        x_new = np.zeros_like(x, dtype=np.float_)
-        # print(f"Iteration {it_count}: {x}")
-        for i in range(A.shape[0]):
-            s1 = np.dot(A[i, :i], x_new[:i])
-            s2 = np.dot(A[i, i + 1:], x[i + 1:])
-
-            x_new[i] = (b[i] - s1 - s2) / A[i, i]
-        # if np.allclose(x, x_new, rtol=1e-10):
-        #     break
-        x = x_new
-
-    # print(f"Solution: {x}")
-    # error = np.linalg.norm(abs(np.dot(A, x) - b))
-    # print(error)
-    #  it_count, np.max(abs(np.dot(A, x) - b))
-    return x
-    # return x, it_count, np.max(abs(np.dot(A, x) - b))
 
 
-# pol_path=Constants.path+'polygons/rect.pt'
-# p=torch.load(pol_path)
-# err=np.sin(p['interior_points'][:,0])
-# A=p['M'][p['interior_indices']][:,p['interior_indices']]
-# A=A.todense()
-# Gauss_zeidel(A,err,err*0)
-# p=torch.load(Constants.path+'polygons/rect.pt')
-# M=p['M']
-# interior_indices=p['interior_indices']
-# f=np.array(list(map(Test_function().call, p['X'][:,0],p['X'][:,1])))
-# solve_helmholtz(M, interior_indices, f)
 def solve_helmholtz(M, interior_indices, f):
     A = -M[interior_indices][:, interior_indices] - Constants.k * scipy.sparse.identity(
         len(interior_indices)
@@ -384,29 +239,10 @@ def extract_path_from_dir(dir):
     return [dir + n for n in raw_names if n.endswith(".pt")]
 
 
-def plot3d(x, y, z, color="black"):
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-    ax.scatter(x, y, z, color=color)
-
-    def is_inside(self, x, y):
-        #   point = Point(0.5, 0.5)
-        point = Point(x, y)
-        return self.polygon.contains(point)
-
-    def call(self, x, y):
-        if self.is_inside(x, y):
-            return 1
-        else:
-            return 0
 
 
-class chi_function:
-    def __init__(self, vertices) -> None:
-        self.polygon = Polygon(
-            [(vertices[i, 0], vertices[i, 1])
-             for i in range(vertices.shape[0])]
-        )
+
+
 
 
 def complex_version(v):
@@ -416,9 +252,6 @@ def complex_version(v):
     return r*cmath.exp(1j*theta)
 
 
-def stochastic_matrix(m, n):
-    a = np.random.rand(m, n)
-    return [a[i]/np.sum(a[i]) for i in range(m)]
 
 
 def save_figure(X, Y, titles, names, colors):
@@ -436,7 +269,7 @@ def save_figure(X, Y, titles, names, colors):
 
 
 def step_fourier(L,Theta):
-    N=30
+    N=50
     x=[0]+[np.sum(L[:k+1]) for k in range(len(L))]
     a0=np.sum([l*theta for l,theta in zip(L,Theta)])
     a1=[2*np.sum([L[i]*Theta[i]*(-np.sin(2*math.pi*n*x[i+1])+np.sin(2*math.pi*n*x[i]))/(2*math.pi*n) 
@@ -449,3 +282,11 @@ def step_fourier(L,Theta):
         coeff.append(a2[i])
 
     return np.array(coeff)
+
+def save_uniqe(file, path):
+    uniq_filename = (
+            str(datetime.datetime.now().date())
+            + "_"
+            + str(datetime.datetime.now().time()).replace(":", ".")
+        )
+    torch.save(file, path+uniq_filename+'.pt') 
