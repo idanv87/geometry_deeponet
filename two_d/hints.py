@@ -68,8 +68,8 @@ def deeponet(model, func, domain, domain_hot, moments_x, moments_y, angle_fourie
         X_test_i.append([
                         torch.tensor([domain[0][j],domain[1][j]], dtype=torch.float32), 
                          torch.tensor(a, dtype=torch.float32),
-                         torch.tensor(moments_x, dtype=torch.float32),
-                         torch.tensor(moments_y, dtype=torch.float32),
+                         torch.tensor(0, dtype=torch.float32),
+                         torch.tensor(0, dtype=torch.float32),
                          torch.tensor(angle_fourier, dtype=torch.float32)
                          ])
         Y_test_i.append(torch.tensor(s0, dtype=torch.float32))

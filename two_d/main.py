@@ -20,10 +20,12 @@ from utils import count_trainable_params, extract_path_from_dir, save_uniqe
 from constants import Constants
 
 
-train_names=extract_path_from_dir(Constants.path+'polygons/')[0:2]
-test_names=[train_names[0]]
-hint_names=[train_names[0]]
-      
+
+
+test_names=[Constants.path+'polygons/92.pt']
+hint_names=[Constants.path+'polygons/92.pt']
+train_names=list(set(extract_path_from_dir(Constants.path+'polygons/'))-set(test_names))
+
 def plot_surface(xi,yi,Z):
     fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
     surf = ax.plot_surface(xi, yi, Z, cmap=cm.coolwarm,
@@ -48,7 +50,8 @@ def generate_data(names,  save_path, number_samples=10):
         
     X=[]
     Y=[]
-    for name in names:
+    for l,name in enumerate(names):
+        print(l)
         domain=torch.load(name)
         xi,yi,F, F_hot,psi, moments_x, moments_y, angle_fourier=create_data(domain)
      
@@ -63,8 +66,8 @@ def generate_data(names,  save_path, number_samples=10):
                 X1=[
                     torch.tensor([xi[j],yi[j]], dtype=torch.float32),
                     torch.tensor(a, dtype=torch.float32),
-                    torch.tensor(moments_x, dtype=torch.float32),
-                    torch.tensor(moments_y, dtype=torch.float32),
+                    torch.tensor(0, dtype=torch.float32),
+                    torch.tensor(0, dtype=torch.float32),
                     torch.tensor(angle_fourier, dtype=torch.float32)
                     ]
                 Y1=torch.tensor(s1[j], dtype=torch.float32)

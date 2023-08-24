@@ -10,8 +10,8 @@ import scipy
 from scipy.interpolate import Rbf
 
 class Constants:
-    # device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = torch.device('cpu')
+    device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # device = torch.device('cpu')
     dtype = torch.float32
     current_path=os.path.abspath(__file__)
 
@@ -19,8 +19,8 @@ class Constants:
     # path='/content/drive/MyDrive/clones'
 
     path = current_path.split('deeponet')[0]+'/data_exp3/'
-    train_path= '/Users/idanversano/Documents/clones/data_exp3/train_set/'
-    test_path= '/Users/idanversano/Documents/clones/data_exp3/test_set/'
+    train_path= path+'train_set/'
+    test_path= path+'test_set/'
 
     fig_path=path+'figures/'
     k=25
@@ -30,7 +30,7 @@ class Constants:
 
 
 
-    batch_size =16
+    batch_size =64
     num_epochs = 400
     hot_spots_ratio = 1
 
