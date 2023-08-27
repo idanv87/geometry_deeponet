@@ -188,10 +188,9 @@ def plot_hints():
             ax[1,0].legend(loc='lower right')
             # ax[1,0].text(40,0,'relative error='+str(r_deeponet[-1]))
             ax[1,0].set_title('relative error of high modes')
-    ax[0,1].plot(e_deeponet)
-    
+    ax[0,1].plot(e_deeponet[350:])
     ax[0,1].set_title(f'relative error={"{:.3e}".format(e_deeponet[-1])}')
-    ax[1,1].plot(r_deeponet)
+    ax[1,1].plot(r_deeponet[350:])
     ax[1,1].set_title(f'residual error={"{:.3e}".format(r_deeponet[-1])}')
 
 
@@ -223,18 +222,19 @@ def non_linear(func,x_k):
             J=jacobian(G,yi)
             with torch.no_grad():
                 evk.append(torch.linalg.eigvals(J).numpy())
+                # evk.append(torch.linalg.eigvals(J).numpy()[int(A.shape[0]/2):])
         all_ev.append(evk)        
     torch.save(all_ev, Constants.path+'all_ev.pt')    
     return all_ev            
 
-plot_hints()
-plt_comparison()
+# plot_hints()
+# plot_comparison()
 # non_linear(func,x_k)
 all_ev=torch.load(Constants.path+'all_ev.pt')
 
 fig,ax=plt.subplots(1)
 for j,l in enumerate(all_ev):
-    spectral_radii=np.max([np.max(l[s].real**2+l[s].imag**2) for s in range(len(l))])
+    spectral_radii=np.max([np.max(np.sqrt(l[s].real**2+l[s].imag**2)) for s in range(len(l))])
     ax.scatter(j,np.sqrt(spectral_radii))
     ax.set_title('spectral radius')
 ax.text(j,1,spectral_radii)
