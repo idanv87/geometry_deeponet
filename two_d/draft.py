@@ -3,6 +3,7 @@ import sys
 import math
 
 # from shapely.geometry import Polygon as Pol2
+from airfoils import Airfoil
 import dmsh
 import meshio
 import optimesh
@@ -82,43 +83,40 @@ def expand_function(f,domain):
     
     
 
-# rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
-# rect.create_mesh(0.1)
-# rect.save(Constants.path+'polygons/rect.pt')
 
-# rect=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
-# rect.create_mesh(1/40)
-# rect.save(Constants.path+'base_polygon/base_rect.pt')
-
-# figures:
-# import urllib
-# selig_url = 'http://airfoiltools.com/airfoil/seligdatfile?airfoil=n0012-il'
-# selig_path = 'naca0012-selig.dat'
-# urllib.request.urlretrieve(selig_url, selig_path)
-# Load coordinates from file.
 def generate_domains():
-
-    fourier_coeff=[]
-    for i,name in enumerate(os.listdir(Constants.path+'naca/')):
+    names=extract_path_from_dir(Constants.path+'my_naca/')
+    # for i,name in enumerate(os.listdir(Constants.path+'my_naca/')):
+    for i,f in enumerate(names):
+       file_name=f.split('/')[-1].split('.')[0]
        if i<100: 
-        with open(Constants.path+'naca/'+name, 'r') as infile:
-            x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
+            x1,y1=torch.load(f)
+
+            # with open(Constants.path+'naca/'+name, 'r') as infile:
+                # x1, y1 = np.loadtxt(infile, unpack=True, skiprows=1)
+
             lengeths=[np.sqrt((x1[(k+1)%x1.shape[0]]-x1[k])**2+ (y1[(k+1)%x1.shape[0]]-y1[k])**2) for k in range(x1.shape[0])]
             
             X=[]
             Y=[]
             for j in range(len(lengeths)):
-                    if lengeths[j]>1e-6:
+                    if lengeths[j]>0:
                         X.append(x1[j])
                         Y.append(y1[j])
+            domain=Polygon(np.vstack((np.array(X),np.array(Y))).T)                     
             try:    
+                 
+                
+
+
+            #    Polygon.plot(np.vstack((X,Y)).T, title=str(file_name))
+                # Polygon.plot(np.vstack((np.array(X),np.array(Y))).T,str(file_name))             
               
-            #    Polygon.plot(np.vstack((x1,y1)).T, title='original')
-            #    Polygon.plot(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T,str(i))             
-              
-                domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
-                domain.create_mesh(0.1)
-                domain.save(Constants.path+'polygons/'+str(i)+'.pt')
+                #for naca: domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
+                domain=Polygon(np.vstack((np.array(X),np.array(Y))).T)
+                domain.plot()
+                # domain.create_mesh(0.1)
+                # domain.save(Constants.path+'polygons/'+str(file_name)+'.pt')
             except:
                 pass    
 
@@ -158,12 +156,12 @@ def analyze_data():
 
 if __name__=='__main__':
      
-     domain_coeff=analyze_data()
+    #  domain_coeff=analyze_data()
     #  plt.show()
     # base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
     # base_domain.create_mesh(0.1)
     # base_ domain.save(Constants.path+'base_polygon/base_rect.pt')
-    # generate_domains()
+    generate_domains()
 
 
 
