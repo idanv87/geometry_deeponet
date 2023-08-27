@@ -18,9 +18,9 @@ class fc(torch.nn.Module):
         self.activation_last=activation_last
         self.input_shape = input_shape
         self.output_shape = output_shape
-        n = 150
+        n = 100
         # self.activation = torch.nn.ReLU()
-        self.activation = torch.nn.LeakyReLU()
+        self.activation = torch.nn.Tanh()
         self.layers = torch.nn.ModuleList(
             [torch.nn.Linear(in_features=self.input_shape, out_features=n, bias=True)])
         output_shape = n
@@ -50,12 +50,12 @@ class deeponet(nn.Module):
 
     def __init__(self, dim, num_hot_spots, p):
         super().__init__()
-        n_layers = 8
+        n_layers = 4
         self.n = p
         self.alpha = nn.Parameter(torch.tensor(0.))
-        self.branch1 = fc(num_hot_spots, self.n, n_layers,activation_last=True)
+        self.branch1 = fc(num_hot_spots, self.n, n_layers,activation_last=False)
         self.trunk1 = fc(dim, p,  n_layers, activation_last=True)
-        self.c_layer = fc( self.n, p, 2, activation_last=False)
+        self.c_layer = fc( self.n, p, n_layers, activation_last=False)
         self.c2_layer =fc( num_hot_spots+1, 1, 3, False) 
 
 

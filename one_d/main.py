@@ -70,8 +70,8 @@ for i in range(number_samples):
 # s0,s1=generate_sample()
 for j,y in enumerate(list(x[1:-1])):
            
-            s0=F[5]*10
-            s1=psi[5]*10
+            s0=F[5]
+            s1=psi[5]
             X_test.append([torch.tensor(y, dtype=torch.float32),torch.tensor(s0, dtype=torch.float32)])
             Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
    
@@ -96,6 +96,6 @@ train_dataloader = create_loader(train_dataset, batch_size=Constants.batch_size,
 test_dataloader=create_loader(test_dataset, batch_size=1, shuffle=False, drop_last=False)
      
 
-model=deeponet( 1, x.shape[0]-2, 150)
+model=deeponet( 1, x.shape[0]-2, 80)
 print(f" num of model parameters: {count_trainable_params(model)}")
 # model([X[0].to(Constants.device),X[1].to(Constants.device)])

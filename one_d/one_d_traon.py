@@ -42,8 +42,8 @@ from special_functions import norms
 
 
 
-experment_dir='geo_deeponet/'
-experment_path=Constants.path+'runs/'+experment_dir
+
+experment_path=Constants.path+'runs/'
 isExist = os.path.exists(experment_path)
 if not isExist:
     os.makedirs(experment_path)  
