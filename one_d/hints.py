@@ -9,7 +9,7 @@ import scipy
 import torch
 import torch.nn as nn
 from torch.autograd.functional import jacobian
-from torch.utils.data import Dataset, DataLoader
+
 import sys
 from scipy.interpolate import Rbf
 
@@ -18,7 +18,7 @@ from scipy.interpolate import Rbf
 from utils import np_to_torch, count_trainable_params
 from constants import Constants
 from functions.functions import gaussian
-from one_d.main import test_dataset, Y_test, L, SonarDataset, F, domain, generate_sample
+from one_d.main import test_dataset, Y_test, L, SonarDataset, F, domain, generate_sample, sample
 from one_d.one_d_data_set import create_loader
 
 class g(nn.Module):
@@ -81,21 +81,12 @@ def deeponet(model, func):
 def network(model,func, with_net):
 
     A = (-L - Constants.k* scipy.sparse.identity(L.shape[0]))
-    ev,V=scipy.sparse.linalg.eigs(A,k=15,return_eigenvectors=True,which="SR")
+    ev,V=scipy.sparse.linalg.eigs(-L,k=15,return_eigenvectors=True,which="SR")
     # print(ev)
     # # func=scipy.interpolate.interp1d(domain[1:-1],np.sin(4*math.pi*domain[1:-1]), kind='cubic')
     # func=scipy.special.legendre(4)
     b=func(domain[1:-1])
-    dx=domain[1]-domain[0]
     solution=scipy.sparse.linalg.spsolve(A, b)
-
-    # mod1=[np.dot(solution,V[:,i]) for i in range(14)]
-    # mod2=[np.dot(deeponet(model, func),V[:,i]) for i in range(15)]
-    # plt.plot(mod1,'r')
-    # plt.plot(mod2)
-    # plt.plot(solution,'r')
-    # plt.plot(deeponet(model, func))
-    # plt.show()
 
 
     if with_net:
@@ -110,17 +101,18 @@ def network(model,func, with_net):
     k_it=0
     x_k=[]
     count=0
-    for i in range(600):
+    for i in range(1000):
         x_0 = x
         k_it += 1
-        theta=1
+        theta=0.7
         res_err.append(np.linalg.norm(A@x-b)/np.linalg.norm(b))
         fourier_err.append([np.dot(x-solution,V[:,i]) for i in range(15)])
         err.append(np.linalg.norm(x-solution)/np.linalg.norm(solution))
 
         
         # if False:
-        if (((k_it%4) ==0))and with_net :  
+        if (((k_it%20) ==0))and with_net :  
+        # if True:
             count+=1
             x_k.append(x_0)
             factor=np.max(abs(b))/np.max(abs(A@x_0-b))
@@ -167,11 +159,13 @@ fourier_deeponet=[]
 e_gs=[]
 r_gs=[]
 
-func=scipy.interpolate.interp1d(domain[1:-1],(1-domain[1:-1]**2)*np.exp(domain[1:-1]), kind='cubic')
+# func=scipy.interpolate.interp1d(domain[1:-1],F[21], kind='cubic')
+func=scipy.interpolate.interp1d(domain[1:-1], generate_sample(sample[0])[0], kind='cubic')
 
 
-# temp1, temp2, temp3, temp4=main1(func)
-# torch.save((temp1,temp2,temp3,temp4), Constants.path+'modes_error.pt')
+
+temp1, temp2, temp3, temp4=main1(func)
+torch.save((temp1,temp2,temp3,temp4), Constants.path+'modes_error.pt')
 e_deeponet, r_deeponet, fourier_deeponet, x_k= torch.load( Constants.path+'modes_error.pt')
 
 def plot_hints():
@@ -215,7 +209,7 @@ def non_linear(func,x_k):
     for xk in x_k: 
         evk=[]
         Xi=[(1-t[i])*solution+t[i]*xk for i in range(t.shape[0])]
-        factor=np.max(abs(b))/np.max(abs(A@xk-b)) 
+        factor=np.max(abs(b))/np.max(abs(A@xk-b))*8 
         G=g(torch.tensor(A.todense(),dtype=torch.float32),model,torch.tensor(b,dtype=torch.float32),factor)
         for xi in Xi:
             yi=torch.tensor(xi,dtype=torch.float32,requires_grad=True)
@@ -227,18 +221,19 @@ def non_linear(func,x_k):
     torch.save(all_ev, Constants.path+'all_ev.pt')    
     return all_ev            
 
-# plot_hints()
-# plot_comparison()
-# non_linear(func,x_k)
-all_ev=torch.load(Constants.path+'all_ev.pt')
+plot_hints()
+plot_comparison()
 
-fig,ax=plt.subplots(1)
-for j,l in enumerate(all_ev):
-    spectral_radii=np.max([np.max(np.sqrt(l[s].real**2+l[s].imag**2)) for s in range(len(l))])
-    ax.scatter(j,np.sqrt(spectral_radii))
-    ax.set_title('spectral radius')
-ax.text(j,1,spectral_radii)
-plt.show(block=True)
+
+# non_linear(func,x_k)
+# all_ev=torch.load(Constants.path+'all_ev.pt')
+# fig,ax=plt.subplots(1)
+# for j,l in enumerate(all_ev):
+#     spectral_radii=np.max([np.max(np.sqrt(l[s].real**2+l[s].imag**2)) for s in range(len(l))])
+#     ax.scatter(j,np.sqrt(spectral_radii))
+#     ax.set_title('spectral radius')
+# ax.text(j,1,spectral_radii)
+plt.show()
 
 
 

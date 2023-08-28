@@ -8,6 +8,7 @@ import sys
 import torch
 from one_d_data_set import *
 from one_d_model import deeponet
+from scipy.stats import qmc
 
 sys.path.append(os.getcwd())
 from utils import count_trainable_params
@@ -30,7 +31,10 @@ domain=x
 L=create_D2(x)
 
 # ev,V=scipy.sparse.linalg.eigs(-L,k=20,return_eigenvectors=True,which="SR")
-V=np.array([((1-x[1:-1])*(1+x[1:-1]))*scipy.special.legendre(j)(x[1:-1])for j in range(20)]).T
+V1=np.array([((1-x[1:-1])*(1+x[1:-1]))*scipy.special.legendre(j)(x[1:-1])for j in range(20)]).T
+V2=np.array([np.sin(j*math.pi*x[1:-1])for j in range(20)]).T
+V3=np.array([((1-x[1:-1])*(1+x[1:-1]))*scipy.special.chebyc(j)(x[1:-1])for j in range(20)]).T
+V=np.hstack((V1,V2,V3))
 F=[V[:,i].real for i in range(V.shape[1])]
 # V=np.array([np.sin(math.pi*(j+1)*x[1:-1]) for j in range(5)]).T
 A = (-L - Constants.k* scipy.sparse.identity(L.shape[0]))
@@ -42,13 +46,8 @@ psi=[scipy.sparse.linalg.spsolve(A,b) for b in F]
 # F=F+psi
 # psi=[scipy.sparse.linalg.spsolve(A,b) for b in F]
 
-def generate_sample():
-    #  if i==0:
-    #      return F[4], psi[4]
-     
-     M=np.random.uniform(-1,1,len(F))
+def generate_sample(M=np.random.uniform(-1,1,len(F))):
 
-    #  M=10*np.random.rand(len(F))-5
      
      x1=np.array([M[i]*F[i] for i  in range(len(F))])
      x2=np.array([M[i]*psi[i] for i  in range(len(F))])
@@ -56,13 +55,16 @@ def generate_sample():
 
      return np.sum(x1, axis=0), np.sum(x2, axis=0)
 
-number_samples=150
+number_samples=300
+sampler = qmc.Halton(d=len(F), scramble=False)
+sample = 2*sampler.random(n=number_samples)-1
 X=[]
 Y=[]
 X_test=[]
 Y_test=[]
 for i in range(number_samples):
-     s0,s1=generate_sample()
+
+     s0,s1=generate_sample(sample[i])
      for j,y in enumerate(list(x[1:-1])):
         X.append([torch.tensor(y, dtype=torch.float32),torch.tensor(s0, dtype=torch.float32)])
         Y.append(torch.tensor(s1[j], dtype=torch.float32))
@@ -70,8 +72,9 @@ for i in range(number_samples):
 # s0,s1=generate_sample()
 for j,y in enumerate(list(x[1:-1])):
            
-            s0=F[5]
-            s1=psi[5]
+            # s0=np.sin(math.pi*domain[1:-1])
+            # s1=scipy.sparse.linalg.spsolve(A,s0) 
+            s0,s1=generate_sample()
             X_test.append([torch.tensor(y, dtype=torch.float32),torch.tensor(s0, dtype=torch.float32)])
             Y_test.append(torch.tensor(s1[j], dtype=torch.float32))
    
