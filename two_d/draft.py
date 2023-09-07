@@ -24,7 +24,7 @@ import pandas as pd
 current_path=os.path.abspath(__file__)
 sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
 from two_d.geometry.geometry import Polygon
-from utils import extract_path_from_dir
+from utils import extract_path_from_dir, save_eps, plot_figures
 
 from constants import Constants
 
@@ -47,7 +47,7 @@ def create_data(domain):
 
     M=domain['M']
     A = (-M - Constants.k* scipy.sparse.identity(M.shape[0]))
-    test_functions=domain['radial_basis']
+    test_functions=domain['hot_radial_basis']
     V=[func(np.array([x, y]).T) for func in test_functions]
     F=[v for v in V]
     psi=[scipy.sparse.linalg.spsolve(A,b) for b in F]
@@ -88,8 +88,9 @@ def generate_domains():
     names=extract_path_from_dir(Constants.path+'my_naca/')
     # for i,name in enumerate(os.listdir(Constants.path+'my_naca/')):
     for i,f in enumerate(names):
-       file_name=f.split('/')[-1].split('.')[0]
-       if i<100: 
+            print(i)
+            file_name=f.split('/')[-1].split('.')[0]
+
             x1,y1=torch.load(f)
 
             # with open(Constants.path+'naca/'+name, 'r') as infile:
@@ -103,20 +104,17 @@ def generate_domains():
                     if lengeths[j]>0:
                         X.append(x1[j])
                         Y.append(y1[j])
-            domain=Polygon(np.vstack((np.array(X),np.array(Y))).T)                     
+             
+
             try:    
-                 
-                
+                # domain=Polygon(np.array([[0,0],[1,0],[2,1],[0,1]])) 
 
-
-            #    Polygon.plot(np.vstack((X,Y)).T, title=str(file_name))
-                # Polygon.plot(np.vstack((np.array(X),np.array(Y))).T,str(file_name))             
-              
-                #for naca: domain=Polygon(np.vstack((np.array(X),np.array(Y)/np.max(abs(y1)))).T)
                 domain=Polygon(np.vstack((np.array(X),np.array(Y))).T)
-                domain.plot()
-                # domain.create_mesh(0.1)
-                # domain.save(Constants.path+'polygons/'+str(file_name)+'.pt')
+                # Polygon.plot(domain.generators)
+                domain.create_mesh(0.1)
+                # domain.plot_geo()
+                domain.save(Constants.path+'polygons/'+str(file_name)+'.pt')
+
             except:
                 pass    
 
@@ -143,25 +141,28 @@ def analyze_data():
             axs[i].scatter(np.array([s[i] for s in my_data]),np.zeros((len(my_data))))
             axs[i].set_title(f'mode number {i}')
     plt.savefig(Constants.fig_path+'fourier_modes_domains_dist', format='eps',bbox_inches='tight')    
-    plt.show()      
-
-        
-        
-
-        # Polygon.plot(domain['generators'], str(i))
+    plt.show()     
     return 1
     
 
 
+def plot_polygon():
+     d=torch.load(Constants.path+'polygons/3250.pt')
+     domain=Polygon(d['generators'])
+     Polygon.plot(d['generators'], title='polygon 3250')
+     save_eps('pol3250.eps')
+
+     
 
 if __name__=='__main__':
-     
+     plot_polygon()
+    #  analyze_data()
     #  domain_coeff=analyze_data()
     #  plt.show()
     # base_domain=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]]))
     # base_domain.create_mesh(0.1)
-    # base_ domain.save(Constants.path+'base_polygon/base_rect.pt')
-    generate_domains()
+    # base_domain.save(Constants.path+'base_polygon/base_rect.pt')
+    # generate_domains()
 
 
 

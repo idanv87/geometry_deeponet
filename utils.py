@@ -269,12 +269,15 @@ def save_figure(X, Y, titles, names, colors):
 
 
 def step_fourier(L,Theta):
+    # fourier expansion of simple function in [0,1]
+    # L is segments lengths
+    # Theta is the angle function's values on the segments
     N=50
     x=[0]+[np.sum(L[:k+1]) for k in range(len(L))]
     a0=np.sum([l*theta for l,theta in zip(L,Theta)])
-    a1=[2*np.sum([L[i]*Theta[i]*(-np.sin(2*math.pi*n*x[i+1])+np.sin(2*math.pi*n*x[i]))/(2*math.pi*n) 
+    a1=[2*np.sum([L[i]*Theta[i]*(np.sin(2*math.pi*n*x[i+1])-np.sin(2*math.pi*n*x[i]))/(2*math.pi*n) 
                   for i in range(len(L))]) for n in range(1,N)]
-    a2=[2*np.sum([L[i]*Theta[i]*(np.cos(2*math.pi*n*x[i+1])-np.cos(2*math.pi*n*x[i]))/(2*math.pi*n)
+    a2=[2*np.sum([L[i]*Theta[i]*(-np.cos(2*math.pi*n*x[i+1])+np.cos(2*math.pi*n*x[i]))/(2*math.pi*n)
                    for i in range(len(L))]) for n in range(1,N)]
     coeff=[a0]
     for i in range(N-1):
@@ -290,3 +293,34 @@ def save_uniqe(file, path):
             + str(datetime.datetime.now().time()).replace(":", ".")
         )
     torch.save(file, path+uniq_filename+'.pt') 
+
+def save_eps(name):
+        plt.savefig(Constants.tex_fig_path+name, format='eps',bbox_inches='tight')
+        plt.show(block=False)
+
+
+def plot_figures(ax,y, **kwargs):
+    d=kwargs
+    try:
+        ax.plot(y, color=d['color'],  label=d['label'])
+        ax.legend()
+    except:
+        ax.plot(y, color=d['color'])    
+    try:
+        ax.set_title(d['title'])
+    except:
+        pass    
+    ax.set_xlabel(d['xlabel'])
+    ax.set_ylabel(d['ylabel']) 
+    try:
+        ax.text(320, d['text_hight'], f'err={y[-1]:.2e}', c=d['color'])
+    except:
+        pass    
+    
+      
+       
+    # plt.savefig(fig_path + 'table7.eps', format='eps',bbox_inches='tight')
+# L=[1/3,2/3]
+# theta=[1,2]
+# a=step_fourier(L,theta)
+# print(a[3]/2)

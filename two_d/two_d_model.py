@@ -82,15 +82,16 @@ class geo_deeponet(nn.Module):
         self.branch2= fc(num_fourier_domain, self.n, n_layers,activation_last=False)
         self.trunk1 = fc(dim, p,  n_layers, activation_last=True)
         self.c_layer = fc( 2*self.n, p, n_layers, activation_last=False)
-        self.c2_layer =fc( num_hot_spots+dim, 1, n_layers, False) 
+        self.c2_layer =fc( num_fourier_domain, 1, n_layers, False) 
 
 
     def forward(self, X):
         y,f,m_x,m_y, angle=X
         branch = self.c_layer(  torch.cat((self.branch1(f), self.branch2(angle)), dim=1))
         trunk = self.trunk1(y)
+        alpha=torch.squeeze(self.c2_layer(angle),dim=1)
         # alpha = torch.squeeze(self.c2_layer(torch.cat((f,y),dim=1)))
-        return torch.sum(branch*trunk, dim=-1, keepdim=False)+self.alpha
+        return torch.sum(branch*trunk, dim=-1, keepdim=False)+alpha
         
 
 

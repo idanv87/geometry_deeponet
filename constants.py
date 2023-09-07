@@ -44,11 +44,6 @@ class foil_function:
         return xu,yu,xl,yl
         
          
-
-
-
-
-
 class Constants:
     device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = torch.device('cpu')
@@ -58,19 +53,20 @@ class Constants:
     # sys.path.append(current_path.split('deeponet')[0]+'deeponet/')
     # path='/content/drive/MyDrive/clones'
 
+    tex_fig_path='/Users/idanversano/Documents/papers/maxwell_donet/figures/'
     path = current_path.split('deeponet')[0]+'data_exp3/'
     train_path= path+'train_set/'
     test_path= path+'test_set/'
 
     fig_path=path+'figures/'
-    k=25
+    k=70
 
 
     h = 1/30
 
 
 
-    batch_size =64
+    batch_size =16
     num_epochs = 400
     hot_spots_ratio = 1
 
@@ -100,19 +96,19 @@ class Constants:
 
 def generate_my_naca():
         k=50
-        for  i in range(1,10):
-            for j in range(1,10):
+        for  i in range(1,4):
+            for j in range(1,4):
             # foil = Airfoil.NACA4('5820')
             
                 f=foil_function(i/100,j/10,k/100)
-                x=np.linspace(0,1,100)
+                x=np.linspace(0,1,10)
                 xu,yu,xl,yl=f(x)
 
                 X=np.hstack((xu,np.flip(xl[1:-1])))
                 Y=np.hstack((yu,np.flip(yl[1:-1])))
                 torch.save((X,Y),Constants.path+'my_naca/'+str(i)+str(j)+str(k)+'.pt')
             
-# generate_my_naca()   
+generate_my_naca()   
 
 
 # foil=Airfoil.NACA4('8950')
@@ -121,18 +117,19 @@ def generate_my_naca():
 # foil.plot()
 # plt.show()
 if __name__=='__main__':
-    m=8
-    p=9
+    m=1
+    p=7
     k=50
     f=foil_function(m/100,p/10,k/100)
-    x=np.linspace(0,1,500)
+    x=np.linspace(0,1,10)
     xu,yu,xl,yl=f(x)
 
     X=np.hstack((xu,xl[1:-1]))
     Y=np.hstack((yu,yl[1:-1]))
     plt.scatter(X,Y)
 
-    plt.show()
+    # plt.show()
+
 
 # foil.plot()
 # plt.scatter(p/10,0,c='g')

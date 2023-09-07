@@ -22,8 +22,8 @@ from constants import Constants
 
 
 
-test_names=[Constants.path+'polygons/92.pt']
-hint_names=[Constants.path+'polygons/92.pt']
+test_names=[Constants.path+'polygons/3250.pt']
+hint_names=[Constants.path+'polygons/3250.pt']
 train_names=list(set(extract_path_from_dir(Constants.path+'polygons/'))-set(test_names))
 
 def plot_surface(xi,yi,Z):
@@ -66,8 +66,8 @@ def generate_data(names,  save_path, number_samples=10):
                 X1=[
                     torch.tensor([xi[j],yi[j]], dtype=torch.float32),
                     torch.tensor(a, dtype=torch.float32),
-                    torch.tensor(0, dtype=torch.float32),
-                    torch.tensor(0, dtype=torch.float32),
+                    torch.tensor(0, dtype=torch.int8),
+                    torch.tensor(0, dtype=torch.int8),
                     torch.tensor(angle_fourier, dtype=torch.float32)
                     ]
                 Y1=torch.tensor(s1[j], dtype=torch.float32)

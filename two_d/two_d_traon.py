@@ -123,6 +123,9 @@ def fit(model, train_dataloader, train_dataset, optimizer, criterion):
     return train_loss, train_acc
 
 def plot_results(x, y_pred, y_test):
+    x=x.to('cpu')
+    y_pred=y_pred.to('cpu')
+    y_test=y_test.to('cpu')
     error=torch.linalg.norm(y_test-y_pred)/torch.linalg.norm(y_test)
     fig, ax=plt.subplots(1,2)
     fig.suptitle(f'relative L2 Error: {error:.3e}')

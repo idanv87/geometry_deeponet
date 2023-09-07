@@ -193,6 +193,7 @@ class Polygon:
         theta=[np.arctan2(y1[(k+1)%y1.shape[0]]-y1[k],x1[(k+1)%x1.shape[0]]-x1[k]) for k in range(x1.shape[0])]
 
         l=[h/np.sum(dx) for h in dx]
+
         coeff=step_fourier(l,theta)
         return coeff
     @classmethod
@@ -204,7 +205,7 @@ class Polygon:
         fig, ax = plt.subplots()
         ax.set_title(title)
         plot_polygon(ax, polygon, facecolor='white', edgecolor='red')
-        plt.show()
+        
 
     def plot_moments(self):
         X=[self.moments[i].real for i in range(len(self.moments))]
@@ -213,7 +214,7 @@ class Polygon:
         ax.plot(range(len(self.moments)), X, 'r', label='real part')
         ax.plot(range(len(self.moments)), Y, 'b', label='imaginary part')
         plt.legend()
-        plt.show()
+        
     
     def plot_geo(self):
         dmsh.show(self.X, self.cells, self.geo)
