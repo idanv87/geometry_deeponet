@@ -26,7 +26,7 @@ def create_D2(x):
     D2[-1, 0] = 0
 
     return scipy.sparse.csr_matrix(D2/dx/dx)
-x=np.linspace(-1,1,50)
+x=np.linspace(-1,1,100)
 domain=x
 L=create_D2(x)
 

@@ -5,6 +5,7 @@ sys.path.append(os.getcwd())
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.sparse.linalg import gmres
 import scipy
 import torch
 import torch.nn as nn
@@ -57,7 +58,7 @@ def Gauss_zeidel(A, b, x, theta):
           
             x_new[i] = (1-theta)*x[i]+ theta*(b[i] - s1 - s2) / A[i, i]
 
-        if np.linalg.norm(A@x-b)/np.linalg.norm(b)<1e-8:
+        if np.linalg.norm(A@x-b)/np.linalg.norm(b)<1e-15:
              x = x_new
              return [x, it_count, np.linalg.norm(A@x-b)/np.linalg.norm(b)]
             
@@ -94,6 +95,8 @@ def network(model,func, with_net):
     else:
         x=deeponet(model, func)*0
     # x=torch.load(Constants.path+'pred.pt')
+    x_gem, exitCode = gmres(A, b, maxiter=1000, tol=1e-10)
+    print(np.linalg.norm(A@x_gem-b)/np.linalg.norm(b))
     tol=[]
     res_err=[]
     err=[]
@@ -104,14 +107,14 @@ def network(model,func, with_net):
     for i in range(1000):
         x_0 = x
         k_it += 1
-        theta=0.7
+        theta=0.8
         res_err.append(np.linalg.norm(A@x-b)/np.linalg.norm(b))
         fourier_err.append([np.dot(x-solution,V[:,i]) for i in range(15)])
         err.append(np.linalg.norm(x-solution)/np.linalg.norm(solution))
 
         
         # if False:
-        if (((k_it%20) ==0))and with_net :  
+        if (((k_it%8) ==0))and with_net :  
         # if True:
             count+=1
             x_k.append(x_0)
@@ -160,7 +163,7 @@ e_gs=[]
 r_gs=[]
 
 # func=scipy.interpolate.interp1d(domain[1:-1],F[21], kind='cubic')
-func=scipy.interpolate.interp1d(domain[1:-1], generate_sample(sample[0])[0], kind='cubic')
+func=scipy.interpolate.interp1d(domain[1:-1], generate_sample(sample[1])[0], kind='cubic')
 
 
 
@@ -196,6 +199,7 @@ def plot_comparison():
     plt.plot(deeponet(model,func),'r',label='deeponet solution')
     plt.plot(solution,'b',label='analytic  solution')
     plt.legend()
+
 def non_linear(func,x_k):
     all_ev=[]
     t= np.linspace(0,1,30)
@@ -221,39 +225,17 @@ def non_linear(func,x_k):
     torch.save(all_ev, Constants.path+'all_ev.pt')    
     return all_ev            
 
-plot_hints()
-plot_comparison()
-
-
-# non_linear(func,x_k)
-# all_ev=torch.load(Constants.path+'all_ev.pt')
-# fig,ax=plt.subplots(1)
-# for j,l in enumerate(all_ev):
-#     spectral_radii=np.max([np.max(np.sqrt(l[s].real**2+l[s].imag**2)) for s in range(len(l))])
-#     ax.scatter(j,np.sqrt(spectral_radii))
-#     ax.set_title('spectral radius')
-# ax.text(j,1,spectral_radii)
-plt.show()
-
-
-
-
-
-
-
-# func=scipy.interpolate.interp1d(domain[1:-1],A@b, kind='cubic')
-# print(deeponet(model, func))
-
-
-# ax[0].plot(e_deeponet) 
-# ax[1].plot(r_deeponet)
-# ax[0].set_title('relative error')
-# ax[1].set_title('residual error')
-
- 
-
-# print(r_deeponet[0][-1])    
+# plot_hints()
+# plot_comparison()
 # plt.show()
+
+
+
+
+
+
+
+
 
 
   
