@@ -88,10 +88,12 @@ def network(model,func, with_net):
     # func=scipy.special.legendre(4)
     b=func(domain[1:-1])
     solution=scipy.sparse.linalg.spsolve(A, b)
+    solution_expansion=[np.dot(solution,V[:,s]) for s in range(V.shape[1])]
 
 
     if with_net:
-        x=deeponet(model, func)
+        x=deeponet(model, func)*0
+        x_expansion=[np.dot(x,V[:,s]) for s in range(V.shape[1])]
     else:
         x=deeponet(model, func)*0
     # x=torch.load(Constants.path+'pred.pt')
@@ -104,21 +106,24 @@ def network(model,func, with_net):
     k_it=0
     x_k=[]
     count=0
-    for i in range(1000):
+    for i in range(2000):
         x_0 = x
         k_it += 1
-        theta=0.8
+        theta=2/3
         res_err.append(np.linalg.norm(A@x-b)/np.linalg.norm(b))
         fourier_err.append([np.dot(x-solution,V[:,i]) for i in range(15)])
         err.append(np.linalg.norm(x-solution)/np.linalg.norm(solution))
 
         
         # if False:
-        if (((k_it%8) ==0))and with_net :  
+        J=10
+
+        if (((k_it%J) ==0) )and with_net :  
         # if True:
             count+=1
             x_k.append(x_0)
-            factor=np.max(abs(b))/np.max(abs(A@x_0-b))
+            factor=np.max(abs(generate_sample(sample[1])[0]))/np.max(abs(A@x_0-b))
+        
             x_temp = x_0*factor + \
             deeponet(model, scipy.interpolate.interp1d(domain[1:-1],(b-A@x_0)*factor, kind='cubic' )) 
             x=x_temp/factor
@@ -163,8 +168,11 @@ e_gs=[]
 r_gs=[]
 
 # func=scipy.interpolate.interp1d(domain[1:-1],F[21], kind='cubic')
-func=scipy.interpolate.interp1d(domain[1:-1], generate_sample(sample[1])[0], kind='cubic')
-
+# func=scipy.interpolate.interp1d(domain[1:-1], generate_sample(sample[1])[0], kind='cubic')
+func=scipy.interpolate.interp1d(domain[1:-1],
+                                np.sin(1*(math.pi/2)*(domain[1:-1]+1))
+                                , kind='cubic')
+# func=scipy.special.legendre(20)
 
 
 temp1, temp2, temp3, temp4=main1(func)
