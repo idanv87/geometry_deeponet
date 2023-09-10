@@ -24,7 +24,7 @@ from one_d.main import test_dataset, Y_test, create_D2, SonarDataset, F, domain,
 from one_d.one_d_data_set import create_loader
 
 main_domain=domain.copy()
-domain=np.linspace(-1,1,100)
+domain=np.linspace(-1,1,300)
 
 L=create_D2(domain)
 class g(nn.Module):
@@ -94,9 +94,9 @@ def network(model,func, J, J_in, hint_init):
 
     b=func(domain[1:-1])
     solution=scipy.sparse.linalg.spsolve(A, b)
-    # gmres_solution,exit_cod=gmres(A, b, x0=None, tol=1e-13, restart=None, maxiter=1000)
-    # print(np.linalg.norm(A@gmres_solution-b)/np.linalg.norm(b))
-    # print(exit_cod)
+    gmres_solution,exit_cod=gmres(A, b, x0=None, tol=1e-13, restart=None, maxiter=4000)
+    print(np.linalg.norm(A@gmres_solution-b)/np.linalg.norm(b))
+    print(exit_cod)
     solution_expansion=[np.dot(solution,V[:,s]) for s in range(V.shape[1])]
 
 
@@ -116,14 +116,14 @@ def network(model,func, J, J_in, hint_init):
     count=0
     # plt.plot(solution,'r');plt.plot(x,'b');plt.show()
 
-    for temp in range(1000):
+    for temp in range(4000):
         fourier_err.append([abs(np.dot(x-solution,V[:,i])) for i in range(15)])
         x_k.append(x)
         x_expansion.append([np.dot(x,V[:,s]) for s in range(V.shape[1])])
         
         x_0 = x
         k_it += 1
-        theta=1
+        theta=1.1
         
         if ( ((k_it%J) in J_in) and (k_it>J_in[-1])  ) :  
 
@@ -149,6 +149,7 @@ def network(model,func, J, J_in, hint_init):
         tol.append(np.linalg.norm(x-x_0))
     
     # torch.save(x, Constants.path+'pred.pt')
+    print(np.linalg.norm(A@x-b)/np.linalg.norm(b))
     return (err, res_err, fourier_err, x_k, solution, solution_expansion, x_expansion, J, J_in, hint_init)
 
 from one_d.main import model
@@ -232,13 +233,15 @@ def plot_solution_and_fourier(times,path, eps_name):
 # func=scipy.interpolate.interp1d(domain[1:-1],F[21], kind='cubic')
 
 func=scipy.interpolate.interp1d(main_domain[1:-1], generate_sample(sample[1])[0], kind='cubic')
+func=scipy.interpolate.interp1d(domain, (1-domain**2)*scipy.special.legendre(10)(domain) , kind='cubic')
 # func=scipy.interpolate.interp1d(domain[1:-1],
 #                                 10*np.sin(    10*(math.pi/2)*(domain[1:-1]+1))+
 #                                 10*np.sin(6*(math.pi/2)*(domain[1:-1]+1))+
 #                                 1*np.sin((math.pi/2)*(domain[1:-1]+1))
 #                                 , kind='cubic')
 # func=scipy.special.legendre(10)    
-torch.save(run_hints(func, J=5, J_in=[0], hint_init=True), Constants.path+'modes_error.pt')
+
+torch.save(run_hints(func, J=30, J_in=[0], hint_init=True), Constants.path+'modes_error.pt')
 plot_solution_and_fourier(list(range(0,0+25)),Constants.path+'modes_error.pt', Constants.tex_fig_path+ 'one_d_x0_J=8_Jin=012_modes=1')
 
 # plot_fourier(fourier_deeponet[:25])
