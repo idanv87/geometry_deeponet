@@ -32,7 +32,7 @@ L=create_D2(x)
 
 # ev,V=scipy.sparse.linalg.eigs(-L,k=20,return_eigenvectors=True,which="SR")
 V1=np.array([((1-x[1:-1])*(1+x[1:-1]))*scipy.special.legendre(j)(x[1:-1])for j in range(20)]).T
-V2=np.array([np.sin(j*math.pi*x[1:-1])for j in range(20)]).T
+V2=np.array([np.sin(j*(math.pi/2)*(x[1:-1]+1))for j in range(20)]).T
 V3=np.array([((1-x[1:-1])*(1+x[1:-1]))*scipy.special.chebyc(j)(x[1:-1])for j in range(20)]).T
 V=np.hstack((V1,V2,V3))
 F=[V[:,i].real for i in range(V.shape[1])]

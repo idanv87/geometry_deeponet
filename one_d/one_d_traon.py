@@ -59,7 +59,8 @@ epochs = Constants.num_epochs
 # optimizers
 optimizer = optim.Adam(model.parameters(), lr=lr,  weight_decay=1e-5)
 # loss function
-criterion = nn.L1Loss()
+
+criterion=norms.relative_L2
 # scheduler
 lr_scheduler=LRScheduler(optimizer)
 early_stopping = EarlyStopping()

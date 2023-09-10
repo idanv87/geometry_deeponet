@@ -14,7 +14,7 @@ class Constants:
     dtype = torch.float32
 
     # path = '/Users/idanversano/Documents/clones/deeponet_data/'
-
+    tex_fig_path='/Users/idanversano/Documents/papers/maxwell_donet/figures/'
     path = '/Users/idanversano/Documents/clones/data_exp_1d/'
     fig_path=path+'figures/'
     k=25
